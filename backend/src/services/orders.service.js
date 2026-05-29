@@ -8,7 +8,7 @@ const { addCustomNotification } = require("./notification.service");
 const emailService = require("./email.service");
 const Gig = require("../models/gig.model");
 
-const STATUS_KEYS = ["active", "late", "delivered", "cancelled"];
+const STATUS_KEYS = ["active", "late", "delivered", "cancelled", "disputed"];
 
 // Count orders per status for the manage-orders tab badges. `role` is
 // either "buyer" or "seller" (matches the user's view mode), so a single

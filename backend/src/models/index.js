@@ -23,3 +23,4 @@ module.exports.SupportTicket = require('./supportTicket.model');
 module.exports.SupportMessage = require('./supportMessage.model');
 module.exports.SearchLog = require('./searchLog.model');
 module.exports.AppConfig = require('./appConfig.model');
+module.exports.Dispute = require('./dispute.model');

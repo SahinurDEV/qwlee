@@ -30,6 +30,7 @@ const STATUS_STYLE = {
   completed: { label: "Completed",   dot: "bg-emerald-600", chip: "bg-emerald-50 text-emerald-800 border-emerald-200" },
   late:      { label: "Late",        dot: "bg-rose-500",    chip: "bg-rose-50 text-rose-700 border-rose-100" },
   cancelled: { label: "Cancelled",   dot: "bg-gray-400",    chip: "bg-gray-100 text-gray-700 border-gray-200" },
+  disputed:  { label: "Disputed",    dot: "bg-rose-500",    chip: "bg-rose-50 text-rose-700 border-rose-100" },
 };
 
 export default function OrderDetails({ orderId }) {

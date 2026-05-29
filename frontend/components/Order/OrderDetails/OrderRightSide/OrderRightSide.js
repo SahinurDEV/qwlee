@@ -27,7 +27,8 @@ import { useGetReviewByOrderQuery } from "@/app/redux/features/reviewsApi";
 import DeliverNowModal from "./DeliveryModal";
 import ExtendDeliveryDateModal from "./ExtendDeliveryDateModal";
 import LeaveReviewModal from "./LeaveReviewModal";
-import { IoStar, IoCalendarOutline } from "react-icons/io5";
+import OpenDisputeModal from "./OpenDisputeModal";
+import { IoStar, IoCalendarOutline, IoFlagOutline } from "react-icons/io5";
 
 export default function OrderActions({ order, orderId, isSeller }) {
   const router = useRouter();
@@ -54,6 +55,7 @@ export default function OrderActions({ order, orderId, isSeller }) {
   const [deliverOpen, setDeliverOpen] = useState(false);
   const [extendOpen, setExtendOpen] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
+  const [disputeOpen, setDisputeOpen] = useState(false);
 
   const calc = useCallback(() => {
     const target = moment(order?.deliveryDate);
@@ -171,6 +173,18 @@ export default function OrderActions({ order, orderId, isSeller }) {
         <section className="bg-gray-50 border border-gray-200 rounded-2xl p-5 text-center">
           <IoAlertCircle className="text-gray-500 w-7 h-7 mx-auto" />
           <h3 className="text-sm font-semibold text-gray-800 mt-1">Order cancelled</h3>
+        </section>
+      )}
+
+      {status === "disputed" && (
+        <section className="bg-rose-50/70 border border-rose-200 rounded-2xl p-5 text-center">
+          <IoFlagOutline className="text-rose-600 w-7 h-7 mx-auto" />
+          <h3 className="text-sm font-semibold text-rose-800 mt-1">
+            Dispute opened
+          </h3>
+          <p className="text-xs text-rose-700 mt-1">
+            The order is paused while the parties try to reach a resolution.
+          </p>
         </section>
       )}
 
@@ -317,6 +331,21 @@ export default function OrderActions({ order, orderId, isSeller }) {
         </section>
       )}
 
+      {["active", "late", "delivered"].includes(status) && (
+        <section className="bg-white border border-gray-200 rounded-2xl p-5">
+          <button
+            type="button"
+            onClick={() => setDisputeOpen(true)}
+            className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-rose-200 text-rose-700 text-sm font-medium hover:bg-rose-50"
+          >
+            <IoFlagOutline /> Open a dispute
+          </button>
+          <p className="text-[11px] text-gray-400 mt-2 text-center">
+            Pauses the order and notifies the other party.
+          </p>
+        </section>
+      )}
+
       <DeliverNowModal
         isOpen={deliverOpen}
         onClose={() => setDeliverOpen(false)}
@@ -332,6 +361,12 @@ export default function OrderActions({ order, orderId, isSeller }) {
         open={reviewOpen}
         onClose={() => setReviewOpen(false)}
         order={order}
+      />
+      <OpenDisputeModal
+        open={disputeOpen}
+        onClose={() => setDisputeOpen(false)}
+        orderId={orderId}
+        viewerRole={isSeller ? "freelancer" : "buyer"}
       />
     </div>
   );

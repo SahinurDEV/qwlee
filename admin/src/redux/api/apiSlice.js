@@ -24,6 +24,7 @@ export const apiSlice = createApi({
     "verifications",
     "searches",
     "settings",
+    "disputes",
    ],
   endpoints: (builder) => ({
 
@@ -785,10 +786,43 @@ updateProfielPicture: builder.mutation({
         }
       }),
       invalidatesTags: ['Image'],
-    })
+    }),
 
+    // Disputes — admin queue and resolution.
+    getAdminDisputes: builder.query({
+      query: ({ status, page = 1, limit = 50 } = {}) => {
+        const qs = new URLSearchParams({ limit, page });
+        if (status) qs.append("status", status);
+        return {
+          url: `/disputes?${qs.toString()}`,
+          headers: { authorization: `Bearer ${localStorage.getItem("token")}` },
+        };
+      },
+      transformResponse: (res) => res?.data?.attributes,
+      providesTags: ["disputes"],
+    }),
+    getDisputeDetail: builder.query({
+      query: (disputeId) => ({
+        url: `/disputes/${disputeId}`,
+        headers: { authorization: `Bearer ${localStorage.getItem("token")}` },
+      }),
+      transformResponse: (res) => res?.data?.attributes,
+      providesTags: ["disputes"],
+    }),
+    resolveDispute: builder.mutation({
+      query: ({ disputeId, resolution, resolutionNote }) => ({
+        url: `/disputes/${disputeId}/resolve`,
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: { resolution, resolutionNote },
+      }),
+      invalidatesTags: ["disputes", "orders"],
+    }),
 
-  }), 
+  }),
 });
 
  export const {
@@ -858,5 +892,8 @@ updateProfielPicture: builder.mutation({
       useSetLevelOverrideMutation,
       useDeleteAdminGigMutation,
       useRestoreAdminGigMutation,
+      useGetAdminDisputesQuery,
+      useGetDisputeDetailQuery,
+      useResolveDisputeMutation,
 
  } = apiSlice;

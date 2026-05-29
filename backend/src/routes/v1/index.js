@@ -22,6 +22,7 @@ const supportRoute = require('./support.routes')
 const verificationRoute = require('./verification.routes')
 const searchRoute = require('./search.routes')
 const paymentsRoute = require('./payments.routes')
+const disputeRoute = require('./dispute.routes')
 
 const router = express.Router();
 
@@ -110,6 +111,10 @@ const defaultRoutes = [
   {
     path: "/payments",
     route: paymentsRoute,
+  },
+  {
+    path: "/disputes",
+    route: disputeRoute,
   }
 ];
 

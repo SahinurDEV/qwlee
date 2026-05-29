@@ -37,8 +37,16 @@ const ordersSchema = mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["active", "late", "delivered", "cancelled"],
+      enum: ["active", "late", "delivered", "cancelled", "disputed"],
       default: "active",
+    },
+    // Set when a dispute is opened so we can pop the order back to
+    // its prior state if the dispute is dropped/cancelled.
+    preDisputeStatus: { type: String, default: "" },
+    activeDisputeId: {
+      type: mongoose.SchemaTypes.ObjectId,
+      ref: "Dispute",
+      default: null,
     },
     deliveryDate: {
       type: Date,

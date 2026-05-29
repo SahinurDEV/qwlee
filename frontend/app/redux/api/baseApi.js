@@ -32,6 +32,7 @@ export const baseApi = createApi({
     "Notifications",
     "SupportTickets",
     "SupportTicket",
+    "Disputes",
   ],
   endpoints: (builder) => ({
     // Example endpoint

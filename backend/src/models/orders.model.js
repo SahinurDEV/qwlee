@@ -28,7 +28,7 @@ const ordersSchema = mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["active", "late", "delivered","cancelled"],
+      enum: ["active", "late", "delivered","cancelled","disputed"],
       default: "active",
     },
     deliveryDate: {

@@ -45,6 +45,7 @@ import Verifications from "../dashboard/menu/Verifications";
 import Conversations from "../dashboard/menu/Conversations";
 import SearchLogs from "../dashboard/menu/SearchLogs";
 import SellerLevels from "../dashboard/menu/SellerLevels";
+import Disputes from "../dashboard/menu/Disputes";
 
 export const router = createBrowserRouter([
   {
@@ -124,6 +125,7 @@ export const router = createBrowserRouter([
       { path: "conversations", element: <Conversations /> },
       { path: "searches", element: <SearchLogs /> },
       { path: "seller-levels", element: <SellerLevels /> },
+      { path: "disputes", element: <Disputes /> },
     ],
   },
 ]);
