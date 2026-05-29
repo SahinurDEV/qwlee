@@ -98,7 +98,7 @@ Always:
 ### Toasts + modals
 - Toasts: `import { toast } from "sonner"` → `toast.success("...")` / `toast.error("...")`.
 - Modals: antd `Modal`. Dropdowns: antd `Dropdown` with `dropdownRender` for custom panels.
-- Confirmations for destructive actions: native `confirm(...)` or sweetalert2 (existing pattern).
+- Confirmations for destructive actions: `confirmModal({ title, description, confirmText, danger })` from `@/components/common/confirm` — returns a Promise<boolean>. Built on antd's `Modal.confirm`; no sweetalert. Same helper exists in the admin app at `src/common/confirm.js`.
 
 ### Realtime (Socket.IO client)
 - `useSocket()` from `components/Context/SocketProvider.js` returns `{ socket }`.

@@ -42,6 +42,10 @@ const getChats = async (filter, options, receiver) => {
       const lastMessage = await Message.findOne({ chat: chatId }).sort({
         createdAt: -1,
       });
+      // Empty chats (created by the Contact button but never used)
+      // don't belong in the inbox sidebar. The realtime `new-chat`
+      // event will surface them the moment the first message lands.
+      if (!lastMessage) continue;
       // Unread count for this viewer = messages where they're the
       // receiver and haven't been read yet. Used for the sidebar badge
       // + the global navbar dot.
@@ -51,7 +55,7 @@ const getChats = async (filter, options, receiver) => {
         readed: false,
       });
 
-      data.push({ chat: chatItem, lastMessage: lastMessage || null, unreadCount });
+      data.push({ chat: chatItem, lastMessage, unreadCount });
     }
 
     data.sort((a, b) => {

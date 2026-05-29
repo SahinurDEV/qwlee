@@ -14,8 +14,8 @@ import useUser from "@/hooks/useUser";
 import moment from "moment";
 import { useCreateBuyerOrderMutation } from "@/app/redux/features/order/buyerOrderApi";
 import { toast } from "sonner";
-import Swal from "sweetalert2";
 import ImageWithFallback from "@/components/common/ImageWithFallback";
+import { confirmModal } from "@/components/common/confirm";
 
 const MessageCart = ({ message }) => {
   const user = useUser();
@@ -56,23 +56,19 @@ const MessageCart = ({ message }) => {
 
   const handleWithdrawOffer = async (offerMessageId) => {
     try {
-      const result = await Swal.fire({
-        title: "Are you sure?",
-        text: "Do you want to withdraw this offer?",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonText: "Yes, withdraw it!",
-        cancelButtonText: "No, keep it",
+      const ok = await confirmModal({
+        title: "Withdraw this offer?",
+        description: "The buyer will no longer be able to accept it.",
+        confirmText: "Withdraw offer",
+        danger: true,
       });
-
-      if (result.isConfirmed) {
-        const res = await cancelOfferMessage(offerMessageId);
-        if (res.error) {
-          toast.error(res.error.data.message);
-          return;
-        }
-        toast.success("Offer withdrawn successfully");
+      if (!ok) return;
+      const res = await cancelOfferMessage(offerMessageId);
+      if (res.error) {
+        toast.error(res.error.data.message);
+        return;
       }
+      toast.success("Offer withdrawn");
     } catch (error) {
       toast.error("Something went wrong");
     }
@@ -80,23 +76,19 @@ const MessageCart = ({ message }) => {
 
   const handleCancelOfferOrder = async (offerMessageId) => {
     try {
-      const result = await Swal.fire({
-        title: "Are you sure?",
-        text: "Do you want to cancel this offer?",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonText: "Yes, cancel it!",
-        cancelButtonText: "No, keep it",
+      const ok = await confirmModal({
+        title: "Cancel this offer?",
+        description: "The seller will be notified the offer is no longer needed.",
+        confirmText: "Cancel offer",
+        danger: true,
       });
-
-      if (result.isConfirmed) {
-        const res = await cancelOfferMessage(offerMessageId);
-        if (res.error) {
-          toast.error(res.error.data.message);
-          return;
-        }
-        toast.success("Offer canceled successfully");
+      if (!ok) return;
+      const res = await cancelOfferMessage(offerMessageId);
+      if (res.error) {
+        toast.error(res.error.data.message);
+        return;
       }
+      toast.success("Offer cancelled");
     } catch (error) {
       toast.error("Something went wrong");
     }

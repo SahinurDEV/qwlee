@@ -9,8 +9,9 @@
 import { useMemo, useState } from "react";
 import { Modal as RModal } from "react-responsive-modal";
 import { Form, Input, Pagination } from "antd";
-import Swal from "sweetalert2";
 import toast from "react-hot-toast";
+
+import { confirmModal } from "../../common/confirm";
 import { IoSearch } from "react-icons/io5";
 import { TbPlus, TbEdit, TbTrash } from "react-icons/tb";
 
@@ -108,15 +109,13 @@ export default function CategoryPage() {
   }
 
   async function handleDelete(row) {
-    const ok = await Swal.fire({
+    const ok = await confirmModal({
       title: `Delete ${row.name}?`,
-      text: "Gigs in this category will lose their classification.",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#E11D48",
-      confirmButtonText: "Delete",
+      description: "Gigs in this category will lose their classification.",
+      confirmText: "Delete",
+      danger: true,
     });
-    if (!ok.isConfirmed) return;
+    if (!ok) return;
     const res = await deleteCategory(row._id);
     if (res?.error) toast.error("Delete failed");
     else toast.success("Category deleted");

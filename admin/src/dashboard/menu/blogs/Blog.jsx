@@ -6,8 +6,9 @@ import { Link } from "react-router-dom";
 import { Pagination } from "antd";
 import { TbPlus, TbEdit, TbTrash } from "react-icons/tb";
 import { IoCalendarOutline } from "react-icons/io5";
-import Swal from "sweetalert2";
 import toast from "react-hot-toast";
+
+import { confirmModal } from "../../../common/confirm";
 
 import {
   useDeleteBlogMutation,
@@ -29,14 +30,13 @@ export default function Blog() {
   const total = data?.totalResults || data?.data?.attributes?.totalResults || blogs.length;
 
   async function handleDelete(b) {
-    const ok = await Swal.fire({
+    const ok = await confirmModal({
       title: `Delete "${b.title}"?`,
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#E11D48",
-      confirmButtonText: "Delete",
+      description: "This blog post will be permanently removed.",
+      confirmText: "Delete",
+      danger: true,
     });
-    if (!ok.isConfirmed) return;
+    if (!ok) return;
     const res = await deleteBlog(b._id || b.id);
     if (res?.error) toast.error("Delete failed");
     else toast.success("Blog deleted");

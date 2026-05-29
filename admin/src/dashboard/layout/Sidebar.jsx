@@ -23,9 +23,8 @@ import {
   IoChevronBackOutline,
   IoChevronForwardOutline,
 } from "react-icons/io5";
-import Swal from "sweetalert2";
-
 import cls from "../../utils/cls";
+import { confirmModal } from "../../common/confirm";
 
 const NAV = [
   {
@@ -117,22 +116,17 @@ export default function Sidebar({ mobileOpen, onMobileClose }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
-  function handleLogout() {
-    Swal.fire({
+  async function handleLogout() {
+    const ok = await confirmModal({
       title: "Sign out?",
-      text: "You'll need to sign in again to access the admin dashboard.",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#059669",
-      cancelButtonColor: "#64748B",
-      confirmButtonText: "Yes, sign out",
-    }).then((result) => {
-      if (result.isConfirmed) {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        navigate("/");
-      }
+      description: "You'll need to sign in again to access the admin dashboard.",
+      confirmText: "Sign out",
+      cancelText: "Stay signed in",
     });
+    if (!ok) return;
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/");
   }
 
   const widthCls = collapsed ? "w-[72px]" : "w-[240px]";

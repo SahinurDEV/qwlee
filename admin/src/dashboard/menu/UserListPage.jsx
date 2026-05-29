@@ -10,7 +10,8 @@ import { useNavigate } from "react-router-dom";
 import { IoSearch } from "react-icons/io5";
 import { Modal as RModal } from "react-responsive-modal";
 import toast from "react-hot-toast";
-import Swal from "sweetalert2";
+
+import { confirmModal } from "../../common/confirm";
 
 import {
   useGetBuyerListQuery,
@@ -86,15 +87,12 @@ export default function UserListPage({ role }) {
   }
 
   async function handleUnban(u) {
-    const ok = await Swal.fire({
+    const ok = await confirmModal({
       title: `Unban ${u.fullName}?`,
-      text: "They'll be able to sign in again immediately.",
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonColor: "#059669",
-      confirmButtonText: "Yes, unban",
+      description: "They'll be able to sign in again immediately.",
+      confirmText: "Unban",
     });
-    if (!ok.isConfirmed) return;
+    if (!ok) return;
     const res = await unbanUser(u._id || u.id);
     if (res?.error) toast.error(res.error?.data?.message || "Couldn't unban");
     else toast.success(`${u.fullName} can sign in again`);

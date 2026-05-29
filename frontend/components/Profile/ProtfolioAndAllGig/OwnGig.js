@@ -5,20 +5,16 @@ import { IoStar } from "react-icons/io5";
 import { imageBaseUrl, imgUrl} from "@/lib/constant";
 import { useRouter } from "next/navigation";
 import { useDeleteGigMutation } from "@/app/redux/features/deleteGigApi";
-import Swal from "sweetalert2";
+import { toast } from "sonner";
 const OwnGig = ({ item }) => {
   const [setData, { isLoading }] = useDeleteGigMutation();
   const router = useRouter();
   const handleDelete = async (id) => {
     try {
-      const response = await setData(id).unwrap();
+      await setData(id).unwrap();
+      toast.success("Gig deleted");
     } catch (error) {
-      Swal.fire({
-        title: "Error!",
-        text: error?.data?.message || "Failed to delete gig",
-        icon: "error",
-        confirmButtonText: "OK",
-      });
+      toast.error(error?.data?.message || "Failed to delete gig");
     }
   };
   return (

@@ -148,18 +148,21 @@ export default function Chat() {
   }, [socket, user?.id, user?._id, activeChatId]);
 
   // Most-recent first. Filter by participant name when the search box
-  // has text in it.
+  // has text in it. Empty chats — created by the Contact button but
+  // never used — are excluded; they'll appear via the realtime
+  // `new-chat` event the moment the first message is sent.
   const visible = useMemo(() => {
+    const withMessages = chats.filter((c) => !!c?.lastMessage);
     const q = query.trim().toLowerCase();
     const filtered = q
-      ? chats.filter((c) => {
+      ? withMessages.filter((c) => {
           const name =
             c?.chat?.participants?.[0]?.fullName?.toLowerCase() || "";
           const username =
             c?.chat?.participants?.[0]?.username?.toLowerCase() || "";
           return name.includes(q) || username.includes(q);
         })
-      : chats;
+      : withMessages;
     return [...filtered].sort((a, b) => lastTime(b) - lastTime(a));
   }, [chats, query]);
 

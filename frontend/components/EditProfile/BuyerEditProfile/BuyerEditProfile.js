@@ -10,7 +10,6 @@ import { Form, Input } from "antd";
 import TextArea from "antd/es/input/TextArea";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
-import Swal from "sweetalert2";
 import { LuImagePlus } from "react-icons/lu";
 import { IoArrowBack, IoSaveOutline, IoTrashOutline } from "react-icons/io5";
 
@@ -56,12 +55,7 @@ export default function BuyerEditProfile() {
     formData.append("image", selectedFile);
     const res = await updateImage(formData);
     if (res.error) {
-      Swal.fire({
-        title: "Could not update photo",
-        text: res.error.data?.message || "Try again.",
-        icon: "error",
-        confirmButtonText: "OK",
-      });
+      toast.error(res.error.data?.message || "Could not update photo");
       return;
     }
     const next = res?.data?.data?.attributes;

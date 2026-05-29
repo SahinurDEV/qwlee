@@ -7,8 +7,9 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { IoSearch } from "react-icons/io5";
-import Swal from "sweetalert2";
 import toast from "react-hot-toast";
+
+import { confirmModal } from "../../common/confirm";
 
 import {
   useGetWithdrawUserQuery,
@@ -70,29 +71,24 @@ export default function Withdraw() {
   }, [rows, filter, search]);
 
   async function handleApprove(row) {
-    const ok = await Swal.fire({
+    const ok = await confirmModal({
       title: `Approve $${row.amount}?`,
-      text: "The funds will be flagged as paid out.",
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonColor: "#059669",
-      confirmButtonText: "Yes, approve",
+      description: "The funds will be flagged as paid out.",
+      confirmText: "Approve",
     });
-    if (!ok.isConfirmed) return;
+    if (!ok) return;
     const res = await approve(row._id);
     if (res.error) toast.error(res.error?.data?.message || "Could not approve");
     else toast.success("Withdrawal approved");
   }
   async function handleReject(row) {
-    const ok = await Swal.fire({
+    const ok = await confirmModal({
       title: "Reject withdrawal?",
-      text: "The freelancer will see this request as cancelled.",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#E11D48",
-      confirmButtonText: "Yes, reject",
+      description: "The freelancer will see this request as cancelled.",
+      confirmText: "Reject",
+      danger: true,
     });
-    if (!ok.isConfirmed) return;
+    if (!ok) return;
     const res = await reject(row._id);
     if (res.error) toast.error(res.error?.data?.message || "Could not reject");
     else toast.success("Withdrawal rejected");

@@ -4,7 +4,6 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { IoIosArrowBack } from "react-icons/io";
 import { Link, useNavigate } from "react-router-dom";
 import baseUrl from '../../../baseUrl'
-import Swal from "sweetalert2";
 import { useAddBlogsMutation } from "../../../redux/api/apiSlice";
 import { PropagateLoader } from "react-spinners";
  

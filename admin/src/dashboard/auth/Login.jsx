@@ -4,7 +4,7 @@
 
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import Swal from "sweetalert2";
+import toast from "react-hot-toast";
 import { IoMailOutline, IoLockClosedOutline, IoEyeOutline, IoEyeOffOutline } from "react-icons/io5";
 
 import baseUrl from "../../baseUrl";
@@ -43,31 +43,20 @@ export default function Login() {
       });
       const data = await res.json();
       if (data?.code !== 200) {
-        Swal.fire({
-          icon: "error",
-          title: "Login failed",
-          text: data?.message || "Check your email and password and try again.",
-        });
+        toast.error(data?.message || "Check your email and password and try again.");
         return;
       }
       const user = data.data.attributes?.user;
       if (user?.role !== "admin") {
-        Swal.fire({
-          icon: "error",
-          title: "Admins only",
-          text: "This sign-in is for the admin dashboard.",
-        });
+        toast.error("This sign-in is for the admin dashboard.");
         return;
       }
       localStorage.setItem("token", data.data.attributes.tokens.access.token);
       localStorage.setItem("user", JSON.stringify(user));
+      toast.success(`Welcome back, ${user.fullName || "admin"}`);
       navigate(intendedPath, { replace: true });
     } catch (err) {
-      Swal.fire({
-        icon: "error",
-        title: "Couldn't sign in",
-        text: err?.message || "Network error",
-      });
+      toast.error(err?.message || "Network error — couldn't sign in");
     } finally {
       setLoading(false);
     }

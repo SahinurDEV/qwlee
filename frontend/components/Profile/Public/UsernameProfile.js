@@ -3,9 +3,12 @@
 // GET /v1/users/by-username/:username (see backend user.service
 // getPublicProfileByUsername — includes gigs, portfolios, reviews).
 //
-// Stateless on data; only client state is the active tab.
+// All sections (About, Skills, Gigs, Portfolio, Reviews) render stacked
+// on one scrollable page — no tabs. A sticky in-page jump bar lets
+// viewers skip to a section without hiding any content.
 
 import { useMemo, useState } from "react";
+// `useState` retained — still used for the cover-image upload preview.
 import Link from "next/link";
 import { useDispatch } from "react-redux";
 import Cookies from "js-cookie";
@@ -46,15 +49,7 @@ function ratingBreakdown(reviews = []) {
   return { counts, total, avg };
 }
 
-const TABS = [
-  { id: "about", label: "About" },
-  { id: "gigs", label: "Gigs" },
-  { id: "portfolio", label: "Portfolio" },
-  { id: "reviews", label: "Reviews" },
-];
-
 export default function UsernameProfile({ user }) {
-  const [tab, setTab] = useState("about");
   const viewer = useUser();
   const dispatch = useDispatch();
   const [updateCoverImage, { isLoading: uploadingCover }] =
@@ -199,49 +194,101 @@ export default function UsernameProfile({ user }) {
                   <span className="hidden md:inline">Dashboard</span>
                 </Link>
               </>
-            ) : (
-              <ContactButton
-                receiverId={user._id || user.id}
-                redirectBackTo={`/${user.username}`}
-              />
-            )}
+            ) : null}
+            {/* Visitor Contact CTA lives in the sticky seller card on
+                the right; intentionally not duplicated here. */}
           </div>
         </div>
       </div>
 
-      {/* Fiverr-style two-column body: left = tabs/content, right = sticky seller card */}
+      {/* Fiverr-style two-column body: left = stacked content, right = sticky seller card */}
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-8">
-          <nav className="border-b border-gray-200 flex gap-6 overflow-x-auto">
-            {TABS.map((t) => (
-              <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
-                className={`pb-3 text-sm font-medium border-b-2 transition whitespace-nowrap ${
-                  tab === t.id
-                    ? "border-emerald-600 text-emerald-700"
-                    : "border-transparent text-gray-500 hover:text-gray-800"
-                }`}
-              >
-                {t.label}
-                {t.id === "gigs" && user.gigs?.length ? (
-                  <span className="ml-1.5 text-xs text-gray-400">{user.gigs.length}</span>
-                ) : null}
-                {t.id === "reviews" && totalReviews ? (
-                  <span className="ml-1.5 text-xs text-gray-400">{totalReviews}</span>
-                ) : null}
-              </button>
-            ))}
+        <div className="lg:col-span-8 space-y-10">
+          {/* In-page jump bar — scrolls, doesn't hide content */}
+          <nav className="sticky top-16 z-10 -mx-2 px-2 py-2 bg-white/85 backdrop-blur border-b border-gray-200 flex gap-5 overflow-x-auto text-sm">
+            <a href="#about" className="text-gray-600 hover:text-emerald-700 whitespace-nowrap">About</a>
+            {user.skills?.length ? (
+              <a href="#skills" className="text-gray-600 hover:text-emerald-700 whitespace-nowrap">Skills</a>
+            ) : null}
+            {isFreelancer ? (
+              <a href="#gigs" className="text-gray-600 hover:text-emerald-700 whitespace-nowrap">
+                Gigs{user.gigs?.length ? ` (${user.gigs.length})` : ""}
+              </a>
+            ) : null}
+            {user.portfolios?.length ? (
+              <a href="#portfolio" className="text-gray-600 hover:text-emerald-700 whitespace-nowrap">
+                Portfolio ({user.portfolios.length})
+              </a>
+            ) : null}
+            {isFreelancer ? (
+              <a href="#reviews" className="text-gray-600 hover:text-emerald-700 whitespace-nowrap">
+                Reviews{totalReviews ? ` (${totalReviews})` : ""}
+              </a>
+            ) : null}
           </nav>
 
-          <div className="mt-6">
-            {tab === "about" && <AboutTab user={user} />}
-            {tab === "gigs" && <GigsTab gigs={user.gigs || []} sellerUsername={user.username} />}
-            {tab === "portfolio" && <PortfolioTab portfolios={user.portfolios || []} />}
-            {tab === "reviews" && (
-              <ReviewsTab reviews={user.reviews || []} counts={counts} avg={avg} total={totalReviews} />
-            )}
-          </div>
+          <Section id="about" title="About">
+            <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
+              {user.about || "This user hasn't written an about section yet."}
+            </p>
+            <SideDetails user={user} />
+          </Section>
+
+          {user.skills?.length ? (
+            <Section id="skills" title="Skills">
+              <div className="flex flex-wrap gap-2">
+                {user.skills.map((s, i) => {
+                  // Skills may be strings (legacy) or {id, text} objects.
+                  const text = typeof s === "string" ? s : s?.text || s?.name || "";
+                  if (!text) return null;
+                  const key = (typeof s === "object" && s?.id) || `skill-${i}-${text}`;
+                  return (
+                    <span
+                      key={key}
+                      className="text-sm bg-gray-100 text-gray-800 rounded-full px-3 py-1"
+                    >
+                      {text}
+                    </span>
+                  );
+                })}
+              </div>
+            </Section>
+          ) : null}
+
+          {isFreelancer ? (
+            <Section
+              id="gigs"
+              title="Gigs"
+              count={user.gigs?.length || 0}
+            >
+              <GigsGrid gigs={user.gigs || []} sellerUsername={user.username} />
+            </Section>
+          ) : null}
+
+          {user.portfolios?.length ? (
+            <Section
+              id="portfolio"
+              title="Portfolio"
+              count={user.portfolios.length}
+            >
+              <PortfolioGrid portfolios={user.portfolios} />
+            </Section>
+          ) : null}
+
+          {isFreelancer ? (
+            <Section
+              id="reviews"
+              title="Reviews"
+              count={totalReviews}
+            >
+              <ReviewsBlock
+                reviews={user.reviews || []}
+                counts={counts}
+                avg={avg}
+                total={totalReviews}
+              />
+            </Section>
+          ) : null}
         </div>
 
         <aside className="lg:col-span-4">
@@ -263,6 +310,52 @@ export default function UsernameProfile({ user }) {
         </aside>
       </div>
     </main>
+  );
+}
+
+// Section header used for every stacked block on the profile.
+// `scroll-mt-24` keeps the anchor target below the sticky navbar.
+function Section({ id, title, count, children }) {
+  return (
+    <section id={id} className="scroll-mt-24">
+      <div className="flex items-baseline gap-3 mb-3">
+        <h2 className="text-lg md:text-xl font-semibold text-gray-900">{title}</h2>
+        {count != null ? (
+          <span className="text-sm text-gray-400 font-medium">{count}</span>
+        ) : null}
+      </div>
+      <div>{children}</div>
+    </section>
+  );
+}
+
+// Two-column About details strip (Languages / Location / Rate / Response time)
+function SideDetails({ user }) {
+  const rows = [
+    { label: "Languages", value: user.language },
+    { label: "Location", value: user.location },
+    {
+      label: "Rate",
+      value: user.perHourRate ? `$${user.perHourRate}/hr` : null,
+    },
+    {
+      label: "Response time",
+      value: user.responseTime ? `${user.responseTime} hour(s)` : null,
+    },
+  ].filter((r) => r.value);
+  if (rows.length === 0) return null;
+  return (
+    <dl className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
+      {rows.map((r) => (
+        <div
+          key={r.label}
+          className="flex justify-between gap-3 border-b border-gray-100 py-2"
+        >
+          <dt className="text-gray-500">{r.label}</dt>
+          <dd className="font-medium text-gray-900 text-right">{r.value}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }
 
@@ -369,65 +462,7 @@ function SellerRow({ label, children }) {
   );
 }
 
-function AboutTab({ user }) {
-  return (
-    <section className="grid md:grid-cols-3 gap-6">
-      <div className="md:col-span-2 space-y-4">
-        <div>
-          <h2 className="text-lg font-semibold mb-2">About</h2>
-          <p className="text-gray-700 whitespace-pre-wrap">
-            {user.about || "This seller hasn't written an about section yet."}
-          </p>
-        </div>
-        {user.skills?.length ? (
-          <div>
-            <h2 className="text-lg font-semibold mb-2">Skills</h2>
-            <div className="flex flex-wrap gap-2">
-              {user.skills.map((s, i) => {
-                // Skills may be strings (legacy) or {id, text} objects.
-                const text = typeof s === "string" ? s : s?.text || s?.name || "";
-                if (!text) return null;
-                const key = (typeof s === "object" && s?.id) || `skill-${i}-${text}`;
-                return (
-                  <span
-                    key={key}
-                    className="text-sm bg-gray-100 text-gray-800 rounded-full px-3 py-1"
-                  >
-                    {text}
-                  </span>
-                );
-              })}
-            </div>
-          </div>
-        ) : null}
-      </div>
-      <aside className="space-y-3 text-sm">
-        <Detail label="Languages" value={user.language} />
-        <Detail label="Location" value={user.location} />
-        <Detail
-          label="Rate"
-          value={user.perHourRate ? `$${user.perHourRate}/hr` : null}
-        />
-        <Detail
-          label="Response time"
-          value={user.responseTime ? `${user.responseTime} hour(s)` : null}
-        />
-      </aside>
-    </section>
-  );
-}
-
-function Detail({ label, value }) {
-  if (!value) return null;
-  return (
-    <div className="flex justify-between gap-3 border-b border-gray-100 pb-2">
-      <span className="text-gray-500">{label}</span>
-      <span className="font-medium text-right">{value}</span>
-    </div>
-  );
-}
-
-function GigsTab({ gigs, sellerUsername }) {
+function GigsGrid({ gigs, sellerUsername }) {
   if (!gigs.length) {
     return <EmptyState message="No gigs yet." />;
   }
@@ -459,7 +494,7 @@ function GigsTab({ gigs, sellerUsername }) {
   );
 }
 
-function PortfolioTab({ portfolios }) {
+function PortfolioGrid({ portfolios }) {
   if (!portfolios.length) {
     return <EmptyState message="No portfolio items yet." />;
   }
@@ -483,7 +518,7 @@ function PortfolioTab({ portfolios }) {
   );
 }
 
-function ReviewsTab({ reviews, counts, avg, total }) {
+function ReviewsBlock({ reviews, counts, avg, total }) {
   return (
     <section className="grid md:grid-cols-3 gap-6">
       <aside className="md:col-span-1">

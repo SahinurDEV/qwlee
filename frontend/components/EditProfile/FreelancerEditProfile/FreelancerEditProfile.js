@@ -17,7 +17,6 @@ import TextArea from "antd/es/input/TextArea";
 import { WithContext as ReactTags } from "react-tag-input";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
-import Swal from "sweetalert2";
 import { LuImagePlus } from "react-icons/lu";
 import { IoArrowBack, IoSaveOutline, IoTrashOutline } from "react-icons/io5";
 
@@ -113,12 +112,7 @@ export default function FreelancerEditProfile() {
     try {
       const res = await setProfile(payload);
       if (res.error) {
-        Swal.fire({
-          title: "Could not save",
-          text: res.error.data?.message || "Please try again.",
-          icon: "error",
-          confirmButtonText: "OK",
-        });
+        toast.error(res.error.data?.message || "Could not save — please try again.");
         return;
       }
       const next = res?.data?.data?.attributes;
@@ -126,20 +120,10 @@ export default function FreelancerEditProfile() {
         Cookies.set("user", JSON.stringify(next));
         dispatch(setUser(next));
       }
-      Swal.fire({
-        title: "Profile saved",
-        icon: "success",
-        showConfirmButton: false,
-        timer: 1400,
-      });
+      toast.success("Profile saved");
       router.push("/profile");
     } catch (err) {
-      Swal.fire({
-        title: "Error",
-        text: err?.data?.message || "Failed to update profile",
-        icon: "error",
-        confirmButtonText: "OK",
-      });
+      toast.error(err?.data?.message || "Failed to update profile");
     }
   }
 

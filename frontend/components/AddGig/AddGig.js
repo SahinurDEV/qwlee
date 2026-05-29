@@ -12,7 +12,7 @@
 import { useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import Swal from "sweetalert2";
+import { toast } from "sonner";
 import {
   IoArrowBack,
   IoArrowForward,
@@ -128,22 +128,11 @@ export default function AddGig() {
 
       const res = await setData(formData).unwrap();
       if (res.code === 201) {
-        await Swal.fire({
-          title: "Gig published",
-          text: "Your gig is now live on Qwlee.",
-          icon: "success",
-          showConfirmButton: false,
-          timer: 1500,
-        });
+        toast.success("Gig published — it's now live on Qwlee.");
         router.push("/profile");
       }
     } catch (err) {
-      Swal.fire({
-        title: "Could not publish",
-        text: err?.data?.message || "Something went wrong.",
-        icon: "error",
-        confirmButtonText: "OK",
-      });
+      toast.error(err?.data?.message || "Could not publish — please try again.");
     } finally {
       setSubmitting(false);
     }
