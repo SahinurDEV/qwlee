@@ -47,6 +47,18 @@ export const inboxApi = baseApi.injectEndpoints({
         return response?.data?.attributes;
       },
     }),
+    // Get-or-create the chat between the current user and `receiverId`.
+    // Backend returns the existing chat if one already exists, otherwise
+    // creates a fresh one. Used by the public profile Contact button.
+    startChatWithUser: builder.mutation({
+      query: (receiverId) => ({
+        url: "/chat/add-chat",
+        method: "POST",
+        body: { receiverId },
+      }),
+      invalidatesTags: ["Chat"],
+      transformResponse: (response) => response?.data?.attributes,
+    }),
     getChat: builder.query({
       query: (chatId) => `/chat/${chatId}`,
       transformResponse: (response) => {
@@ -73,4 +85,5 @@ export const {
   useGetMessagesQuery,
   useCancelOrWithdrawOfferMutation,
   useGetMoreMessagesQuery,
+  useStartChatWithUserMutation,
 } = inboxApi;

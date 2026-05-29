@@ -23,6 +23,7 @@ import { FaSpinner } from "react-icons/fa";
 import ImageWithFallback from "@/components/common/ImageWithFallback";
 import Avatar from "@/components/common/Avatar";
 import VerifiedBadge from "@/components/common/VerifiedBadge";
+import ContactButton from "@/components/common/ContactButton";
 import useUser from "@/hooks/useUser";
 import { useUpdateCoverImageMutation } from "@/app/redux/features/updateProfileApi";
 import { setUser } from "@/app/redux/slices/userSlice";
@@ -92,12 +93,6 @@ export default function UsernameProfile({ user }) {
   );
 
   const isFreelancer = user.role === "freelancer";
-  const stats = [
-    { label: "Avg rating", value: avg ? avg.toFixed(2) : "—" },
-    { label: "Reviews", value: totalReviews },
-    { label: "Active gigs", value: user.gigs?.length || 0 },
-    { label: "Response time", value: user.responseTime ? `${user.responseTime}h` : "—" },
-  ];
 
   return (
     <main className="container mx-auto px-4 py-8 max-w-6xl">
@@ -204,67 +199,173 @@ export default function UsernameProfile({ user }) {
                   <span className="hidden md:inline">Dashboard</span>
                 </Link>
               </>
-            ) : isFreelancer ? (
-              <Link
-                href={`/freelancer-details?id=${user._id || user.id}`}
-                className="inline-flex items-center justify-center px-5 py-2.5 rounded-lg bg-emerald-600 text-white font-medium hover:bg-emerald-700 transition"
-              >
-                Contact
-              </Link>
-            ) : null}
+            ) : (
+              <ContactButton
+                receiverId={user._id || user.id}
+                redirectBackTo={`/${user.username}`}
+              />
+            )}
           </div>
         </div>
       </div>
 
-      {/* Stats strip */}
-      {isFreelancer ? (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
-          {stats.map((s) => (
-            <div
-              key={s.label}
-              className="rounded-xl border border-gray-200 bg-white px-4 py-3"
-            >
-              <div className="text-xs uppercase tracking-wide text-gray-500">
-                {s.label}
-              </div>
-              <div className="text-xl font-semibold mt-1">{s.value}</div>
-            </div>
-          ))}
+      {/* Fiverr-style two-column body: left = tabs/content, right = sticky seller card */}
+      <div className="mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="lg:col-span-8">
+          <nav className="border-b border-gray-200 flex gap-6 overflow-x-auto">
+            {TABS.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setTab(t.id)}
+                className={`pb-3 text-sm font-medium border-b-2 transition whitespace-nowrap ${
+                  tab === t.id
+                    ? "border-emerald-600 text-emerald-700"
+                    : "border-transparent text-gray-500 hover:text-gray-800"
+                }`}
+              >
+                {t.label}
+                {t.id === "gigs" && user.gigs?.length ? (
+                  <span className="ml-1.5 text-xs text-gray-400">{user.gigs.length}</span>
+                ) : null}
+                {t.id === "reviews" && totalReviews ? (
+                  <span className="ml-1.5 text-xs text-gray-400">{totalReviews}</span>
+                ) : null}
+              </button>
+            ))}
+          </nav>
+
+          <div className="mt-6">
+            {tab === "about" && <AboutTab user={user} />}
+            {tab === "gigs" && <GigsTab gigs={user.gigs || []} sellerUsername={user.username} />}
+            {tab === "portfolio" && <PortfolioTab portfolios={user.portfolios || []} />}
+            {tab === "reviews" && (
+              <ReviewsTab reviews={user.reviews || []} counts={counts} avg={avg} total={totalReviews} />
+            )}
+          </div>
         </div>
-      ) : null}
 
-      {/* Tabs */}
-      <nav className="mt-8 border-b border-gray-200 flex gap-6 overflow-x-auto">
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={`pb-3 text-sm font-medium border-b-2 transition ${
-              tab === t.id
-                ? "border-emerald-600 text-emerald-700"
-                : "border-transparent text-gray-500 hover:text-gray-800"
-            }`}
-          >
-            {t.label}
-            {t.id === "gigs" && user.gigs?.length ? (
-              <span className="ml-1.5 text-xs text-gray-400">{user.gigs.length}</span>
-            ) : null}
-            {t.id === "reviews" && totalReviews ? (
-              <span className="ml-1.5 text-xs text-gray-400">{totalReviews}</span>
-            ) : null}
-          </button>
-        ))}
-      </nav>
-
-      <div className="mt-6">
-        {tab === "about" && <AboutTab user={user} />}
-        {tab === "gigs" && <GigsTab gigs={user.gigs || []} sellerUsername={user.username} />}
-        {tab === "portfolio" && <PortfolioTab portfolios={user.portfolios || []} />}
-        {tab === "reviews" && (
-          <ReviewsTab reviews={user.reviews || []} counts={counts} avg={avg} total={totalReviews} />
-        )}
+        <aside className="lg:col-span-4">
+          {isFreelancer ? (
+            <SellerCard
+              user={user}
+              isOwner={isOwner}
+              avg={avg}
+              totalReviews={totalReviews}
+              joined={formatJoined(user.createdAt)}
+            />
+          ) : (
+            <BuyerCard
+              user={user}
+              isOwner={isOwner}
+              joined={formatJoined(user.createdAt)}
+            />
+          )}
+        </aside>
       </div>
     </main>
+  );
+}
+
+// Fiverr-style sticky seller card. Renders on the right of the profile
+// body on desktop; stacks below the tabs on mobile/tablet.
+function SellerCard({ user, isOwner, avg, totalReviews, joined }) {
+  return (
+    <div className="lg:sticky lg:top-20 rounded-2xl border border-gray-200 bg-white overflow-hidden shadow-sm">
+      <div className="p-5">
+        <div className="flex items-center gap-3">
+          <Avatar src={user.image} name={user.fullName} size={56} rounded />
+          <div className="min-w-0">
+            <div className="font-semibold text-gray-900 truncate flex items-center gap-1.5">
+              {user.fullName}
+              <VerifiedBadge user={user} size={14} />
+            </div>
+            <div className="text-xs text-gray-500 truncate">@{user.username}</div>
+          </div>
+        </div>
+
+        <div className="mt-3 flex items-center gap-2 flex-wrap text-xs">
+          {user.online ? (
+            <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-medium">
+              <GoDotFill /> Online
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full font-medium">
+              <GoDotFill /> Offline
+            </span>
+          )}
+          {totalReviews > 0 ? (
+            <span className="inline-flex items-center gap-1 text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full font-medium">
+              <GiRoundStar /> {avg.toFixed(1)} ({totalReviews})
+            </span>
+          ) : null}
+        </div>
+      </div>
+
+      <dl className="divide-y divide-gray-100 border-t border-gray-100">
+        <SellerRow label="From">
+          {user.gigs?.length
+            ? `$${Math.min(...user.gigs.map((g) => Number(g.price) || Infinity))}`
+            : "—"}
+        </SellerRow>
+        <SellerRow label="Member since">{joined}</SellerRow>
+        <SellerRow label="Avg. response time">
+          {user.responseTime ? `${user.responseTime} hour${user.responseTime === 1 ? "" : "s"}` : "—"}
+        </SellerRow>
+        <SellerRow label="Languages">{user.language || "—"}</SellerRow>
+        <SellerRow label="Location">{user.location || "—"}</SellerRow>
+        <SellerRow label="Active gigs">{user.gigs?.length || 0}</SellerRow>
+      </dl>
+
+      {!isOwner ? (
+        <div className="p-4 border-t border-gray-100 space-y-2">
+          <ContactButton
+            receiverId={user._id || user.id}
+            redirectBackTo={`/${user.username}`}
+            className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition"
+          />
+          <p className="text-[11px] text-gray-400 text-center">
+            Replies typically within {user.responseTime ? `${user.responseTime}h` : "a few hours"}.
+          </p>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function BuyerCard({ user, isOwner, joined }) {
+  return (
+    <div className="lg:sticky lg:top-20 rounded-2xl border border-gray-200 bg-white overflow-hidden shadow-sm">
+      <div className="p-5 flex items-center gap-3">
+        <Avatar src={user.image} name={user.fullName} size={56} rounded />
+        <div className="min-w-0">
+          <div className="font-semibold text-gray-900 truncate">{user.fullName}</div>
+          <div className="text-xs text-gray-500 truncate">@{user.username}</div>
+        </div>
+      </div>
+      <dl className="divide-y divide-gray-100 border-t border-gray-100">
+        <SellerRow label="Member since">{joined}</SellerRow>
+        <SellerRow label="Location">{user.location || "—"}</SellerRow>
+        <SellerRow label="Languages">{user.language || "—"}</SellerRow>
+      </dl>
+      {!isOwner ? (
+        <div className="p-4 border-t border-gray-100">
+          <ContactButton
+            receiverId={user._id || user.id}
+            redirectBackTo={`/${user.username}`}
+            className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition"
+          />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function SellerRow({ label, children }) {
+  return (
+    <div className="flex items-center justify-between gap-3 px-5 py-3 text-sm">
+      <dt className="text-gray-500">{label}</dt>
+      <dd className="font-medium text-gray-900 text-right truncate">{children}</dd>
+    </div>
   );
 }
 

@@ -2,6 +2,8 @@
 
 Three-app freelancing marketplace (rebranded from the legacy cnnctr codebase). Each app is a separate deployable.
 
+> **New here?** Start with [`docs/CONTRIBUTING.md`](./docs/CONTRIBUTING.md) for setup, then read [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md). The full developer guide index lives in [`docs/`](./docs/). A short on-ramp for Claude Code sessions is in [`CLAUDE.md`](./CLAUDE.md).
+
 > **All image uploads route through [ImgBB](https://api.imgbb.com/).** Nothing is written to local disk. Set `IMGBB_API_KEY` in `backend/.env`.
 
 | App | Stack | Port | Purpose |
