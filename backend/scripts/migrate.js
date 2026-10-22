@@ -38,7 +38,33 @@ async function run() {
   // Categories predating subcategories are top-level.
   const cats = await db.collection("categories").updateMany({ parentId: { $exists: false } }, { $set: { parentId: null } });
 
-  console.log(JSON.stringify({ categoriesBackfilled: cats.modifiedCount, gigsSanitised: gigsFixed, escrowHeld: held.modifiedCount, escrowReleased: released.modifiedCount,
+  // ID documents that were stored in the public /uploads folder move to
+  // the private store; ones hosted elsewhere (ImgBB) can't be made
+  // private and are only counted.
+  const fsp = require("fs/promises");
+  const path = require("path");
+  const pf = require("../src/services/privateFiles.service");
+  const { UPLOAD_DIR } = require("../src/services/imageUpload.service");
+  let idDocsMoved = 0, idDocsExternal = 0;
+  await fsp.mkdir(pf.PRIVATE_DIR, { recursive: true, mode: 0o700 });
+  for await (const u of db.collection("users").find({ "verification.status": { $ne: "unsubmitted" } }, { projection: { verification: 1 } })) {
+    const set = {};
+    for (const k of ["frontUrl", "backUrl", "selfieUrl"]) {
+      const v = u.verification?.[k];
+      if (!v || String(v).startsWith(pf.PREFIX)) continue;
+      const m = String(v).match(/\/uploads\/([a-f0-9]{32}\.(?:jpg|png|gif|webp))$/);
+      if (m) {
+        try {
+          await fsp.rename(path.join(UPLOAD_DIR, m[1]), pf.filePath(m[1]));
+          set[`verification.${k}`] = `${pf.PREFIX}${m[1]}`;
+          idDocsMoved++;
+        } catch { /* file already gone */ }
+      } else idDocsExternal++;
+    }
+    if (Object.keys(set).length) await db.collection("users").updateOne({ _id: u._id }, { $set: set });
+  }
+
+  console.log(JSON.stringify({ idDocsMoved, idDocsExternal, categoriesBackfilled: cats.modifiedCount, gigsSanitised: gigsFixed, escrowHeld: held.modifiedCount, escrowReleased: released.modifiedCount,
     escrowRefunded: refunded.modifiedCount, requirementsBackfilled: req.modifiedCount, deliveryBackfilled: del.modifiedCount }));
   await mongoose.disconnect();
 }

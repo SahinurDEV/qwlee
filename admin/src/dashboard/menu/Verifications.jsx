@@ -43,7 +43,12 @@ export default function Verifications() {
   const [reason, setReason] = useState("");
   const [zoomImage, setZoomImage] = useState(null);
 
-  const { data, isFetching } = useGetVerificationsQuery({ status: tab });
+  const { data, isFetching } = useGetVerificationsQuery(
+    { status: tab },
+    // ID images are served through signed links that expire after 10
+    // minutes, so refresh the list before they lapse.
+    { pollingInterval: 5 * 60 * 1000 }
+  );
   const items = data?.results || [];
   const [review, { isLoading: reviewing }] = useReviewVerificationMutation();
 
