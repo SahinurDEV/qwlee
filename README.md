@@ -151,6 +151,11 @@ Every price is stored and charged in US dollars. Visitors can choose a display c
 
 Sellers withdraw to a bank account, PayPal (by email) or Payoneer (by payee id). Bank transfers are paid manually by the finance team, as before. When finance approves a PayPal or Payoneer withdrawal, the payout is sent to the provider straight away. The withdrawal id is used as the provider reference, so a retry can't pay twice. If the provider refuses, the withdrawal goes back to Pending with the error shown, so finance can retry or decline it. Without credentials, the payout is recorded as `demo` and nothing is sent. `GET /v1/withdrawal/methods` shows which methods are live.
 
+On Admin → Withdrawals, finance can work through payouts in bulk:
+- **Batch approve:** tick pending rows and choose "Approve selected" (`POST /v1/withdrawal/batch/approve`, up to 100 ids). Each one goes through the normal approval. Amounts at or above the "second approval over" setting are skipped and must be approved on their own.
+- **Bank export:** `GET /v1/withdrawal/export/bank.csv` lists pending bank withdrawals for the bank's bulk upload (reference, name, email, bank, account, amount). Cells that would start a spreadsheet formula are escaped.
+- **Reconcile:** upload the bank's statement (`POST /v1/withdrawal/reconcile` with `{csv, dryRun}`). It needs the columns `reference` (the withdrawal id) and `amount`, and optionally `status` (paid/failed) and `bank_reference`. Paid rows with the right amount are approved if still pending and stamped with the bank reference and `reconciledAt`. Unknown references, amount differences, failed rows and rows already reconciled are listed and left alone. Preview first, then apply.
+
 Not verified against the real providers: the PayPal and Payoneer request formats follow their public API docs and are covered by stubbed tests, but no sandbox account has been used.
 
 ### Subscriptions
