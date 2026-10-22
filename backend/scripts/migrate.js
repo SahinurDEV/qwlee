@@ -35,7 +35,10 @@ async function run() {
   const req = await orders.updateMany({ requirementsStatus: { $exists: false } }, { $set: { requirementsStatus: "not_required" } });
   const del = await orders.updateMany({ delivery: { $exists: false } }, { $set: { delivery: { state: "none", count: 0 } } });
 
-  console.log(JSON.stringify({ gigsSanitised: gigsFixed, escrowHeld: held.modifiedCount, escrowReleased: released.modifiedCount,
+  // Categories predating subcategories are top-level.
+  const cats = await db.collection("categories").updateMany({ parentId: { $exists: false } }, { $set: { parentId: null } });
+
+  console.log(JSON.stringify({ categoriesBackfilled: cats.modifiedCount, gigsSanitised: gigsFixed, escrowHeld: held.modifiedCount, escrowReleased: released.modifiedCount,
     escrowRefunded: refunded.modifiedCount, requirementsBackfilled: req.modifiedCount, deliveryBackfilled: del.modifiedCount }));
   await mongoose.disconnect();
 }

@@ -58,6 +58,7 @@ export default function AddGig() {
   // form data
   const [title, setTitle] = useState("");
   const [categoryId, setCategoryId] = useState("");
+  const [subCategoryId, setSubCategoryId] = useState("");
   const [basicPrice, setBasicPrice] = useState("");
   const [description, setDescription] = useState("");
   const [packages, setPackages] = useState(DEFAULT_PACKAGES);
@@ -115,6 +116,7 @@ export default function AddGig() {
       formData.append("title", title.trim());
       formData.append("description", description);
       formData.append("categoriesId", categoryId);
+      if (subCategoryId) formData.append("subCategoryId", subCategoryId);
       formData.append("price", basicPrice);
       images.forEach((img) => formData.append("images", img));
       // Sanitise packages: drop empty feature rows + numeric coercion.
@@ -219,7 +221,9 @@ export default function AddGig() {
               setTitle={setTitle}
               titleCount={titleCount}
               categoryId={categoryId}
-              setCategoryId={setCategoryId}
+              setCategoryId={(v) => { setCategoryId(v); setSubCategoryId(""); }}
+              subCategoryId={subCategoryId}
+              setSubCategoryId={setSubCategoryId}
               categories={categories}
               errors={errors}
             />
@@ -354,7 +358,9 @@ function Stepper({ step }) {
 
 /* ---------- Step 1: Overview ---------- */
 
-function Overview({ title, setTitle, titleCount, categoryId, setCategoryId, categories, errors }) {
+function Overview({ title, setTitle, titleCount, categoryId, setCategoryId, subCategoryId, setSubCategoryId, categories, errors }) {
+  const { data: subData } = useGetAllCategoryQuery({ parentId: categoryId, limit: 100 }, { skip: !categoryId });
+  const subCategories = categoryId ? subData?.results || [] : [];
   return (
     <div className="space-y-6">
       <div>
@@ -397,6 +403,25 @@ function Overview({ title, setTitle, titleCount, categoryId, setCategoryId, cate
         </select>
         <FieldError msg={errors.categoryId} />
       </div>
+
+      {subCategories.length > 0 && (
+        <div>
+          <Label htmlFor="subcategory">Subcategory</Label>
+          <select
+            id="subcategory"
+            value={subCategoryId}
+            onChange={(e) => setSubCategoryId(e.target.value)}
+            className="w-full px-3 py-3 rounded-lg border border-gray-200 focus:border-emerald-500 outline-none text-base bg-white"
+          >
+            <option value="">Select a subcategory (optional)</option>
+            {subCategories.map((c) => (
+              <option key={c.id || c._id} value={c.id || c._id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
     </div>
   );
 }

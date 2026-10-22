@@ -6,6 +6,7 @@ const getAllGigApi = baseApi.injectEndpoints({
       query: (args = {}) => {
         const {
           categories,
+          subCategory,
           minPrice,
           maxPrice,
           search,
@@ -25,6 +26,7 @@ const getAllGigApi = baseApi.injectEndpoints({
         if (categories) {
           categories.forEach((category) => params.append("categories", category));
         }
+        if (subCategory) params.append("subCategory", subCategory);
         if (maxPrice) params.append("maxPrice", maxPrice);
         if (minPrice) params.append("minPrice", minPrice);
         if (sortBy) params.append("sortBy", sortBy);

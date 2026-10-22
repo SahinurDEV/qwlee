@@ -81,6 +81,8 @@ Out of the box all email goes to the bundled Mailpit inbox at http://localhost:8
 4. Seller delivers; buyer accepts or requests a revision (limited by the package).
 5. On acceptance, or `AUTO_COMPLETE_DAYS` after delivery, escrow is released to the seller minus the platform fee. Cancellations and dispute refunds return escrow to the buyer.
 
+Categories have one level of subcategories (`GET /v1/categories` lists top-level; `?parentId=<id>` lists one parent's subcategories; `?level=all` lists both). Admins manage them on the Categories page. The marketplace can be filtered by subcategory (`/gig?subCategory=<id>`) and delivery time (`delivery=<days>`).
+
 Gigs support extras, FAQ, requirement questions and an optional YouTube/Vimeo/MP4 video.
 
 After upgrading an existing database run `docker compose exec backend npm run migrate` (idempotent).
