@@ -110,6 +110,12 @@ const userSchema = mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    // Google account subject id, set when the user signs in with Google.
+    googleId: {
+      type: String,
+      private: true,
+      index: { unique: true, sparse: true },
+    },
     isResetPassword: {
       type: Boolean,
       default: false,
@@ -231,6 +237,8 @@ userSchema.statics.isPhoneNumberTaken = async function (
  */
 userSchema.methods.isPasswordMatch = async function (password) {
   const user = this;
+  // Accounts created with Google sign-in have no password until they set one.
+  if (!user.password || typeof password !== "string") return false;
   return bcrypt.compare(password, user.password);
 };
 
@@ -268,7 +276,7 @@ userSchema.pre("save", async function (next) {
     user.oneTimeCodeAttempts = 0;
     user.oneTimeCodeExpiresAt = user.oneTimeCode ? new Date(Date.now() + OTP_TTL_MS) : null;
   }
-  if (user.isModified("password")) {
+  if (user.isModified("password") && user.password) {
     user.password = await bcrypt.hash(user.password, 8);
   }
   next();
