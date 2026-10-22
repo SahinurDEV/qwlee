@@ -284,3 +284,13 @@ step's health (ok / failing / stale = no run for 3 intervals / never), last
 run, runs and failures in the last 24 h, the last error and recent history;
 super admins can "Run housekeeping now". API: `GET /v1/admin/jobs/status`,
 `GET /v1/admin/jobs/history?job=&limit=`, `POST /v1/admin/jobs/housekeeping`.
+
+### Maintenance mode
+
+Admin → Site settings → **Maintenance mode** (message, optional "expected
+back" time). While on, every marketplace page shows a maintenance screen
+(within a minute; the layout caches site settings for 60 s) and the API
+answers `503` with `MAINTENANCE: <message>` and `Retry-After` for everything
+except `/v1/info`, `/v1/auth`, `/v1/admin` and `/v1/docs`, unless the request
+carries an admin's access token. The admin dashboard keeps working. The chat
+socket server is not paused.

@@ -130,6 +130,9 @@ if (config.env === "production") {
 // Express Monitor
 app.use(status());
 
+// Maintenance mode gate (503 for non-admins while on).
+app.use(require("./middlewares/maintenance"));
+
 // v1 api routes
 app.use("/v1", routes);
 

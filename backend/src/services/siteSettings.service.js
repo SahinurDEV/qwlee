@@ -72,6 +72,7 @@ function defaults() {
     security: { requireAdmin2fa: false, adminIpAllowlist: [] },
     growth: { referrals: true, refereePercent: 10, referrerReward: 10 },
     moderation: { blockedWords: [], flaggedWords: [], flagContactInfo: true, riskOrderAmount: 500 },
+    maintenance: { enabled: false, message: "", until: "" },
   };
 }
 
@@ -87,6 +88,9 @@ function normalise(site = {}, base = defaults()) {
   const sec = { ...base.security, ...(site.security || {}) };
   const g = { ...base.growth, ...(site.growth || {}) };
   const mod = { ...base.moderation, ...(site.moderation || {}) };
+  const mt = { ...base.maintenance, ...(site.maintenance || {}) };
+  const until = str(mt.until, 40);
+  if (until && Number.isNaN(Date.parse(until))) throw new ApiError(httpStatus.BAD_REQUEST, "Maintenance end time must be a date");
   const words = (v) => [...new Set((Array.isArray(v) ? v : String(v || "").split(/[\n,]+/)).map((x) => String(x).trim().toLowerCase().slice(0, 60)).filter(Boolean))].slice(0, 300);
   const ipList = (Array.isArray(sec.adminIpAllowlist) ? sec.adminIpAllowlist : String(sec.adminIpAllowlist || "").split(/[\s,]+/))
     .map((x) => String(x).trim())
@@ -128,6 +132,9 @@ function normalise(site = {}, base = defaults()) {
       flagContactInfo: bool(mod.flagContactInfo, true),
       riskOrderAmount: num(mod.riskOrderAmount, 500, 0, 1000000),
     },
+    // Maintenance mode: the marketplace shows a maintenance page and the
+    // API answers 503 for everyone but admins (see middlewares/maintenance).
+    maintenance: { enabled: bool(mt.enabled, false), message: str(mt.message, 300), until: until ? new Date(until).toISOString() : "" },
   };
 }
 
@@ -165,6 +172,7 @@ async function getPublic() {
     features: s.features,
     demoPayments: s.marketplace.demoPayments,
     growth: s.growth,
+    maintenance: s.maintenance,
   };
 }
 

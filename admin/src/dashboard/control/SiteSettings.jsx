@@ -79,6 +79,13 @@ export default function SiteSettings() {
               </div>
             </div>
           </Card>
+          <Card title="Maintenance mode" subtitle="Shows a maintenance page on the marketplace and pauses the API for everyone except admins. Takes up to a minute to appear.">
+            <div className="space-y-3">
+              <Toggle label="Maintenance mode on" hint="Admins keep full access through this dashboard." checked={s.maintenance.enabled} onChange={(v) => set("maintenance", { enabled: v })} />
+              <Field label="Message"><input aria-label="Maintenance message" className={input} maxLength={300} placeholder="We're upgrading payments and will be back shortly." value={s.maintenance.message} onChange={(e) => set("maintenance", { message: e.target.value })} /></Field>
+              <Field label="Expected back (your local time, optional)"><input aria-label="Maintenance until" type="datetime-local" className={input} value={s.maintenance.until ? toLocalInput(s.maintenance.until) : ""} onChange={(e) => set("maintenance", { until: e.target.value ? new Date(e.target.value).toISOString() : "" })} /></Field>
+            </div>
+          </Card>
           <HomepageBuilder home={s.homepage} onChange={(patch) => set("homepage", patch)} />
           <Card title="SEO" subtitle="Default title and description for search engines and link previews">
             <div className="space-y-3">
@@ -215,3 +222,9 @@ function HomepageBuilder({ home, onChange }) {
     </Card>
   );
 }
+
+const toLocalInput = (iso) => {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+};
