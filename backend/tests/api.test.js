@@ -111,3 +111,11 @@ test("seed images are served by the API", async () => {
   assert.equal(res.status, 200);
   assert.match(res.headers.get("content-type") || "", /image\/jpeg/);
 });
+
+test("profile gig listing requires a userId", async () => {
+  const r = await call("GET", "/gig/public");
+  assert.equal(r.status, 400);
+  const ok = await call("GET", `/gig/public?userId=${seller.user.id}`);
+  assert.equal(ok.status, 200);
+  assert.ok(ok.data.results.every((g) => g.gigStatus === "active"));
+});

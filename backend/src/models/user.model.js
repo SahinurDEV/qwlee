@@ -129,6 +129,9 @@ const userSchema = mongoose.Schema(
       required: false,
       private: true, // never serialised to clients
     },
+    // One-time codes expire and lock after too many wrong guesses.
+    oneTimeCodeExpiresAt: { type: Date, default: null, private: true },
+    oneTimeCodeAttempts: { type: Number, default: 0, private: true },
     language: {
       type: String,
       required: false,
@@ -231,8 +234,40 @@ userSchema.methods.isPasswordMatch = async function (password) {
   return bcrypt.compare(password, user.password);
 };
 
+const OTP_TTL_MS = 15 * 60 * 1000;
+const OTP_MAX_ATTEMPTS = 5;
+
+/**
+ * Check a submitted one-time code. Counts wrong attempts and burns the
+ * code after OTP_MAX_ATTEMPTS or once it is older than OTP_TTL_MS.
+ * Codes issued before this field existed (no expiry) are still honoured
+ * once, for backward compatibility. Saves the user when state changes.
+ * @returns {Promise<boolean>}
+ */
+userSchema.methods.checkOneTimeCode = async function (code) {
+  if (!this.oneTimeCode) return false;
+  const expired =
+    this.oneTimeCodeExpiresAt && this.oneTimeCodeExpiresAt.getTime() < Date.now();
+  if (expired || this.oneTimeCodeAttempts >= OTP_MAX_ATTEMPTS) {
+    this.oneTimeCode = null;
+    await this.save();
+    return false;
+  }
+  if (String(code) !== String(this.oneTimeCode)) {
+    this.oneTimeCodeAttempts = (this.oneTimeCodeAttempts || 0) + 1;
+    if (this.oneTimeCodeAttempts >= OTP_MAX_ATTEMPTS) this.oneTimeCode = null;
+    await this.save();
+    return false;
+  }
+  return true;
+};
+
 userSchema.pre("save", async function (next) {
   const user = this;
+  if (user.isModified("oneTimeCode")) {
+    user.oneTimeCodeAttempts = 0;
+    user.oneTimeCodeExpiresAt = user.oneTimeCode ? new Date(Date.now() + OTP_TTL_MS) : null;
+  }
   if (user.isModified("password")) {
     user.password = await bcrypt.hash(user.password, 8);
   }

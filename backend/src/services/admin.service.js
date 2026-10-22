@@ -252,7 +252,9 @@ const cancelOrder = async (orderId, { reason = "", adminId } = {}) => {
   const wasSettled = order.status === "delivered";
   if (wasSettled && order.freelancerId) {
     const amount = Number(order?.items?.[0]?.price || 0);
-    const credited = amount * 0.95; // matches orders.service commission
+    // Reverse exactly what was credited; legacy orders (before the
+    // settlement snapshot existed) used the old fixed 5% fee.
+    const credited = order.sellerEarning != null ? order.sellerEarning : amount * 0.95;
     if (credited > 0) {
       await User.findByIdAndUpdate(order.freelancerId, {
         $inc: { balance: -credited },

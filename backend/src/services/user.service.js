@@ -1,3 +1,4 @@
+const { generateOtp } = require("../utils/otp");
 const { escapeRegex } = require("../utils/publicUser");
 const httpStatus = require("http-status");
 const ApiError = require("../utils/ApiError");
@@ -13,7 +14,7 @@ const createUser = async (userBody) => {
   }
 
   const oneTimeCode =
-    Math.floor(Math.random() * (999999 - 100000 + 1)) + 100000;
+    generateOtp();
 
   if (userBody.role === "buyer" || userBody.role === "freelancer") {
     sendEmailVerification(userBody.email, oneTimeCode);
@@ -100,7 +101,7 @@ const isUpdateUser = async (userId, updateBody) => {
   }
 
   const oneTimeCode =
-    Math.floor(Math.random() * (999999 - 100000 + 1)) + 100000;
+    generateOtp();
   const annualIncome = updateBody.income * 12;
 
   if (updateBody.role === "buyer" || updateBody.role === "freelancer") {

@@ -1,3 +1,4 @@
+const appConfigService = require("./appConfig.service");
 const httpStatus = require("http-status");
 const mongoose = require("mongoose");
 const ApiError = require("../utils/ApiError");
@@ -209,10 +210,15 @@ const orderModify = async (paymentId, body, userId) => {
   }
 
   if (order.status === "delivered" && prevStatus !== "delivered") {
-    // Calculate the amount after deducting the 5% commission
-    const orderAmount = order?.items[0]?.price;
-    const commission = orderAmount * 0.05;
-    const amountAfterCommission = orderAmount - commission;
+    // Deduct the platform commission (configurable, see appConfig).
+    const feePercent = await appConfigService.getPlatformFeePercent();
+    const orderAmount = Number(order?.items?.[0]?.price || 0);
+    const commission = Math.round(orderAmount * feePercent) / 100;
+    const amountAfterCommission = Math.round((orderAmount - commission) * 100) / 100;
+    await Payment.updateOne(
+      { _id: order._id },
+      { $set: { platformFeePercent: feePercent, platformFee: commission, sellerEarning: amountAfterCommission } }
+    );
 
     // Update freelancer's balance with the amount after deducting commission
     const updatedFreelancer = await User.findByIdAndUpdate(

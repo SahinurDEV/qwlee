@@ -160,11 +160,7 @@ const resetPassword = async (newPassword, email, oneTimeCode) => {
   // the email blindly and any attacker who knows a victim's email can
   // overwrite their password. forgot-password set both fields; this is
   // the point where we consume them.
-  if (
-    !user.isResetPassword ||
-    !user.oneTimeCode ||
-    String(oneTimeCode) !== String(user.oneTimeCode)
-  ) {
+  if (!user.isResetPassword || !(await user.checkOneTimeCode(oneTimeCode))) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Invalid or expired reset code");
   }
   if (await user.isPasswordMatch(newPassword)) {
@@ -210,10 +206,10 @@ const verifyEmail = async (reqBody, reqQuery) => {
   const user = await userService.getUserByEmail(email);
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, "User does not exist");
-  } else if (user.oneTimeCode === null) {
+  } else if (!user.oneTimeCode) {
     throw new ApiError(httpStatus.BAD_REQUEST, "OTP expired");
-  } else if (oneTimeCode != user.oneTimeCode) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid OTP");
+  } else if (!(await user.checkOneTimeCode(oneTimeCode))) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid or expired OTP");
   } else if (user.isEmailVerified && user.isResetPassword) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
