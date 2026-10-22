@@ -119,6 +119,31 @@ test("google sign-in: unverified Google email refused; existing account linked",
   assert.equal(pw.status, 401);
 });
 
+test("google sign-in with two-factor needs the code (challenge)", async (t) => {
+  if (!enabled) return t.skip("GOOGLE_CLIENT_ID not set on the API");
+  const totp = require("../src/utils/totp");
+  const email = `g2fa-${Date.now()}@example.com`;
+  const sub = `g2-${Date.now()}`;
+  const first = await exchange((await callback(await start(), `${email}|${sub}|1`)).searchParams.get("code"));
+  const token = first.json.data.attributes.tokens.access.token;
+  const h = { "content-type": "application/json", authorization: `Bearer ${token}` };
+  const secret = (await fetch(`${API}/v1/two-factor/setup`, { method: "POST", headers: h }).then((r) => r.json())).data.attributes.secret;
+  const step = Math.floor(Date.now() / 30000);
+  assert.equal((await fetch(`${API}/v1/two-factor/enable`, { method: "POST", headers: h, body: JSON.stringify({ code: totp.codeAt(secret, step) }) })).status, 200);
+  const ex = await exchange((await callback(await start(), `${email}|${sub}|1`)).searchParams.get("code"));
+  assert.equal(ex.status, 401);
+  const { twoFactorRequired, challenge, tokens } = ex.json.data.attributes;
+  assert.equal(twoFactorRequired, true);
+  assert.equal(tokens, undefined);
+  // The challenge is not an access token.
+  assert.equal((await fetch(`${API}/v1/two-factor`, { headers: { authorization: `Bearer ${challenge}` } })).status, 401);
+  const v = (code) => fetch(`${API}/v1/auth/2fa/verify`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ challenge, code }) });
+  assert.equal((await v("000000")).status, 401);
+  const ok = await v(totp.codeAt(secret, step + 1));
+  assert.equal(ok.status, 200);
+  assert.ok((await ok.json()).data.attributes.tokens.access.token);
+});
+
 test("google sign-up honours a referral link (new accounts only)", async (t) => {
   if (!enabled) return t.skip("GOOGLE_CLIENT_ID not set on the API");
   const j = (m, path, token, body) => fetch(`${API}/v1${path}`, { method: m, headers: { "content-type": "application/json", ...(token ? { authorization: `Bearer ${token}` } : {}) }, body: body && JSON.stringify(body) }).then((r) => r.json());

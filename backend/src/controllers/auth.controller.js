@@ -80,9 +80,9 @@ const register = catchAsync(async (req, res) => {
 // Issue tokens, record the sign-in and send the standard login payload.
 async function sendLoginSuccess(req, res, user) {
   // Every sign-in path (password, Google, OTP) funnels through here, so an
-  // admin with 2FA can only get tokens after the code was checked above.
-  if (user.role === "admin" && user.twoFactorEnabled && !req.twoFactorVerified) {
-    throw new ApiError(httpStatus.UNAUTHORIZED, "This admin account uses two-factor. Sign in with email, password and code.");
+  // account with 2FA can only get tokens after the code was checked.
+  if (user.twoFactorEnabled && !req.twoFactorVerified) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, "This account uses two-factor. Sign in with email, password and code.");
   }
   const tokens = await tokenService.generateAuthTokens(user, { req });
 
@@ -133,10 +133,11 @@ const login = catchAsync(async (req, res) => {
   }
   const user = isUser;
 
-  // Admin two-factor: password alone is not enough.
-  if (user.role === "admin" && user.twoFactorEnabled) {
+  // Two-factor (any role): password alone is not enough.
+  if (user.twoFactorEnabled) {
     const otp = req.body.otp || req.body.code;
     if (!otp) {
+      res.locals.twoFactorPrompt = true;
       return res.status(httpStatus.UNAUTHORIZED).json({ code: 401, message: "Enter the code from your authenticator app", data: { attributes: { twoFactorRequired: true } } });
     }
     const full = await require("../models").User.findById(user._id).select("+twoFactorSecret");
@@ -188,6 +189,22 @@ const googleCallback = catchAsync(async (req, res) => {
 
 const googleExchange = catchAsync(async (req, res) => {
   const user = await googleAuth.exchangeLoginCode(req.body?.code);
+  if (user.twoFactorEnabled) {
+    // The Google code is single-use; hand back a short-lived challenge that
+    // POST /auth/2fa/verify swaps for tokens together with the TOTP code.
+    const challenge = require("../services/twoFactor.service").challengeFor(user);
+    res.locals.twoFactorPrompt = true;
+    return res.status(httpStatus.UNAUTHORIZED).json({ code: 401, message: "Enter the code from your authenticator app", data: { attributes: { twoFactorRequired: true, challenge } } });
+  }
+  await sendLoginSuccess(req, res, user);
+});
+
+const twoFactorVerify = catchAsync(async (req, res) => {
+  const tf = require("../services/twoFactor.service");
+  const user = await tf.userFromChallenge(req.body?.challenge);
+  const full = await require("../models").User.findById(user._id).select("+twoFactorSecret");
+  if (!(await tf.check(full, req.body?.code))) throw new ApiError(httpStatus.UNAUTHORIZED, "Invalid two-factor code");
+  req.twoFactorVerified = true;
   await sendLoginSuccess(req, res, user);
 });
 
@@ -285,8 +302,8 @@ const sendVerificationEmail = catchAsync(async (req, res,next) => {
 
 const verifyEmail = catchAsync(async (req, res,next) => {
   const user = await authService.verifyEmail(req.body, req.query);
-  // An emailed code must not bypass an admin's two-factor.
-  const tokens = user.role === "admin" && user.twoFactorEnabled ? null : await tokenService.generateAuthTokens(user, { req });
+  // An emailed code must not bypass two-factor.
+  const tokens = user.twoFactorEnabled ? null : await tokenService.generateAuthTokens(user, { req });
 
   res.status(httpStatus.OK).json(
     response({
@@ -316,6 +333,7 @@ module.exports = {
   googleStart,
   googleCallback,
   googleExchange,
+  twoFactorVerify,
   register,
   login,
   logout,

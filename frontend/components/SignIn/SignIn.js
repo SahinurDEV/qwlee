@@ -30,6 +30,8 @@ const SignIn = () => {
   // /sign-in) shows the same banner without needing the user to
   // attempt a new login.
   const [banReason, setBanReason] = useState("");
+  // Two-factor: after a correct password the API asks for a code.
+  const [needCode, setNeedCode] = useState(false);
   useEffect(() => {
     const fromUrl = params.get("banned");
     if (fromUrl) setBanReason(decodeURIComponent(fromUrl));
@@ -50,7 +52,18 @@ const SignIn = () => {
       const res = await userLogin({
         email: values.email,
         password: values.password,
+        ...(needCode && values.otp ? { otp: String(values.otp).trim() } : {}),
       });
+
+      if (res?.data?.attributes?.twoFactorRequired) {
+        setNeedCode(true);
+        if (needCode) toast.error(res?.message || "Enter the code from your authenticator app");
+        return;
+      }
+      if (needCode && res?.code === 401) {
+        toast.error(res?.message || "Invalid two-factor code");
+        return;
+      }
 
       if (res?.code === 403 && typeof res?.message === "string" && res.message.startsWith("BANNED:")) {
         setBanReason(res.message.slice("BANNED:".length).trim());
@@ -184,6 +197,16 @@ const SignIn = () => {
             size="large"
           />
         </Form.Item>
+        {needCode && (
+          <Form.Item
+            name="otp"
+            label="Authentication code"
+            extra="Enter the 6-digit code from your authenticator app, or one of your recovery codes."
+            rules={[{ required: true, message: "Enter your code" }]}
+          >
+            <Input autoFocus inputMode="numeric" autoComplete="one-time-code" placeholder="123456" className="py-2" size="large" />
+          </Form.Item>
+        )}
         <div className="flex justify-between items-center mb-3">
           <Form.Item
             name="remember"
