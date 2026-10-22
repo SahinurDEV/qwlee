@@ -82,6 +82,10 @@ function SignUp() {
   const router = useRouter();
   const params = useSearchParams();
   const fromParam = params.get("from") || "";
+  // Referral link (?ref=code) — kept for this browser session so it
+  // survives a detour to sign-in and back.
+  const refParam = params.get("ref") || (typeof window !== "undefined" ? sessionStorage.getItem("qwlee:ref") || "" : "");
+  if (typeof window !== "undefined" && params.get("ref")) sessionStorage.setItem("qwlee:ref", params.get("ref"));
   const availability = useUsernameAvailability(username);
   const pw = passwordStrength(password);
   const ip = useIpLocation();
@@ -103,6 +107,7 @@ function SignUp() {
       // Auto-detected from IP — Fiverr-style. Stays empty if the lookup
       // failed; the user can edit it later via profile settings.
       location: ip.locationLabel || "",
+      ...(/^[a-f0-9]{8}$/.test(refParam) ? { ref: refParam } : {}),
     };
     try {
       const res = await registerUser(newUser);

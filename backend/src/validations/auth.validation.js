@@ -10,6 +10,7 @@ const register = {
     // "freelancer" later via POST /v1/users/become-seller. "admin" is
     // disallowed at the public registration endpoint regardless.
     role: Joi.string().valid("freelancer", "buyer").default("buyer"),
+    ref: Joi.string().max(16).allow(""),
     // Optional — when present it must pass the format check; if absent the
     // controller derives one from the email and ensures it's unique.
     username: Joi.string()

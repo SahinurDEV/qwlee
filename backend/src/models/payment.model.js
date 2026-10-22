@@ -57,6 +57,7 @@ const ordersSchema = mongoose.Schema(
     // status reset to active) or declines (request marked declined,
     // original date stays). `status === "none"` means no current
     // request — keeps the field self-describing for the UI.
+    coupon: { code: String, discount: Number },
     // Mutual cancellation request (see cancellation.service).
     cancellationRequest: {
       status: { type: String, enum: ["none", "pending", "accepted", "auto-accepted", "declined", "withdrawn"], default: "none" },
@@ -83,6 +84,7 @@ const ordersSchema = mongoose.Schema(
     // Escrow: full payment held on the order until release/refund.
     escrow: {
       status: { type: String, enum: ["held", "released", "refunded"], default: undefined },
+      platformFunded: { type: Number, default: 0 },
       amount: { type: Number },
       provider: { type: String },
       heldAt: { type: Date },

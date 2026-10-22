@@ -150,6 +150,10 @@ router.post(
   }),
   ac.refundTip
 );
+const coupons = require("../../controllers/coupons.controller");
+router.get("/coupons", A, coupons.list);
+router.post("/coupons", A, coupons.create);
+router.patch("/coupons/:id", A, coupons.update);
 const approvals = require("../../controllers/approvals.controller");
 router.get("/approvals", A, approvals.list);
 router.post("/approvals/:id/approve", A, approvals.approve);
