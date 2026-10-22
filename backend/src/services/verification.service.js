@@ -52,7 +52,14 @@ async function listPending({ status = "pending", limit = 50, page = 1 } = {}) {
       "fullName username email image role isVerified verification createdAt"
     );
   const total = await User.countDocuments(filter);
-  return { results: items, totalResults: total, page, limit };
+  const pf = require("./privateFiles.service");
+  const results = items.map((u) => {
+    const j = u.toJSON();
+    const v = { ...(u.verification?.toObject?.() || u.verification || {}) };
+    for (const k of ["frontUrl", "backUrl", "selfieUrl"]) v[k] = pf.signedUrl(v[k]);
+    return { ...j, verification: v };
+  });
+  return { results, totalResults: total, page, limit };
 }
 
 async function review(userId, { action, reason, reviewerId }) {

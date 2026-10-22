@@ -25,5 +25,5 @@ restore() {
 }
 trap restore EXIT INT TERM
 
-cd backend
-API_URL=${API_URL:-http://localhost:7171} MAILPIT_URL=${MAILPIT_URL:-http://localhost:8025} npm test
+# Subshell: the restore trap runs compose from the repo root.
+(cd backend && API_URL=${API_URL:-http://localhost:7171} MAILPIT_URL=${MAILPIT_URL:-http://localhost:8025} npm test)

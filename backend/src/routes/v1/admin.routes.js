@@ -152,6 +152,9 @@ router.get("/reviews", A, ac.listReviews);
 router.delete("/reviews/:reviewId", A, ac.deleteReview);
 router.get("/settings/site", A, ac.getSite);
 router.patch("/settings/site", A, ac.updateSite);
+// Orphaned local uploads: GET = dry run, POST = delete.
+router.get("/settings/storage/orphans", A, ac.storageOrphans);
+router.post("/settings/storage/orphans", A, ac.storageOrphans);
 router.post("/broadcast", A, ac.broadcast);
 router.get("/broadcast", A, ac.listBroadcasts);
 router.get("/analytics", A, ac.analytics);
