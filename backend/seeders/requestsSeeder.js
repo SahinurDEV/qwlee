@@ -17,7 +17,7 @@ const REQUESTS = [
     description: "About 40 short product descriptions for an e-commerce site need natural Spanish translation." },
 ];
 
-async function seedRequests({ buyers, sellers, categories, subcategories = [] }) {
+async function seedRequests({ buyers, sellers, categories, subcategories = [], gigs = [] }) {
   const catByName = Object.fromEntries(categories.map((c) => [c.name, c]));
   const now = Date.now();
   const docs = REQUESTS.map((r, i) => {
@@ -58,7 +58,9 @@ async function seedRequests({ buyers, sellers, categories, subcategories = [] })
   await Promise.all(requests.map((r) => BuyerRequest.updateOne({ _id: r._id }, { $set: { offersCount: 2 } })));
   // One seller on vacation so the "away" state is visible in the demo.
   const { User } = require("../src/models");
-  const away = sellers[sellers.length - 1];
+  // Pick the last seller who has a gig (never the demo seller account).
+  const withGigs = new Set(gigs.map((g) => String(g.userId)));
+  const away = [...sellers].reverse().find((s) => s.email !== "seller@example.com" && withGigs.has(String(s._id))) || sellers[sellers.length - 1];
   await User.updateOne(
     { _id: away._id },
     { $set: { availability: { away: true, from: null, until: new Date(now + 7 * 86400000), message: "On a short break, back next week!", allowMessages: true } } }

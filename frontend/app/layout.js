@@ -1,4 +1,6 @@
 import { Suspense } from "react";
+import "@fontsource-variable/inter";
+import "@fontsource-variable/plus-jakarta-sans";
 import "./globals.css";
 import { Providers } from "./redux/provider";
 import { Toaster } from "sonner";
