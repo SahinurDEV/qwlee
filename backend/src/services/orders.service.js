@@ -1,3 +1,4 @@
+const orderLifecycle = require("./orderLifecycle.service");
 const appConfigService = require("./appConfig.service");
 const httpStatus = require("http-status");
 const mongoose = require("mongoose");
@@ -114,59 +115,12 @@ const getMyOrders = async (filter, options, userId) => {
   return orders;
 };
 
-const orderModify = async (paymentId, body, userId) => {
-  const order = await Payment.findById(paymentId);
-  if (!order) {
-    throw new ApiError(httpStatus.NOT_FOUND, "Order not found");
-  }
-
-  // Only the buyer or the seller on this order may change it, and only
-  // through explicit, validated status transitions. Never mass-assign
-  // the request body (that previously let anyone rewrite price,
-  // freelancerId or status on any order).
-  const isBuyer = String(order.clientId) === String(userId);
-  const isSeller = String(order.freelancerId) === String(userId);
-  if (!isBuyer && !isSeller) {
-    throw new ApiError(httpStatus.FORBIDDEN, "You are not a party to this order");
-  }
-  const nextStatus = body?.status;
-  const prevStatus = order.status;
-  const OPEN = ["active", "late"];
-  if (nextStatus === "delivered") {
-    // "delivered" in this app means the buyer accepted the work.
-    if (!isBuyer) {
-      throw new ApiError(httpStatus.FORBIDDEN, "Only the buyer can accept an order");
-    }
-  } else if (nextStatus !== "cancelled") {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Unsupported status change");
-  }
-  if (!OPEN.includes(prevStatus)) {
-    throw new ApiError(
-      httpStatus.CONFLICT,
-      `Order is already ${prevStatus} and cannot be changed`
-    );
-  }
-  const update = { status: nextStatus };
-  if (nextStatus === "cancelled") {
-    update.cancellationReason = String(body.reason || "").slice(0, 1000);
-    update.cancelledBy = userId;
-    update.cancelledAt = new Date();
-    update.cancelledFromStatus = prevStatus;
-  }
-  // Atomic compare-and-set on the previous status so two concurrent
-  // "accept" requests can never credit the seller twice.
-  const swapped = await Payment.updateOne(
-    { _id: order._id, status: prevStatus },
-    { $set: update }
-  );
-  if (!swapped.modifiedCount) {
-    throw new ApiError(httpStatus.CONFLICT, "Order was changed by another request");
-  }
-  Object.assign(order, update);
-
+// Emails + notifications for a status transition. Never throws.
+const sendStatusEmails = async (order, prevStatus, body = {}) => {
   // Email side-effects on a state transition. Wrapped in try/catch so a
   // template / SMTP hiccup never breaks the order update itself.
-  if (prevStatus !== order.status) {
+  if (prevStatus === order.status) return;
+  {
     try {
       const [buyer, seller, gig] = await Promise.all([
         User.findById(order.clientId).select("fullName email username"),
@@ -209,45 +163,81 @@ const orderModify = async (paymentId, body, userId) => {
     }
   }
 
-  if (order.status === "delivered" && prevStatus !== "delivered") {
-    // Deduct the platform commission (configurable, see appConfig).
-    const feePercent = await appConfigService.getPlatformFeePercent();
-    const orderAmount = Number(order?.items?.[0]?.price || 0);
-    const commission = Math.round(orderAmount * feePercent) / 100;
-    const amountAfterCommission = Math.round((orderAmount - commission) * 100) / 100;
-    await Payment.updateOne(
-      { _id: order._id },
-      { $set: { platformFeePercent: feePercent, platformFee: commission, sellerEarning: amountAfterCommission } }
-    );
-
-    // Update freelancer's balance with the amount after deducting commission
-    const updatedFreelancer = await User.findByIdAndUpdate(
-      order.freelancerId,
-      { $inc: { balance: amountAfterCommission } },
-      { new: true }
-    );
-
-    if (!updatedFreelancer) {
-      throw new ApiError(
-        httpStatus.INTERNAL_SERVER_ERROR,
-        "Failed to update freelancer balance"
-      );
+  if (order.status === "delivered") {
+    try {
+      await addCustomNotification("order-delivered", order.freelancerId, {
+        receiverId: order.freelancerId,
+        message: "Your delivery was accepted and the payment was released to your balance",
+        role: "freelancer",
+        type: "order",
+        viewStatus: false,
+      });
+    } catch (e) {
+      /* notification failures don't block the order */
     }
+  }
+};
 
-    const notificationData = {
-      receiverId: order?.freelancerId,
-      message: `Your order has been delivered`,
-      role: "freelancer",
-      type: "order",
-      viewStatus: false,
-    };
+const orderModify = async (paymentId, body, userId) => {
+  const order = await Payment.findById(paymentId);
+  if (!order) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Order not found");
+  }
 
-    // Send the notification using addCustomNotification
-    await addCustomNotification(
-      "order-delivered",
-      order?.freelancerId,
-      notificationData
+  // Only the buyer or the seller on this order may change it, and only
+  // through explicit, validated status transitions. Never mass-assign
+  // the request body (that previously let anyone rewrite price,
+  // freelancerId or status on any order).
+  const isBuyer = String(order.clientId) === String(userId);
+  const isSeller = String(order.freelancerId) === String(userId);
+  if (!isBuyer && !isSeller) {
+    throw new ApiError(httpStatus.FORBIDDEN, "You are not a party to this order");
+  }
+  const nextStatus = body?.status;
+  const prevStatus = order.status;
+  const OPEN = ["active", "late"];
+  if (nextStatus === "delivered") {
+    // "delivered" in this app means the buyer accepted the work.
+    if (!isBuyer) {
+      throw new ApiError(httpStatus.FORBIDDEN, "Only the buyer can accept an order");
+    }
+  } else if (nextStatus !== "cancelled") {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Unsupported status change");
+  }
+  if (!OPEN.includes(prevStatus)) {
+    throw new ApiError(
+      httpStatus.CONFLICT,
+      `Order is already ${prevStatus} and cannot be changed`
     );
+  }
+  if (nextStatus === "delivered") {
+    // Buyer accepts: release escrow to the seller (exactly once).
+    const done = await orderLifecycle.completeOrder(order, { reason: "accepted" });
+    await sendStatusEmails(done, prevStatus, body);
+    return done;
+  }
+  const update = { status: nextStatus };
+  if (nextStatus === "cancelled") {
+    update.cancellationReason = String(body.reason || "").slice(0, 1000);
+    update.cancelledBy = userId;
+    update.cancelledAt = new Date();
+    update.cancelledFromStatus = prevStatus;
+  }
+  // Atomic compare-and-set on the previous status so two concurrent
+  // "accept" requests can never credit the seller twice.
+  const swapped = await Payment.updateOne(
+    { _id: order._id, status: prevStatus },
+    { $set: update }
+  );
+  if (!swapped.modifiedCount) {
+    throw new ApiError(httpStatus.CONFLICT, "Order was changed by another request");
+  }
+  Object.assign(order, update);
+
+  await sendStatusEmails(order, prevStatus, body);
+
+  if (order.status === "cancelled") {
+    await orderLifecycle.refundEscrow(order._id);
   }
 
   return order;

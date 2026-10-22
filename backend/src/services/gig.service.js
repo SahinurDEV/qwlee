@@ -187,14 +187,92 @@ const getGigBySlug = async (slug) => {
   return gig;
 }
 
-const updateGigById = async (gigId, data, images) => {
+// Fields a seller may edit on their own gig. Everything else (owner,
+// moderation, stats, slug) is server-managed.
+const EDITABLE_GIG_FIELDS = [
+  "title", "description", "price", "package", "categoriesId", "subCategoryId",
+  "extras", "faq", "requirementQuestions", "video",
+];
+const JSON_GIG_FIELDS = ["package", "extras", "faq", "requirementQuestions"];
+
+const assertGigOwner = (gig, actor) => {
+  if (!actor) return;
+  if (actor.role === "admin") return;
+  if (String(gig.userId) !== String(actor.id)) {
+    throw new ApiError(httpStatus.FORBIDDEN, "You can only change your own gigs");
+  }
+};
+
+// Normalise the Fiverr-style optional sections (extras, FAQ, buyer
+// requirement questions, video URL). Accepts JSON strings (multipart).
+const sanitiseGigExtrasFields = (data) => {
+  const out = {};
+  for (const key of JSON_GIG_FIELDS) {
+    if (data[key] === undefined) continue;
+    let v = data[key];
+    if (typeof v === "string") {
+      try { v = JSON.parse(v); } catch (e) { throw new ApiError(httpStatus.BAD_REQUEST, `Invalid JSON in ${key}`); }
+    }
+    out[key] = v;
+  }
+  if (out.extras) {
+    out.extras = (Array.isArray(out.extras) ? out.extras : []).slice(0, 10).map((e) => {
+      const price = Number(e?.price);
+      if (!String(e?.title || "").trim() || !Number.isFinite(price) || price < 0) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "Each extra needs a title and a non-negative price");
+      }
+      return {
+        ...(e?._id ? { _id: e._id } : {}),
+        title: String(e.title).trim().slice(0, 120),
+        description: String(e.description || "").slice(0, 500),
+        price,
+        deliveryDays: Math.max(0, Math.min(90, Number(e.deliveryDays) || 0)),
+      };
+    });
+  }
+  if (out.faq) {
+    out.faq = (Array.isArray(out.faq) ? out.faq : []).slice(0, 20)
+      .filter((f) => String(f?.question || "").trim())
+      .map((f) => ({ question: String(f.question).trim().slice(0, 300), answer: String(f.answer || "").slice(0, 2000) }));
+  }
+  if (out.requirementQuestions) {
+    out.requirementQuestions = (Array.isArray(out.requirementQuestions) ? out.requirementQuestions : []).slice(0, 10)
+      .filter((q) => String(q?.question || "").trim())
+      .map((q) => ({ question: String(q.question).trim().slice(0, 500), required: !!q.required }));
+  }
+  if (data.video !== undefined) {
+    const v = String(data.video || "").trim();
+    if (v && !/^https:\/\/(www\.)?(youtube\.com|youtu\.be|vimeo\.com|player\.vimeo\.com)\//i.test(v) && !/^https:\/\/.+\.(mp4|webm)(\?.*)?$/i.test(v)) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Video must be a YouTube/Vimeo link or an https .mp4/.webm URL");
+    }
+    out.video = v;
+  }
+  return out;
+};
+
+const updateGigById = async (gigId, data, images, actor) => {
   let gig = await getGigById(gigId);
   if (!gig) {
     throw new ApiError(httpStatus.NOT_FOUND, "Gig not found");
   }
+  assertGigOwner(gig, actor);
 
-  // Update gig data if needed
-  Object.assign(gig, data);
+  const patch = {};
+  for (const key of EDITABLE_GIG_FIELDS) {
+    if (data?.[key] !== undefined && !JSON_GIG_FIELDS.includes(key) && key !== "video") patch[key] = data[key];
+  }
+  Object.assign(patch, sanitiseGigExtrasFields(data || {}));
+  // Sellers may pause / un-pause; everything else goes through moderation.
+  if (data?.gigStatus !== undefined) {
+    const next = data.gigStatus;
+    const allowed =
+      actor?.role === "admin" ||
+      (next === "paused" && gig.gigStatus === "active") ||
+      (next === "active" && gig.gigStatus === "paused");
+    if (!allowed) throw new ApiError(httpStatus.FORBIDDEN, "You cannot set that gig status");
+    patch.gigStatus = next;
+  }
+  Object.assign(gig, patch);
 
   // Append the new images to the existing images array
   if (images && images.length > 0) {
@@ -207,30 +285,32 @@ const updateGigById = async (gigId, data, images) => {
   return gig;
 };
 
-
-
-
-const deleteGigById = async (gigId) => {
+const deleteGigById = async (gigId, actor) => {
   let gig = await getGigById(gigId);
   if (!gig) {
     throw new ApiError(httpStatus.NOT_FOUND, "Gig not found");
   }
-  await Gig.findByIdAndDelete(gigId);
+  assertGigOwner(gig, actor);
+  // Soft delete keeps order history pointing at a real gig.
+  gig.isDeleted = true;
+  await gig.save();
   return gig;
 };
 
 
-const gigSingleImageDelete = async (gigId, image) => {
+const gigSingleImageDelete = async (gigId, image, actor) => {
   let gig = await getGigById(gigId);
   if (!gig) {
     throw new ApiError(httpStatus.NOT_FOUND, "Gig not found");
   }
+  assertGigOwner(gig, actor);
   gig.images = gig.images.filter((img) => img !== image);
   await gig.save();
   return gig;
 };
 
 module.exports = {
+  sanitiseGigExtrasFields,
   createGig,
   queryGigs,
   getGigById,

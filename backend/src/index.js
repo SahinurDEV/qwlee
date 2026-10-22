@@ -10,6 +10,8 @@ const bindHost = config.backendIp || "0.0.0.0";
 let server;
 mongoose.connect(config.mongoose.url, config.mongoose.options).then(() => {
   logger.info("Connected to MongoDB");
+  // Auto-complete ignored deliveries and flag late orders.
+  require("./services/orderLifecycle.service").startHousekeeping();
   server = app.listen(config.port, bindHost, () => {
     logger.info(`Listening on http://${bindHost}:${config.port}`);
   });

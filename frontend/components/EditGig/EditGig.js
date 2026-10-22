@@ -16,6 +16,7 @@ import { Suspense, useState, useEffect, useRef } from "react";
 import { useGetAllCategoryQuery } from "@/app/redux/features/getAllCategoryApi";
 import { imageBaseUrl, imgUrl} from "@/lib/constant";
 import { useEditGigMutation } from "@/app/redux/features/editGigApi";
+import GigExtrasEditor, { cleanGigExtras } from "@/components/common/GigExtrasEditor";
 import dynamic from "next/dynamic";
 import { TiDelete } from "react-icons/ti";
 import { usePostDeleteMutation } from "@/app/redux/features/postDeleteApi";
@@ -34,6 +35,7 @@ const EditGigContent = () => {
   const [gigImage, setGigImages] = useState([]);
   const [setGigUploadData] = usePostGigImageUpoadMutation();
   const [setData] = useEditGigMutation();
+  const [gigExtras, setGigExtras] = useState(null);
   const {
     data: singleGig,
     isLoading: loading,
@@ -44,6 +46,8 @@ const EditGigContent = () => {
     if (singleGig) {
       setContent(singleGig?.data?.attributes?.gig?.description);
       setGigImages(singleGig?.data?.attributes?.gig?.images);
+      const g = singleGig?.data?.attributes?.gig || {};
+      setGigExtras({ extras: g.extras || [], faq: g.faq || [], requirementQuestions: g.requirementQuestions || [], video: g.video || "" });
     }
   }, [singleGig]);
 
@@ -70,6 +74,7 @@ const EditGigContent = () => {
   const handleEditEvent = async (values) => {
     const result = {
       ...values,
+      ...cleanGigExtras(gigExtras),
       description: content,
     };
 
@@ -413,6 +418,10 @@ const EditGigContent = () => {
               </div>
             )}
           </Form.List>
+
+          <div className="my-8 max-w-[700px]">
+            <GigExtrasEditor value={gigExtras} onChange={setGigExtras} />
+          </div>
 
           <Button
             htmlType="submit"

@@ -16,6 +16,7 @@ import { IoCheckmarkCircle, IoTimeOutline } from "react-icons/io5";
 import ImageWithFallback from "@/components/common/ImageWithFallback";
 import Avatar from "@/components/common/Avatar";
 import Activity from "./Activity";
+import RequirementsCard from "./RequirementsCard";
 
 export default function OrderSummary({ order, orderId, isSeller }) {
   const gig = order?.gigId || {};
@@ -91,13 +92,13 @@ export default function OrderSummary({ order, orderId, isSeller }) {
               {packageName}
             </div>
           </div>
-          {pkg?.price ? (
+          {order?.price || pkg?.price ? (
             <div className="text-right">
               <div className="text-xs text-gray-400 uppercase tracking-wide">
                 Total
               </div>
               <div className="text-lg font-bold text-gray-900">
-                ${Number(pkg.price).toFixed(2)}
+                ${Number(order?.price || pkg.price).toFixed(2)}
               </div>
             </div>
           ) : null}
@@ -140,7 +141,9 @@ export default function OrderSummary({ order, orderId, isSeller }) {
         )}
       </section>
 
-      {/* Requirements */}
+      <RequirementsCard order={order} orderId={orderId} isSeller={isSeller} />
+
+      {/* Requirements (legacy free-text) */}
       {requirements ? (
         <section className="bg-white border border-gray-200 rounded-2xl p-5 md:p-6">
           <div className="flex items-center justify-between">

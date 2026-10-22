@@ -26,27 +26,11 @@ const MessageCart = ({ message }) => {
   const [cancelOfferMessage] = useCancelOrWithdrawOfferMutation();
 
   const handleOfferOrder = async () => {
-    const { gigTitle, gigId, freelancerId, clientId, deliveryTime, price } =
-      content?.offerDetails || {};
-    const orderData = {
-      items: [
-        {
-          name: gigTitle,
-          price: price,
-          quantity: 1,
-        },
-      ],
-      messageId,
-      gigId,
-      freelancerId,
-      clientId,
-      deliveryDate: moment(new Date())
-        .add(deliveryTime, "days")
-        .format("YYYY-MM-DD"),
-    };
+    // Price, seller and delivery come from the offer on the server.
+    const orderData = { messageId };
     const res = await createOrder(orderData);
     if (res.error) {
-      console.log(res.error);
+      toast.error(res.error?.data?.message || "Could not accept the offer");
       return;
     }
     if (res.data) {
