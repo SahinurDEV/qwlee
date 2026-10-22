@@ -28,6 +28,7 @@ import DeliverNowModal from "./DeliveryModal";
 import ExtendDeliveryDateModal from "./ExtendDeliveryDateModal";
 import LeaveReviewModal from "./LeaveReviewModal";
 import OpenDisputeModal from "./OpenDisputeModal";
+import TipCard from "./TipCard";
 import { IoStar, IoCalendarOutline, IoFlagOutline } from "react-icons/io5";
 
 export default function OrderActions({ order, orderId, isSeller }) {
@@ -168,6 +169,8 @@ export default function OrderActions({ order, orderId, isSeller }) {
           </p>
         </section>
       )}
+
+      {!isSeller && status === "delivered" && <TipCard order={order} orderId={orderId} />}
 
       {status === "cancelled" && (
         <section className="bg-gray-50 border border-gray-200 rounded-2xl p-5 text-center">
