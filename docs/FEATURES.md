@@ -4,7 +4,7 @@ Three-app freelancing marketplace (rebranded from the legacy cnnctr codebase). E
 
 > **New here?** Start with [`docs/CONTRIBUTING.md`](./CONTRIBUTING.md) for setup, then read [`docs/ARCHITECTURE.md`](./ARCHITECTURE.md). The full developer guide index lives in [`docs/`](./). A short on-ramp for Claude Code sessions is in [`CLAUDE.md`](../CLAUDE.md).
 
-> **All image uploads route through [ImgBB](https://api.imgbb.com/).** Nothing is written to local disk. Set `IMGBB_API_KEY` in `backend/.env`.
+> **Image uploads** go to [ImgBB](https://api.imgbb.com/) when `IMGBB_API_KEY` is set. When `IMGBB_API_KEY` is not set, uploads are stored on the backend's `uploads` Docker volume and served from `<PUBLIC_API_URL>/uploads/…` (only real JPG/PNG/GIF/WebP files are accepted, checked by magic bytes, with random file names).
 
 | App | Stack | Port | Purpose |
 |---|---|---|---|

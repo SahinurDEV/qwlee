@@ -75,7 +75,7 @@ The admin token lives in `localStorage.getItem("token")` and is attached to ever
 
 ## Image upload fails
 
-All uploads go through ImgBB. The backend forwards the file with `IMGBB_API_KEY`. If `IMGBB_API_KEY` is empty or wrong in `backend/.env`, every upload returns 400.
+With `IMGBB_API_KEY` set, uploads go to ImgBB; a wrong key makes uploads fail. When `IMGBB_API_KEY` is not set, uploads are stored on the backend's `uploads` Docker volume and served from `<PUBLIC_API_URL>/uploads/…` (only real JPG/PNG/GIF/WebP files are accepted, checked by magic bytes, with random file names).
 
 ## "There is already a chat between these participants" / chat doesn't open
 

@@ -185,7 +185,7 @@ defaultRoutes.push({ path: "/disputes", route: disputeRoute });
   3. `services/orders.service.js` `STATUS_KEYS`
 - **Controllers/index.js isn't exhaustive.** Many controllers are required directly in routes — match the route file's existing style rather than the `controllers/index.js` aggregation style.
 - **`Payment` vs `Orders`** — both exist, both have similar shape. `Payment` is canonical. New code targets `Payment`.
-- **Cloudinary vs ImgBB** — the project moved off Cloudinary. Image uploads go through ImgBB (`IMGBB_API_KEY`). Local disk writes are not allowed.
+- **Cloudinary vs ImgBB** — the project moved off Cloudinary. Image uploads go through ImgBB when `IMGBB_API_KEY` is set. When `IMGBB_API_KEY` is not set, uploads are stored on the backend's `uploads` Docker volume and served from `<PUBLIC_API_URL>/uploads/…` (only real JPG/PNG/GIF/WebP files are accepted, checked by magic bytes, with random file names).
 
 ## Running tests
 
