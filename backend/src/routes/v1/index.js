@@ -29,6 +29,10 @@ const router = express.Router();
 
 const defaultRoutes = [
   {
+    path: "/analytics",
+    route: require("./analytics.routes"),
+  },
+  {
     path: "/growth",
     route: require("./growth.routes"),
   },
