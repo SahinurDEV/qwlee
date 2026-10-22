@@ -198,6 +198,7 @@ function SignUp() {
           <Input
             addonBefore="@"
             placeholder="username"
+            aria-label="Username"
             size="large"
             value={username}
             onChange={(e) =>
@@ -219,12 +220,13 @@ function SignUp() {
           label="Email"
           rules={[{ required: true, message: "Please enter your email" }]}
         >
-          <Input placeholder="you@example.com" size="large" />
+          <Input type="email" inputMode="email" autoComplete="email" placeholder="you@example.com" size="large" />
         </Form.Item>
         <div className="mb-4">
           <label className="block text-sm font-medium mb-1.5">Password</label>
           <Input.Password
             placeholder="At least 8 characters with a number"
+            aria-label="Password"
             size="large"
             value={password}
             onChange={(e) => setPassword(e.target.value)}

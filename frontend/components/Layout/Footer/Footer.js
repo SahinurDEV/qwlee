@@ -18,6 +18,7 @@ import {
 import { HiOutlineMailOpen } from "react-icons/hi";
 import { GoVerified } from "react-icons/go";
 import QwleeLogo from "@/components/common/QwleeLogo";
+import { base } from "@/lib/constant";
 import useUser from "@/hooks/useUser";
 import useSiteConfig, { featureOn } from "@/hooks/useSiteConfig";
 
@@ -75,20 +76,27 @@ export default function Footer() {
       : { label: "Become a seller", href: "/sign-up" },
   ];
 
-  function handleNewsletter(e) {
+  const [subscribing, setSubscribing] = useState(false);
+  async function handleNewsletter(e) {
     e.preventDefault();
-    // No newsletter backend yet — be honest about it. Save to localStorage
-    // so the entry isn't lost if you wire a real list provider later.
     const v = email.trim();
     if (!v) return;
+    setSubscribing(true);
     try {
-      const k = "qwlee:newsletter:pending";
-      const cur = JSON.parse(localStorage.getItem(k) || "[]");
-      if (!cur.includes(v)) cur.push(v);
-      localStorage.setItem(k, JSON.stringify(cur));
-    } catch {}
-    toast.success("Thanks — we'll be in touch when Qwlee launches updates.");
-    setEmail("");
+      const res = await fetch(`${base}/v1/newsletter`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "ngrok-skip-browser-warning": "1" },
+        body: JSON.stringify({ email: v, source: "footer" }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.message || "Could not subscribe");
+      toast.success("You're subscribed. Thanks!");
+      setEmail("");
+    } catch (err) {
+      toast.error(err.message || "Could not subscribe");
+    } finally {
+      setSubscribing(false);
+    }
   }
 
   return (
@@ -122,9 +130,10 @@ export default function Footer() {
               />
               <button
                 type="submit"
-                className="px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 transition"
+                disabled={subscribing}
+                className="px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 transition disabled:opacity-60"
               >
-                Subscribe
+                {subscribing ? "Subscribing…" : "Subscribe"}
               </button>
             </form>
 

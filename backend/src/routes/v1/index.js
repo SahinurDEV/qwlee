@@ -29,6 +29,10 @@ const router = express.Router();
 
 const defaultRoutes = [
   {
+    path: "/newsletter",
+    route: require("./newsletter.routes"),
+  },
+  {
     path: "/auth",
     route: authRoute,
   },

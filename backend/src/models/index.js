@@ -29,3 +29,4 @@ module.exports.RequestOffer = require('./requestOffer.model');
 
 module.exports.AdminAudit = require('./adminAudit.model');
 module.exports.Announcement = require('./announcement.model');
+module.exports.Subscriber = require('./subscriber.model');

@@ -249,6 +249,7 @@ export default function FreelancerEditProfile() {
             </Form.Item>
             <Form.Item label="Username">
               <Input
+                aria-label="Username"
                 size="large"
                 value={`@${loginUser?.username || ""}`}
                 disabled
