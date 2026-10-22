@@ -10,12 +10,18 @@ const ROLE_PERMISSIONS = {
   finance: ["read", "orders.write", "finance", "disputes", "analytics"],
 };
 const ADMIN_ROLES = Object.keys(ROLE_PERMISSIONS);
+// Every permission a role can hold ("*" is super only).
+const PERMISSIONS = ["read", "users.moderate", "gigs.write", "orders.write", "finance", "disputes", "moderation", "content", "support", "broadcast", "analytics", "settings"];
+// Custom roles (AdminRole collection), kept in memory by adminRoles.service.
+let CUSTOM = {};
+const setCustomRoles = (map) => { CUSTOM = map || {}; };
+const allRoles = () => ({ ...ROLE_PERMISSIONS, ...CUSTOM });
 
 // [methods ("*" = any, "W" = any non-GET), path regex, permission, audit GETs?]
 const RULES = [
   // Any admin manages their own two-factor.
   ["*", /^\/admin\/2fa(\/|$)/, "read"],
-  ["*", /^\/admin\/(settings|team|audit)(\/|$)/, "settings"],
+  ["*", /^\/admin\/(settings|team|audit|roles)(\/|$)/, "settings"],
   ["*", /^\/admin\/coupons(\/|$)/, "finance"],
   ["*", /^\/admin\/(chats|order-chats)(\/|$)/, "support", true],
   ["GET", /^\/admin\/users\/[^/]+\/view$/, "read", true],
@@ -45,9 +51,16 @@ const RULES = [
   ["GET", /^\/admin\/analytics(\/|$)/, "analytics"],
 ];
 
-const roleOf = (user) => (ADMIN_ROLES.includes(user?.adminRole) ? user.adminRole : "super");
+// No adminRole = super (accounts made before sub-roles existed). A role
+// that no longer exists (custom role deleted) grants nothing.
+const roleOf = (user) => {
+  const r = user?.adminRole;
+  if (!r) return "super";
+  return ROLE_PERMISSIONS[r] || CUSTOM[r] ? r : "none";
+};
+const permissionsOf = (role) => ROLE_PERMISSIONS[role] || CUSTOM[role] || [];
 const can = (user, perm) => {
-  const perms = ROLE_PERMISSIONS[roleOf(user)] || [];
+  const perms = permissionsOf(roleOf(user));
   return perms.includes("*") || perms.includes(perm);
 };
 
@@ -64,4 +77,4 @@ function resolve(req) {
   return { perm: write ? "*" : "read", audit: write, path };
 }
 
-module.exports = { ROLE_PERMISSIONS, ADMIN_ROLES, RULES, roleOf, can, resolve, apiPath };
+module.exports = { ROLE_PERMISSIONS, ADMIN_ROLES, PERMISSIONS, RULES, roleOf, can, resolve, apiPath, setCustomRoles, allRoles, permissionsOf };

@@ -174,6 +174,14 @@ Buyers post a request (`/requests/new`) with a budget and deadline. Sellers brow
 
 After upgrading an existing database run `docker compose exec backend npm run migrate` (idempotent).
 
+## Custom admin roles
+
+Besides the built-in admin roles (super, moderator, support and finance), a super admin can create roles under Admin team → Custom roles (`GET/POST/PATCH/DELETE /v1/admin/roles`) and assign them from Users → Manage.
+
+- **Permissions:** a role can hold any mix of `read`, `users.moderate`, `gigs.write`, `orders.write`, `finance`, `disputes`, `moderation`, `content`, `support`, `broadcast`, `analytics` and `settings`. Full access (`*`) stays with super, and `read` is always included.
+- **Changing a role:** its admins are signed out, so the new rights apply when they sign in again.
+- **Deleting a role:** a role that admins still hold can't be deleted. An admin whose role no longer exists gets no access rather than falling back to super.
+
 ## Bans, appeals and bulk actions
 
 - **Temporary bans:** admins can ban for 1–365 days, or permanently, from Users → Manage → Ban (`PATCH /v1/admin/users/:id/ban {reason, days}`). A temporary ban lifts itself when it runs out, either at the user's next sign-in or in the background housekeeping run.

@@ -78,7 +78,9 @@ const setRole = catchAsync(async (req, res) => {
     user.role = role;
   }
   if (adminRole !== undefined) {
-    if (!perms.ADMIN_ROLES.includes(adminRole)) throw new ApiError(httpStatus.BAD_REQUEST, `adminRole must be one of ${perms.ADMIN_ROLES.join(", ")}`);
+    await require("../services/adminRoles.service").load();
+    const known = Object.keys(perms.allRoles());
+    if (!known.includes(adminRole)) throw new ApiError(httpStatus.BAD_REQUEST, `adminRole must be one of ${known.join(", ")}`);
     user.adminRole = adminRole;
   }
   if (user.role !== "admin") user.adminRole = undefined;
@@ -418,7 +420,7 @@ const team = catchAsync(async (req, res) => {
   ok(res, {
     admins: admins.map(({ _id, ...a }) => ({ id: String(_id), ...a, adminRole: a.adminRole || "super" })),
     logins: logins.map((l) => ({ id: String(l._id), adminId: String(l.userId), admin: nameOf[String(l.userId)], ip: l.ip, userAgent: l.userAgent, at: l.createdAt })),
-    roles: perms.ROLE_PERMISSIONS,
+    roles: perms.allRoles(),
     me: { id: String(req.user._id), adminRole: perms.roleOf(req.user) },
   });
 });
@@ -443,7 +445,7 @@ const listSubscribers = catchAsync(async (req, res) => {
 
 const me = catchAsync(async (req, res) => {
   const role = perms.roleOf(req.user);
-  ok(res, { id: String(req.user._id), adminRole: role, permissions: perms.ROLE_PERMISSIONS[role] });
+  ok(res, { id: String(req.user._id), adminRole: role, permissions: perms.permissionsOf(role) });
 });
 
 const storageOrphans = catchAsync(async (req, res) => {
