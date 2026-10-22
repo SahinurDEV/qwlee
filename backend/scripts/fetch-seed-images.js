@@ -6,7 +6,7 @@ const path = require("path");
 const KINDS = {
   avatar: [300, 300, 15, 1000],
   cover: [1200, 300, 7, 10],
-  gig: [800, 500, 29, 20],
+  // gig images are generated per gig: node scripts/gen-gig-images.js
   portfolio: [800, 600, 15, 60],
   banner: [1600, 500, 5, 100],
   blog: [900, 500, 11, 110],

@@ -217,7 +217,7 @@ const getGigBySlug = async (slug) => {
 // Fields a seller may edit on their own gig. Everything else (owner,
 // moderation, stats, slug) is server-managed.
 const EDITABLE_GIG_FIELDS = [
-  "title", "description", "price", "package", "categoriesId", "subCategoryId", "tags",
+  "title", "description", "package", "categoriesId", "subCategoryId", "tags",
   "extras", "faq", "requirementQuestions", "video",
 ];
 const JSON_GIG_FIELDS = ["package", "extras", "faq", "requirementQuestions"];
@@ -229,6 +229,49 @@ const assertGigOwner = (gig, actor) => {
     throw new ApiError(httpStatus.FORBIDDEN, "You can only change your own gigs");
   }
 };
+
+// 1-3 packages: name, price, delivery days, optional revisions/description,
+// up to 10 feature lines. Returns the cleaned array.
+const validatePackages = (pkgs) => {
+  if (typeof pkgs === "string") {
+    try { pkgs = JSON.parse(pkgs); } catch (e) { throw new ApiError(httpStatus.BAD_REQUEST, "Invalid JSON in package field"); }
+  }
+  if (!Array.isArray(pkgs) || pkgs.length < 1 || pkgs.length > 3) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "A gig needs 1 to 3 packages");
+  }
+  return pkgs.map((p, i) => {
+    const name = String(p?.name || "").trim().slice(0, 40);
+    const price = Number(p?.price);
+    const deliveryDate = Math.round(Number(p?.deliveryDate));
+    if (!name) throw new ApiError(httpStatus.BAD_REQUEST, `Package ${i + 1} needs a name`);
+    if (!(price >= 5 && price <= 100000)) throw new ApiError(httpStatus.BAD_REQUEST, `Package "${name}" price must be between 5 and 100000`);
+    if (!(deliveryDate >= 1 && deliveryDate <= 90)) throw new ApiError(httpStatus.BAD_REQUEST, `Package "${name}" delivery must be 1-90 days`);
+    const out = {
+      name,
+      price,
+      deliveryDate,
+      description: String(p?.description || "").trim().slice(0, 300),
+      features: (p?.features || [])
+        .map((f) => ({ feature: String(typeof f === "string" ? f : f?.feature || "").trim().slice(0, 120) }))
+        .filter((f) => f.feature)
+        .slice(0, 10),
+    };
+    if (p?.revisions !== undefined && p?.revisions !== "" && p?.revisions !== null) {
+      const r = Math.round(Number(p.revisions));
+      if (!(r >= 0 && r <= 99)) throw new ApiError(httpStatus.BAD_REQUEST, `Package "${name}" revisions must be 0-99`);
+      out.revisions = r;
+    }
+    return out;
+  });
+};
+
+const slugify = (title) =>
+  String(title || "")
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80) || "gig";
 
 // Normalise the Fiverr-style optional sections (extras, FAQ, buyer
 // requirement questions, video URL). Accepts JSON strings (multipart).
@@ -299,6 +342,23 @@ const updateGigById = async (gigId, data, images, actor) => {
     if (data?.[key] !== undefined && !JSON_GIG_FIELDS.includes(key) && key !== "video") patch[key] = data[key];
   }
   Object.assign(patch, sanitiseGigExtrasFields(data || {}));
+  if (patch.title !== undefined) {
+    patch.title = String(patch.title).trim().slice(0, 120);
+    if (patch.title.length < 15) throw new ApiError(httpStatus.BAD_REQUEST, "Title must be at least 15 characters");
+  }
+  if (data?.package !== undefined) {
+    patch.package = validatePackages(data.package);
+    patch.price = Math.min(...patch.package.map((p) => p.price));
+  }
+  // Reorder / remove gallery images: must be a subset of the current ones.
+  if (data?.images !== undefined) {
+    const current = new Set(gig.images || []);
+    if (!Array.isArray(data.images) || data.images.some((u) => !current.has(u))) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "images may only reorder or remove existing images");
+    }
+    if (data.images.length < 1) throw new ApiError(httpStatus.BAD_REQUEST, "A gig needs at least one image");
+    patch.images = [...new Set(data.images)];
+  }
   const categoryChanged = patch.categoriesId !== undefined && String(patch.categoriesId) !== String(gig.categoriesId);
   if (patch.subCategoryId !== undefined || categoryChanged) {
     const subId = patch.subCategoryId !== undefined ? patch.subCategoryId : gig.subCategoryId;
@@ -322,6 +382,9 @@ const updateGigById = async (gigId, data, images, actor) => {
   // Append the new images to the existing images array
   if (images && images.length > 0) {
     gig.images = gig.images ? gig.images : [];
+    if (gig.images.length + images.length > 6) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "A gig can have at most 6 images");
+    }
     gig.images.push(...images); // Add multiple images to the existing array
   }
 
@@ -355,6 +418,8 @@ const gigSingleImageDelete = async (gigId, image, actor) => {
 };
 
 module.exports = {
+  validatePackages,
+  slugify,
   sanitiseGigExtrasFields,
   createGig,
   queryGigs,

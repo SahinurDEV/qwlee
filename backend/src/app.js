@@ -43,6 +43,22 @@ app.use(
   })
 );
 
+// Locally stored uploads (used when IMGBB_API_KEY is not set).
+app.use(
+  "/uploads",
+  (req, res, next) => {
+    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    next();
+  },
+  express.static(require("./services/imageUpload.service").UPLOAD_DIR, {
+    maxAge: "30d",
+    fallthrough: false,
+    index: false,
+    dotfiles: "deny",
+  })
+);
+
 // CORS — allowlist from CORS_ORIGINS env. Wildcard with credentials is
 // invalid per spec; if no origins configured, fall back to permissive
 // in non-production only.

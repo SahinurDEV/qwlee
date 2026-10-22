@@ -119,7 +119,7 @@ export default function GigPackagePicker({ gig }) {
         </div>
 
         <p className="mt-2 text-sm text-gray-600">
-          Get a {active?.name?.toLowerCase() || "service"} delivery from {gig?.userId?.fullName || "this seller"}.
+          {active?.description || `Get a ${active?.name?.toLowerCase() || "service"} delivery from ${gig?.userId?.fullName || "this seller"}.`}
         </p>
 
         <div className="mt-4 flex items-center gap-5 text-sm text-gray-700">
@@ -129,7 +129,9 @@ export default function GigPackagePicker({ gig }) {
           </span>
           <span className="inline-flex items-center gap-1.5">
             <IoRefreshOutline className="text-gray-400" />
-            Revisions on request
+            {Number.isFinite(Number(active?.revisions)) && active?.revisions !== "" && active?.revisions != null
+              ? `${active.revisions} revision${Number(active.revisions) === 1 ? "" : "s"}`
+              : "Revisions on request"}
           </span>
         </div>
 
