@@ -142,6 +142,7 @@ Gigs support extras, FAQ, requirement questions and an optional YouTube/Vimeo/MP
 ### Display currency
 
 Every price is stored and charged in US dollars. Visitors can choose a display currency in the footer. The choice is saved in the browser, and prices on gig cards and gig pages are then shown converted and marked "≈", with the USD amount in the tooltip. The checkout review shows the USD charge with the converted amount underneath. Rates come from `GET /v1/info/currencies`.
+
 ### Subscriptions
 
 Sellers can offer monthly subscriptions on an active gig, with an optional discount of up to 30%. They set this on `/subscriptions`. On the gig page, a buyer can then use "Subscribe monthly" on a package. The first month is ordered straight away, and after that a normal order is created each month by the order housekeeping job, so escrow, delivery and payout work as for any order. The buyer can pause or resume a subscription, and either side can cancel it. A month that can't be ordered (for example, the seller is away or the gig was removed) is recorded as failed and retried the next month. Super admins can run billing now with `POST /v1/admin/jobs/subscriptions` (optional `asOf`).
