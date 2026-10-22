@@ -8,6 +8,10 @@ const UPLOADS_FOLDER_USERS = "./public/uploads/users";
 const router = express.Router();
 
 
+router.get('/google/config', authController.googleConfig);
+router.get('/google', authController.googleStart);
+router.get('/google/callback', authController.googleCallback);
+router.post('/google/exchange', authController.googleExchange);
 router.post('/register', validate(authValidation.register), authController.register);
 router.post('/login', validate(authValidation.login), authController.login);
 router.post('/verify-email', validate(authValidation.verifyEmail), authController.verifyEmail);

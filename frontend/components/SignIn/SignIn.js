@@ -12,6 +12,7 @@ import { userLogin } from "@/actions/userLogin";
 import { storeUserInfo } from "@/actions/auth.services";
 import { setUser } from "@/app/redux/slices/userSlice";
 import Button from "../CustomCreate/Button";
+import GoogleSignInButton from "../common/GoogleSignInButton";
 import AuthCard from "../common/AuthCard";
 import useIpLocation, { flagEmoji } from "@/hooks/useIpLocation";
 
@@ -158,6 +159,7 @@ const SignIn = () => {
         </div>
       )}
 
+      <GoogleSignInButton label="Continue with Google" />
       <Form
         onFinish={handleSubmit}
         autoComplete="on"

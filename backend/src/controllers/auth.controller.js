@@ -16,29 +16,7 @@ const {
 } = require("../validations/username.validation");
 const { isReserved } = require("../utils/reservedUsernames");
 
-// Derive a unique username from a seed (the email local part) by suffixing
-// a counter until we find a free slot. Used when the client hasn't picked
-// a username themselves.
-async function deriveUniqueUsername(seed) {
-  const cleaned = (
-    String(seed)
-      .toLowerCase()
-      .replace(/[^a-z0-9_-]+/g, "")
-      .replace(/^[^a-z0-9]+|[^a-z0-9]+$/g, "")
-      .slice(0, 18) || "user"
-  );
-  let candidate = cleaned;
-  let i = 0;
-  while (
-    isReserved(candidate) ||
-    (await userService.isUsernameTaken(candidate))
-  ) {
-    i += 1;
-    candidate = `${cleaned}${i}`;
-    if (i > 200) break;
-  }
-  return candidate;
-}
+const { deriveUniqueUsername } = require("../utils/deriveUsername");
 
 const register = catchAsync(async (req, res) => {
   // Pick the final username. Client-provided wins (after format + reserved
@@ -96,6 +74,37 @@ const register = catchAsync(async (req, res) => {
   }
 });
 
+// Issue tokens, record the sign-in and send the standard login payload.
+async function sendLoginSuccess(req, res, user) {
+  const tokens = await tokenService.generateAuthTokens(user);
+
+  // Record the sign-in for the admin "monitor user" feature. Best-effort
+  // — never block the login response if the activity write fails.
+  try {
+    const activityService = require("../services/activity.service");
+    const ip =
+      (req.headers["x-forwarded-for"] || "").split(",")[0].trim() ||
+      req.ip ||
+      req.connection?.remoteAddress ||
+      "";
+    await activityService.recordLogin({
+      userId: user.id,
+      ip,
+      userAgent: req.headers["user-agent"] || "",
+    });
+  } catch (err) {
+    console.error("activity.recordLogin failed:", err?.message);
+  }
+  res.status(httpStatus.OK).json(
+    response({
+      status: "OK",
+      statusCode: httpStatus.OK,
+      message: "Login Successful",
+      data: { user, tokens },
+    })
+  );
+}
+
 const login = catchAsync(async (req, res) => {
   const { email, password } = req.body;
   // Verify the password first and fail with one generic message, so the
@@ -126,33 +135,38 @@ const login = catchAsync(async (req, res) => {
       console.error("Error updating oneTimeCode:", error);
     }
   }, 180000);
-  const tokens = await tokenService.generateAuthTokens(user);
+  await sendLoginSuccess(req, res, user);
+});
 
-  // Record the sign-in for the admin "monitor user" feature. Best-effort
-  // — never block the login response if the activity write fails.
-  try {
-    const activityService = require("../services/activity.service");
-    const ip =
-      (req.headers["x-forwarded-for"] || "").split(",")[0].trim() ||
-      req.ip ||
-      req.connection?.remoteAddress ||
-      "";
-    await activityService.recordLogin({
-      userId: user.id,
-      ip,
-      userAgent: req.headers["user-agent"] || "",
-    });
-  } catch (err) {
-    console.error("activity.recordLogin failed:", err?.message);
-  }
+const googleAuth = require("../services/googleAuth.service");
+
+const googleConfig = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).json(
-    response({
-      status: "OK",
-      statusCode: httpStatus.OK,
-      message: "Login Successful",
-      data: { user, tokens },
-    })
+    response({ message: "Google sign-in", status: "OK", statusCode: httpStatus.OK, data: { enabled: googleAuth.isEnabled() } })
   );
+});
+
+const googleStart = catchAsync(async (req, res) => {
+  const { url, nonce } = googleAuth.startAuth({ from: req.query.from });
+  res.cookie(googleAuth.STATE_COOKIE, nonce, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: req.secure,
+    maxAge: 10 * 60 * 1000,
+    path: "/",
+  });
+  res.redirect(302, url);
+});
+
+const googleCallback = catchAsync(async (req, res) => {
+  const target = await googleAuth.handleCallback(req);
+  res.clearCookie(googleAuth.STATE_COOKIE, { path: "/" });
+  res.redirect(302, target);
+});
+
+const googleExchange = catchAsync(async (req, res) => {
+  const user = await googleAuth.exchangeLoginCode(req.body?.code);
+  await sendLoginSuccess(req, res, user);
 });
 
 const logout = catchAsync(async (req, res) => {
@@ -275,6 +289,10 @@ const deleteMe = catchAsync(async (req, res,next) => {
 });
 
 module.exports = {
+  googleConfig,
+  googleStart,
+  googleCallback,
+  googleExchange,
   register,
   login,
   logout,
