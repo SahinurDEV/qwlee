@@ -4,7 +4,7 @@ const { toJSON, paginate } = require("./plugins");
 // Four-eyes approval for large money movements (refunds, payouts).
 const approvalSchema = new mongoose.Schema(
   {
-    kind: { type: String, enum: ["refund", "withdrawal"], required: true },
+    kind: { type: String, enum: ["refund", "tip-refund", "withdrawal"], required: true },
     targetId: { type: String, required: true },
     amount: { type: Number, default: 0 },
     method: { type: String, required: true },

@@ -131,7 +131,8 @@ const loginUserWithEmailAndPassword = async (email, password) => {
 // frontend, leaving the session feeling stuck.
 const logout = async (refreshToken) => {
   if (!refreshToken) return;
-  await Token.deleteOne({ token: refreshToken, type: tokenTypes.REFRESH });
+  const doc = await Token.findOneAndDelete({ token: refreshToken, type: tokenTypes.REFRESH });
+  if (doc?.sid) await require("./session.service").revoke(doc.user, doc.sid);
 };
 
 const refreshAuth = async (refreshToken) => {
@@ -144,8 +145,10 @@ const refreshAuth = async (refreshToken) => {
     if (!user) {
       throw new Error();
     }
+    const sessions = require("./session.service");
+    if (refreshTokenDoc.sid && !(await sessions.isActive(refreshTokenDoc.sid))) throw new Error();
     await Token.deleteOne({ _id: refreshTokenDoc._id });
-    return tokenService.generateAuthTokens(user);
+    return tokenService.generateAuthTokens(user, { sid: refreshTokenDoc.sid });
   } catch (error) {
     throw new ApiError(httpStatus.UNAUTHORIZED, "Please authenticate");
   }

@@ -120,6 +120,8 @@ router.patch("/users/:userId", A, ac.updateUser);
 router.patch("/users/:userId/role", A, ac.setRole);
 router.post("/users/:userId/reset-password", A, ac.resetPassword);
 router.post("/users/:userId/logout-all", A, ac.logoutEverywhere);
+router.get("/users/:userId/sessions", A, ac.userSessions);
+router.delete("/users/:userId/sessions/:sid", A, ac.revokeUserSession);
 router.get("/users/:userId/view", A, ac.viewUser);
 router.patch("/gigs/:gigId/feature", A, ac.featureGig);
 router.patch("/gigs/:gigId", A, ac.editGig);
@@ -135,6 +137,18 @@ router.post(
     return o && { id: o._id, amount: Number(o.escrow?.amount ?? o.price ?? 0), summary: `Refund order ${o._id}` };
   }),
   ac.refundOrder
+);
+router.post(
+  "/orders/:orderId/tips/:tipId/refund",
+  A,
+  secondApproval("tip-refund", async (req) => {
+    const { Payment } = require("../../models");
+    if (!require("mongoose").isValidObjectId(req.params.orderId)) return null;
+    const o = await Payment.findById(req.params.orderId).select("tips").lean();
+    const t = (o?.tips || []).find((x) => x.sessionId === req.params.tipId);
+    return t && { id: `${o._id}:${t.sessionId}`, amount: Number(t.amount || 0), summary: `Refund $${t.amount} tip on order ${o._id}` };
+  }),
+  ac.refundTip
 );
 const approvals = require("../../controllers/approvals.controller");
 router.get("/approvals", A, approvals.list);

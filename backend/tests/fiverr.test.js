@@ -104,4 +104,15 @@ test("tips: only on completed orders, limits enforced, credited to seller", asyn
   assert.equal(Math.round((after - before) * 100) / 100, 19, "tip credited net of 5% fee");
   const o2 = (await call("GET", `/orders/${co.orderId}`, { token: buyer.token })).data;
   assert.equal(o2.tips.length, 1);
+
+  // Admin returns the tip: seller's net share comes back off, once only.
+  const admin = await login("admin@example.com", "Admin123!");
+  const tipId = encodeURIComponent(o2.tips[0].sessionId);
+  const rf = await call("POST", `/admin/orders/${co.orderId}/tips/${tipId}/refund`, { token: admin.token, body: { reason: "test" } });
+  assert.equal(rf.status, 200, JSON.stringify(rf.json));
+  assert.equal(rf.data.refund.status, "succeeded");
+  const back = (await call("GET", `/users/${seller.user.id}`, { token: seller.token })).data.user.balance;
+  assert.equal(Math.round((back - before) * 100) / 100, 0, "seller debited the tip's net share");
+  assert.equal((await call("POST", `/admin/orders/${co.orderId}/tips/${tipId}/refund`, { token: admin.token })).status, 409);
+  assert.equal((await call("POST", `/admin/orders/${co.orderId}/tips/${tipId}/refund`, { token: seller.token })).status, 403);
 });

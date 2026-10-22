@@ -139,6 +139,7 @@ function ManageUser({ user, isSuper, onClose, onChanged }) {
             <Button size="sm" variant="secondary" onClick={() => act({ title: "Sign this user out everywhere?", description: "All their current sessions end immediately.", path: `/admin/users/${user.id}/logout-all`, done, success: "Signed out everywhere" })}>Sign out everywhere</Button>
           </div>
         </section>
+        <UserSessions userId={user.id} />
         <section className="border-t border-ink-100 pt-4">
           <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-500 mb-2">Role {isSuper ? "" : "(super admins only)"}</h3>
           <div className="flex flex-wrap items-end gap-2">
@@ -161,5 +162,38 @@ function ManageUser({ user, isSuper, onClose, onChanged }) {
         </section>
       </div>
     </Modal>
+  );
+}
+
+// Signed-in devices; each can be signed out on its own.
+function UserSessions({ userId }) {
+  const { data, reload } = useAdminQuery(`/admin/users/${userId}/sessions`);
+  const rows = data?.results || [];
+  const revoke = async (sid) => {
+    try {
+      await adminFetch(`/admin/users/${userId}/sessions/${sid}`, { method: "DELETE" });
+      toast.success("Session signed out");
+      reload();
+    } catch (e) {
+      toast.error(e.message);
+    }
+  };
+  return (
+    <section className="border-t border-ink-100 pt-4">
+      <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-500 mb-2">Signed-in devices ({rows.length})</h3>
+      {rows.length ? (
+        <ul className="divide-y divide-ink-100 text-sm">
+          {rows.map((r) => (
+            <li key={r.id} className="flex items-center justify-between gap-3 py-2">
+              <div className="min-w-0">
+                <p className="truncate text-ink-800" title={r.userAgent}>{r.userAgent || "Unknown device"}</p>
+                <p className="text-xs text-ink-500">{r.ip || "?"} · signed in {formatDate(r.createdAt)} · last seen {formatDate(r.lastSeenAt)}</p>
+              </div>
+              <Button size="sm" variant="secondary" onClick={() => revoke(r.id)}>Sign out</Button>
+            </li>
+          ))}
+        </ul>
+      ) : <p className="text-sm text-ink-500">No active sessions.</p>}
+    </section>
   );
 }
