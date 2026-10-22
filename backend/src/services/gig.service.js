@@ -2,6 +2,7 @@ const httpStatus = require("http-status");
 const ApiError = require("../utils/ApiError");
 const { Gig, User } = require("../models");
 const { PUBLIC_USER_SELECT } = require("../utils/publicUser");
+const { awayFilter } = require("../utils/availability");
 
 // Fiverr-style seller level thresholds. The frontend filter sends a
 // short identifier (`new`, `level1`, `level2`, `topRated`) and we
@@ -121,7 +122,9 @@ const queryGigs = async (filter, options, { excludeUserId, viewer } = {}) => {
   for (const key of Object.keys(filter)) {
     if (seller.includes(key)) continue;
     if (key === "title" && filter[key] !== "") {
-      query[key] = { $regex: escapeRegex(filter[key]), $options: "i" };
+      // Match the title or any search tag.
+      const re = { $regex: escapeRegex(filter[key]), $options: "i" };
+      query.$and = [...(query.$and || []), { $or: [{ title: re }, { tags: re }] }];
     } else if (key === "categories") {
       query["categoriesId"] = filter[key];
     } else if (key === "subCategory") {
@@ -148,6 +151,12 @@ const queryGigs = async (filter, options, { excludeUserId, viewer } = {}) => {
     } else {
       query.gigStatus = "active";
     }
+  }
+
+  // Sellers in vacation mode drop out of search (their gig pages stay up).
+  if (viewer?.role !== "admin" && !query.slug && !filter.userId) {
+    const away = await User.find(awayFilter(), { _id: 1 }).lean();
+    if (away.length) query.$and = [...(query.$and || []), { userId: { $nin: away.map((u) => u._id) } }];
   }
 
   if (excludeUserId) {
@@ -208,7 +217,7 @@ const getGigBySlug = async (slug) => {
 // Fields a seller may edit on their own gig. Everything else (owner,
 // moderation, stats, slug) is server-managed.
 const EDITABLE_GIG_FIELDS = [
-  "title", "description", "price", "package", "categoriesId", "subCategoryId",
+  "title", "description", "price", "package", "categoriesId", "subCategoryId", "tags",
   "extras", "faq", "requirementQuestions", "video",
 ];
 const JSON_GIG_FIELDS = ["package", "extras", "faq", "requirementQuestions"];
@@ -264,6 +273,16 @@ const sanitiseGigExtrasFields = (data) => {
       throw new ApiError(httpStatus.BAD_REQUEST, "Video must be a YouTube/Vimeo link or an https .mp4/.webm URL");
     }
     out.video = v;
+  }
+  if (data.tags !== undefined) {
+    let t = data.tags;
+    if (typeof t === "string") {
+      try { t = JSON.parse(t); } catch (e) { t = t.split(","); }
+    }
+    if (!Array.isArray(t)) throw new ApiError(httpStatus.BAD_REQUEST, "tags must be a list");
+    const clean = [...new Set(t.map((x) => String(x || "").toLowerCase().replace(/[^a-z0-9 +#.-]/g, "").trim().slice(0, 30)).filter(Boolean))];
+    if (clean.length > 5) throw new ApiError(httpStatus.BAD_REQUEST, "Use at most 5 tags");
+    out.tags = clean;
   }
   return out;
 };

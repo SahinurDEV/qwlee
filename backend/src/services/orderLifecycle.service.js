@@ -21,6 +21,7 @@ const logger = require("../config/logger");
 const { Payment, Gig, User } = require("../models");
 const Message = require("../models/message.model");
 const appConfigService = require("./appConfig.service");
+const { isAway } = require("../utils/availability");
 
 const AUTO_COMPLETE_DAYS = Number(process.env.AUTO_COMPLETE_DAYS) || 3;
 const OPEN = ["active", "late"];
@@ -41,7 +42,18 @@ const idOf = (v) => String(v?._id || v?.id || v || "");
  * Work out what the buyer must pay. Prices always come from the database
  * (gig package + extras, or the seller's custom offer), never the client.
  */
-const quoteCheckout = async ({ buyerId, gigId, packageName, extraIds = [], messageId, requestOfferId }) => {
+const quoteCheckout = async (args) => {
+  const quote = await priceCheckout(args);
+  // Vacation mode: no new orders while the seller is away.
+  const seller = await User.findById(quote.freelancerId).select("availability");
+  if (isAway(seller)) {
+    const until = seller.availability.until ? ` until ${new Date(seller.availability.until).toISOString().slice(0, 10)}` : "";
+    throw new ApiError(httpStatus.CONFLICT, `This seller is unavailable${until} and is not taking new orders`);
+  }
+  return quote;
+};
+
+const priceCheckout = async ({ buyerId, gigId, packageName, extraIds = [], messageId, requestOfferId }) => {
   if (requestOfferId) {
     const { offer, request, gig } = await require("./buyerRequest.service").quoteRequestOffer(requestOfferId, buyerId);
     const title = request.title;
@@ -219,6 +231,41 @@ const completeOrder = async (order, { reason = "accepted", fromStatuses = OPEN }
 };
 
 /** Mark escrow refunded when an unreleased order is cancelled. */
+const TIP_WINDOW_DAYS = 30;
+
+/** Validate a tip (Fiverr rules: $5 min; up to $25 on orders under $25, else up to 100%). */
+const quoteTip = async (orderId, buyerId, amount) => {
+  const order = await Payment.findById(orderId);
+  if (!order) throw new ApiError(httpStatus.NOT_FOUND, "Order not found");
+  if (idOf(order.clientId) !== String(buyerId)) throw new ApiError(httpStatus.FORBIDDEN, "Only the buyer can tip");
+  if (order.status !== "delivered" || order.escrow?.status !== "released") {
+    throw new ApiError(httpStatus.BAD_REQUEST, "You can tip once the order is completed");
+  }
+  const doneAt = order.completedAt || order.updatedAt;
+  if (Date.now() - new Date(doneAt).getTime() > TIP_WINDOW_DAYS * 86400000) {
+    throw new ApiError(httpStatus.BAD_REQUEST, `Tips are possible for ${TIP_WINDOW_DAYS} days after completion`);
+  }
+  const value = round2(amount);
+  const max = order.price < 25 ? 25 : round2(order.price);
+  if (!(value >= 5 && value <= max)) throw new ApiError(httpStatus.BAD_REQUEST, `Tip must be between $5 and $${max}`);
+  return { order, amount: value };
+};
+
+/** Credit a paid tip to the seller (net of platform fee). Idempotent on sessionId. */
+const recordTip = async (orderId, amount, { provider, sessionId }) => {
+  const feePercent = await appConfigService.getPlatformFeePercent();
+  const fee = round2((amount * feePercent) / 100);
+  const net = round2(amount - fee);
+  const updated = await Payment.findOneAndUpdate(
+    { _id: orderId, "tips.sessionId": { $ne: sessionId } },
+    { $push: { tips: { amount, fee, net, provider, sessionId, at: new Date() } } },
+    { new: true }
+  );
+  if (!updated) return null;
+  await User.updateOne({ _id: updated.freelancerId }, { $inc: { balance: net } });
+  return updated;
+};
+
 const refundEscrow = async (orderId) => {
   await Payment.updateOne(
     { _id: orderId, "escrow.status": { $ne: "released" } },
@@ -320,6 +367,8 @@ const startHousekeeping = (intervalMs = Number(process.env.ORDER_HOUSEKEEPING_MS
 };
 
 module.exports = {
+  quoteTip,
+  recordTip,
   quoteCheckout,
   createOrderFromQuote,
   completeOrder,

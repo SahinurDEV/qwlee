@@ -629,6 +629,12 @@ function pickSubcategory(title, subs, i) {
   return (best || subs[i % subs.length])._id;
 }
 
+const STOP = new Set(["will", "your", "and", "for", "the", "with", "you", "any", "from", "that", "into", "a", "an", "to", "of", "in", "or", "on", "my", "me"]);
+function tagsFor(title, category) {
+  const words = title.toLowerCase().replace(/^i will /, "").split(/[^a-z0-9+#.]+/).filter((w) => w.length > 2 && !STOP.has(w));
+  return [...new Set([...words.slice(0, 4), category.toLowerCase()])].slice(0, 5);
+}
+
 async function seedGigs({ sellers, categories, subcategories = [] }) {
   const sellerByUsername = Object.fromEntries(sellers.map((s) => [s.username, s]));
   const categoryByName = Object.fromEntries(categories.map((c) => [c.name, c]));
@@ -654,6 +660,7 @@ async function seedGigs({ sellers, categories, subcategories = [] }) {
       subCategoryId: pickSubcategory(g.title, subcategories.filter((s) => String(s.parentId) === String(category._id)), i),
       extras: g.extras || EXTRAS.slice(0, 1 + (i % 3)),
       faq: g.faq || FAQ,
+      tags: g.tags || tagsFor(g.title, g.category),
       requirementQuestions: g.requirementQuestions || REQUIREMENT_QUESTIONS,
     };
   });

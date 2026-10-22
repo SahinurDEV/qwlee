@@ -59,9 +59,36 @@ const getUser = catchAsync(async (req, res) => {
   );
 });
 
+const PROFILE_FIELDS = ["fullName", "gender", "location", "intro", "about", "skills", "language", "perHourRate"];
+
+// Vacation mode settings from the seller dashboard.
+const parseAvailability = (a) => {
+  if (!a || typeof a !== "object") throw new ApiError(httpStatus.BAD_REQUEST, "Invalid availability");
+  const date = (v) => {
+    if (v === null || v === undefined || v === "") return null;
+    const d = new Date(v);
+    if (Number.isNaN(d.getTime())) throw new ApiError(httpStatus.BAD_REQUEST, "Invalid availability date");
+    return d;
+  };
+  const out = {
+    away: !!a.away,
+    from: date(a.from),
+    until: date(a.until),
+    message: String(a.message || "").slice(0, 300),
+    allowMessages: a.allowMessages !== false,
+  };
+  if (out.from && out.until && out.until <= out.from) throw new ApiError(httpStatus.BAD_REQUEST, "Return date must be after the start date");
+  return out;
+};
+
 const updateUser = catchAsync(async (req, res) => {
   const userId = req.user.id;
-  const updatedUserData = req.body; // Directly assign req.body to updatedUserData
+  // Only profile fields are self-editable. Role, balance, email, ban,
+  // verification and password each have their own guarded flows.
+  const updatedUserData = pick(req.body || {}, PROFILE_FIELDS);
+  if (req.body?.availability !== undefined) {
+    updatedUserData.availability = parseAvailability(req.body.availability);
+  }
 
   // Update user data
   const user = await userService.updateUserById(userId, updatedUserData);
