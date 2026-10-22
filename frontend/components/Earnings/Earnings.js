@@ -239,11 +239,13 @@ function SellerEarnings({ user }) {
   }, [activeOrders, deliveredOrders]);
 
   const [openModal, setOpenModal] = useState(false);
+  const [method, setMethod] = useState("bank");
   const [form] = Form.useForm();
   const [createWithdrawalRequest, { isLoading }] =
     usePostWithdrawalRequestMutation();
 
   async function handleSubmit(values) {
+    if (!values.method) values = { ...values, method };
     if (Number(values.withdrawalAmount) > availableBalance) {
       toast.error("Insufficient balance for withdrawal");
       return;
@@ -257,6 +259,7 @@ function SellerEarnings({ user }) {
       if (res?.data?.code === 201) {
         toast.success("Withdrawal request submitted");
         setOpenModal(false);
+        setMethod("bank");
         form.resetFields();
       }
     } catch (err) {
@@ -415,10 +418,10 @@ function SellerEarnings({ user }) {
                         {w.bankName}
                       </td>
                       <td className="px-5 py-3.5 font-mono text-xs text-gray-600">
-                        ••••{String(w.accountNumber || "").slice(-4)}
+                        {w.method && w.method !== "bank" ? w.payoutAccount : `••••${String(w.accountNumber || "").slice(-4)}`}
                       </td>
                       <td className="px-5 py-3.5 text-gray-600">
-                        {w.accountType}
+                        {w.method && w.method !== "bank" ? "-" : w.accountType}
                       </td>
                       <td className="px-5 py-3.5 text-right font-semibold text-gray-900">
                         {money(w.withdrawalAmount)}
@@ -443,7 +446,7 @@ function SellerEarnings({ user }) {
         centered
         open={openModal}
         footer={null}
-        onCancel={() => setOpenModal(false)}
+        onCancel={() => { setOpenModal(false); setMethod("bank"); }}
         width={520}
         destroyOnClose
         title={null}
@@ -456,7 +459,7 @@ function SellerEarnings({ user }) {
             </div>
             <div>
               <h2 className="text-lg font-bold text-gray-900">
-                Withdraw to bank
+                Withdraw earnings
               </h2>
               <p className="text-xs text-gray-500">
                 Available: <strong>{money(availableBalance)}</strong>
@@ -470,6 +473,24 @@ function SellerEarnings({ user }) {
             layout="vertical"
             className="pt-5"
           >
+            <Form.Item
+              name="method"
+              initialValue="bank"
+              label={<span className="text-sm font-medium text-gray-700">Send to</span>}
+            >
+              <Select
+                size="large"
+                onChange={(v) => setMethod(v)}
+                options={[
+                  { label: "Bank transfer", value: "bank" },
+                  { label: "PayPal", value: "paypal" },
+                  { label: "Payoneer", value: "payoneer" },
+                ]}
+              />
+            </Form.Item>
+
+            {method === "bank" ? (
+              <>
             <Form.Item
               name="bankName"
               label={<span className="text-sm font-medium text-gray-700">Bank name</span>}
@@ -515,6 +536,20 @@ function SellerEarnings({ user }) {
               </Form.Item>
             </div>
 
+              </>
+            ) : (
+              <Form.Item
+                name="payoutAccount"
+                label={<span className="text-sm font-medium text-gray-700">{method === "paypal" ? "PayPal email" : "Payoneer payee id"}</span>}
+                rules={[
+                  { required: true, message: method === "paypal" ? "Enter your PayPal email" : "Enter your Payoneer payee id" },
+                  ...(method === "paypal" ? [{ type: "email", message: "Enter a valid email" }] : []),
+                ]}
+              >
+                <Input size="large" placeholder={method === "paypal" ? "you@example.com" : "Payee id from Payoneer"} />
+              </Form.Item>
+            )}
+
             <Form.Item
               name="withdrawalAmount"
               label={
@@ -544,8 +579,9 @@ function SellerEarnings({ user }) {
             </Form.Item>
 
             <div className="text-[11px] text-gray-500 -mt-1 mb-4">
-              Funds typically arrive in 2–5 business days. A small bank
-              processing fee may apply.
+              {method === "bank"
+                ? "Bank transfers are paid by our finance team, typically within 2–5 business days. A small bank processing fee may apply."
+                : `Sent to your ${method === "paypal" ? "PayPal" : "Payoneer"} account as soon as the request is approved.`}
             </div>
 
             <div className="flex items-center justify-end gap-2">

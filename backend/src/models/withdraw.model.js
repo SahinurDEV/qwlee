@@ -10,15 +10,18 @@ const withdrawalSchema = new mongoose.Schema(
     },
     bankName: {
       type: String,
-      required: true,
+      // Only bank transfers need bank details.
+      required: function () { return (this.method || "bank") === "bank"; },
     },
     accountNumber: {
       type: String,
-      required: true,
+      // Only bank transfers need bank details.
+      required: function () { return (this.method || "bank") === "bank"; },
     },
     accountType: {
       type: String,
-      required: true,
+      // Only bank transfers need bank details.
+      required: function () { return (this.method || "bank") === "bank"; },
     },
     withdrawalAmount: {
       type: Number,
@@ -26,10 +29,20 @@ const withdrawalSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["Pending", "Completed", "Failed"],
+      enum: ["Pending", "Processing", "Completed", "Failed"],
       default: "Pending",
     },
     cancelReason: { type: String, default: "" },
+    // Payout method (see payouts.service).
+    method: { type: String, enum: ["bank", "paypal", "payoneer"], default: "bank" },
+    payoutAccount: { type: String, default: "" }, // PayPal email or Payoneer payee id
+    payout: {
+      provider: String, // paypal | payoneer | demo | manual
+      id: String,
+      status: String,
+      error: String,
+      at: Date,
+    },
   },
   { timestamps: true }
 );

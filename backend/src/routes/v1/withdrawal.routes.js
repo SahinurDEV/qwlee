@@ -7,6 +7,9 @@ const router = express.Router();
 router
   .route("/my")
   .get(auth("freelancer"), withdrawalController.getSingleUserWithdrawals);
+// Which payout methods are live (real provider) or demo.
+router.get("/methods", auth("common"), (req, res) =>
+  res.json({ code: 200, message: "OK", data: { attributes: { bank: "manual", ...require("../../services/payouts.service").status() } } }));
 router
   .route("/single")
   .get(auth("admin"), withdrawalController.getSingleWithdrawal);
