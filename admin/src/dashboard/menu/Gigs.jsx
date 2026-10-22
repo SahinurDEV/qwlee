@@ -36,7 +36,9 @@ import cls from "../../utils/cls";
 import { formatDate, formatMoney, formatNumber, truncate } from "../../utils/format";
 import getImageUrl from "../../utils/getImageUrl";
 import { frontendUrl } from "../../baseUrl";
-import { act } from "../control/ui";
+import { act, promptText } from "../control/ui";
+import { adminFetch } from "../../utils/adminApi";
+import { confirmModal } from "../../common/confirm";
 import GigEditModal from "../control/GigEditModal";
 
 const STATUS_TABS = [
@@ -118,7 +120,33 @@ export default function Gigs() {
   const safePage = Math.min(page, totalPages);
   const pageRows = visible.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
+  const [picked, setPicked] = useState(() => new Set());
+  const gid = (g) => String(g._id || g.id);
+  const allPicked = pageRows.length > 0 && pageRows.every((g) => picked.has(gid(g)));
+  const toggle = (id) => setPicked((p) => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  async function bulk(action, status) {
+    const ids = [...picked];
+    let reason = "";
+    if (status === "denied" || status === "requires-modification" || status === "paused") {
+      reason = await promptText({ title: `${status === "denied" ? "Deny" : status === "paused" ? "Pause" : "Request changes on"} ${ids.length} gigs`, description: "The note is shown to each seller on their dashboard.", placeholder: "Note for the sellers" });
+      if (reason === null) return;
+    } else if (!(await confirmModal({ title: `${action === "status" ? `Set ${ids.length} gigs to ${status}` : `${action === "feature" ? "Feature" : "Unfeature"} ${ids.length} gigs`}?`, confirmText: "Confirm" }))) return;
+    try {
+      const r = await adminFetch("/admin/bulk/gigs", { method: "POST", body: { ids, action, status, reason } });
+      toast.success(`${r.modified} gigs updated`);
+      setPicked(new Set());
+      refetch();
+    } catch (e) {
+      toast.error(e.message);
+    }
+  }
+
   const columns = [
+    {
+      key: "pick",
+      label: <input type="checkbox" aria-label="Select page" checked={allPicked} onChange={() => setPicked((p) => { const n = new Set(p); pageRows.forEach((g) => (allPicked ? n.delete(gid(g)) : n.add(gid(g)))); return n; })} />,
+      render: (g) => <input type="checkbox" aria-label="Select gig" checked={picked.has(gid(g))} onChange={() => toggle(gid(g))} onClick={(e) => e.stopPropagation()} />,
+    },
     {
       key: "gig",
       label: "Gig",
@@ -326,6 +354,18 @@ export default function Gigs() {
         </div>
       </div>
 
+      {picked.size ? (
+        <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg bg-primary-50 border border-primary-100 px-3 py-2 text-sm" data-testid="gig-bulk-bar">
+          <span className="font-medium">{picked.size} selected</span>
+          <Button size="sm" onClick={() => bulk("status", "active")}>Approve</Button>
+          <Button size="sm" variant="secondary" onClick={() => bulk("status", "requires-modification")}>Request changes</Button>
+          <Button size="sm" variant="secondary" onClick={() => bulk("status", "paused")}>Pause</Button>
+          <Button size="sm" variant="danger" onClick={() => bulk("status", "denied")}>Deny</Button>
+          <Button size="sm" variant="secondary" onClick={() => bulk("feature")}>Feature</Button>
+          <Button size="sm" variant="secondary" onClick={() => bulk("unfeature")}>Unfeature</Button>
+          <button type="button" className="ml-auto text-xs text-ink-500 underline" onClick={() => setPicked(new Set())}>Clear</button>
+        </div>
+      ) : null}
       <DataTable
         columns={columns}
         rows={pageRows}

@@ -14,6 +14,7 @@ const jwtVerify = async (payload, done) => {
       throw new Error("Invalid token type");
     }
     const user = await User.findById(payload.sub);
+    if (user?.isBan) await require("../services/moderation.service").liftIfExpired(user);
     if (!user || user.isBan) {
       return done(null, false);
     }

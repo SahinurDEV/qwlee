@@ -91,6 +91,38 @@ export async function act({ title, description, danger, path, method = "POST", b
   }
 }
 
+// Ban dialog: reason plus duration. Resolves {reason, days} or null.
+export function promptBan({ title = "Ban user", count } = {}) {
+  return new Promise((resolve) => {
+    let reason = "";
+    let days = "";
+    Modal.confirm({
+      title,
+      centered: true,
+      okText: "Ban",
+      okButtonProps: { danger: true },
+      content: (
+        <div className="space-y-2">
+          <p className="text-sm text-ink-600">{count ? `${count} accounts will` : "They will"} be signed out and blocked. The reason is emailed and shown when they try to sign in, and they can appeal.</p>
+          <textarea autoFocus rows={3} aria-label="Ban reason" className="w-full rounded-lg border border-ink-200 p-2 text-sm" placeholder="Reason shown to the user" onChange={(e) => (reason = e.target.value)} />
+          <label className="text-sm flex items-center gap-2">Duration
+            <select aria-label="Ban duration" defaultValue="" onChange={(e) => (days = e.target.value)} className="border border-ink-200 rounded-lg px-2 py-1 text-sm">
+              <option value="">Permanent</option>
+              <option value="1">1 day</option>
+              <option value="3">3 days</option>
+              <option value="7">7 days</option>
+              <option value="30">30 days</option>
+              <option value="90">90 days</option>
+            </select>
+          </label>
+        </div>
+      ),
+      onOk: () => resolve({ reason, days: days ? Number(days) : undefined }),
+      onCancel: () => resolve(null),
+    });
+  });
+}
+
 export function promptText({ title, description, placeholder }) {
   return new Promise((resolve) => {
     let value = "";

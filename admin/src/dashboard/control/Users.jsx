@@ -12,7 +12,8 @@ import Button from "../../common/Button";
 import StatusPill from "../../common/StatusPill";
 import { adminFetch, qs, useAdminQuery } from "../../utils/adminApi";
 import { formatDate, formatMoney } from "../../utils/format";
-import { act, ErrorNote, Field, input, Pager, select, Tabs, Td, Th, Empty } from "./ui";
+import { act, ErrorNote, Field, input, Pager, select, Tabs, Td, Th, Empty, promptBan } from "./ui";
+import { confirmModal } from "../../common/confirm";
 
 const ROLES = [
   { v: "", label: "All" },
@@ -31,6 +32,28 @@ export default function Users() {
   const { data, loading, error, reload } = useAdminQuery(`/admin/users${qs({ search: term, role, status, page, limit: 15 })}`);
   const me = useAdminQuery("/admin/me");
   const isSuper = me.data?.adminRole === "super";
+  const [picked, setPicked] = useState(() => new Set());
+  const pageIds = (data?.results || []).filter((u) => u.role !== "admin").map((u) => u.id);
+  const allPicked = pageIds.length > 0 && pageIds.every((id) => picked.has(id));
+  const toggle = (id) => setPicked((p) => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const bulk = async (action) => {
+    const ids = [...picked];
+    let extra = {};
+    if (action === "ban") {
+      const r = await promptBan({ title: `Ban ${ids.length} users`, count: ids.length });
+      if (!r) return;
+      extra = r;
+    } else if (!(await confirmModal({ title: action === "unban" ? `Unban ${ids.length} users?` : `Sign ${ids.length} users out everywhere?`, confirmText: "Confirm" }))) return;
+    try {
+      const r = await adminFetch("/admin/bulk/users", { method: "POST", body: { ids, action, ...extra } });
+      if (r.failed) toast(`${r.done} done, ${r.failed} skipped: ${r.results.filter((x) => !x.ok).map((x) => x.error).slice(0, 2).join("; ")}`);
+      else toast.success(`${r.done} done`);
+      setPicked(new Set());
+      reload();
+    } catch (e) {
+      toast.error(e.message);
+    }
+  };
 
   return (
     <div>
@@ -51,17 +74,27 @@ export default function Users() {
           </div>
         </div>
         <ErrorNote error={error} />
+        {picked.size ? (
+          <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg bg-primary-50 border border-primary-100 px-3 py-2 text-sm" data-testid="bulk-bar">
+            <span className="font-medium">{picked.size} selected</span>
+            <Button size="sm" variant="danger" onClick={() => bulk("ban")}>Ban…</Button>
+            <Button size="sm" variant="secondary" onClick={() => bulk("unban")}>Unban</Button>
+            <Button size="sm" variant="secondary" onClick={() => bulk("logout")}>Sign out everywhere</Button>
+            <button type="button" className="ml-auto text-xs text-ink-500 underline" onClick={() => setPicked(new Set())}>Clear</button>
+          </div>
+        ) : null}
         {loading && !data ? <Empty>Loading…</Empty> : null}
         {data?.results?.length === 0 ? <Empty>No users match.</Empty> : null}
         {data?.results?.length ? (
           <div className="overflow-x-auto">
             <table className="w-full" data-testid="users-table">
               <thead className="border-b border-ink-100">
-                <tr><Th>User</Th><Th>Role</Th><Th>Status</Th><Th>Balance</Th><Th>Joined</Th><Th className="text-right">Actions</Th></tr>
+                <tr><Th><input type="checkbox" aria-label="Select page" checked={allPicked} onChange={() => setPicked((p) => { const n = new Set(p); pageIds.forEach((id) => (allPicked ? n.delete(id) : n.add(id))); return n; })} /></Th><Th>User</Th><Th>Role</Th><Th>Status</Th><Th>Balance</Th><Th>Joined</Th><Th className="text-right">Actions</Th></tr>
               </thead>
               <tbody className="divide-y divide-ink-100">
                 {data.results.map((u) => (
                   <tr key={u.id}>
+                    <Td>{u.role === "admin" ? null : <input type="checkbox" aria-label={`Select ${u.email}`} checked={picked.has(u.id)} onChange={() => toggle(u.id)} />}</Td>
                     <Td>
                       <div className="font-medium text-ink-900">{u.fullName || u.username}</div>
                       <div className="text-xs text-ink-500">{u.email}</div>
@@ -72,7 +105,7 @@ export default function Users() {
                     </Td>
                     <Td>
                       <div className="flex flex-wrap gap-1">
-                        {u.isBan ? <StatusPill status="error" label="Banned" /> : <StatusPill status="ok" label="Active" />}
+                        {u.isBan ? <StatusPill status="error" label={u.bannedUntil ? `Banned until ${formatDate(u.bannedUntil)}` : "Banned"} /> : <StatusPill status="ok" label="Active" />}
                         {u.isEmailVerified ? null : <StatusPill status="warning" label="Unverified" />}
                       </div>
                     </Td>
@@ -133,7 +166,17 @@ function ManageUser({ user, isSuper, onClose, onChanged }) {
             {user.isBan ? (
               <Button size="sm" variant="secondary" onClick={() => act({ title: "Unban this user?", path: `/admin/users/${user.id}/unban`, method: "PATCH", done, success: "User unbanned" })}>Unban</Button>
             ) : (
-              <Button size="sm" variant="danger" onClick={() => act({ title: "Ban this user", description: "They will be signed out and blocked. The reason is emailed to them.", askReason: "Reason shown to the user", path: `/admin/users/${user.id}/ban`, method: "PATCH", done, success: "User banned" })}>Ban</Button>
+              <Button size="sm" variant="danger" onClick={async () => {
+                const r = await promptBan({ title: "Ban this user" });
+                if (!r) return;
+                try {
+                  await adminFetch(`/admin/users/${user.id}/ban`, { method: "PATCH", body: r });
+                  toast.success(r.days ? `Banned for ${r.days} days` : "User banned");
+                  done();
+                } catch (e) {
+                  toast.error(e.message);
+                }
+              }}>Ban</Button>
             )}
             <Button size="sm" variant="secondary" onClick={() => act({ title: "Send a password reset email?", description: "They receive a one-time code to choose a new password.", path: `/admin/users/${user.id}/reset-password`, done, success: "Reset email sent" })}>Send password reset</Button>
             <Button size="sm" variant="secondary" onClick={() => act({ title: "Sign this user out everywhere?", description: "All their current sessions end immediately.", path: `/admin/users/${user.id}/logout-all`, done, success: "Signed out everywhere" })}>Sign out everywhere</Button>

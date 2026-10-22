@@ -125,11 +125,15 @@ const login = catchAsync(async (req, res) => {
   if (isUser.isEmailVerified === false) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Email not verified");
   }
+  if (isUser.isBan === true) await require("../services/moderation.service").liftIfExpired(isUser);
   if (isUser.isBan === true) {
     const reason =
-      isUser.banReason ||
-      "Your account has been suspended by an administrator.";
-    throw new ApiError(httpStatus.FORBIDDEN, `BANNED:${reason}`);
+      (isUser.banReason ||
+      "Your account has been suspended by an administrator.") +
+      (isUser.bannedUntil ? `\n\nSuspended until ${new Date(isUser.bannedUntil).toUTCString()}.` : "");
+    // A short-lived appeal token lets them appeal without signing in.
+    const appealToken = require("../services/moderation.service").appealToken(isUser._id);
+    return res.status(httpStatus.FORBIDDEN).json({ code: 403, message: `BANNED:${reason}`, data: { attributes: { appealToken } } });
   }
   const user = isUser;
 
