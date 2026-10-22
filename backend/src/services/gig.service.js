@@ -43,6 +43,10 @@ const createGig = async (data) => {
 };
 
 const queryGigs = async (filter, options, { excludeUserId, viewer } = {}) => {
+  // Admin-featured gigs: ?featured=true filters; otherwise they sort first.
+  const featuredOnly = filter.featured === "true" || filter.featured === true;
+  delete filter.featured;
+  if (!options.sortBy) options.sortBy = "featured:desc,createdAt";
   // Price range
   if (filter.minPrice || filter.maxPrice) {
     filter.price = {};
@@ -170,6 +174,7 @@ const queryGigs = async (filter, options, { excludeUserId, viewer } = {}) => {
     }
   }
 
+  if (featuredOnly) query.featured = true;
   const gigs = await Gig.paginate(query, options);
   return gigs;
 };

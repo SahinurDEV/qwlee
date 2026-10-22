@@ -180,6 +180,10 @@ const userSchema = mongoose.Schema(
     },
     isDeleted: { type: Boolean, default: false },
     isBan: { type: Boolean, default: false },
+    // Admin sub-role (only meaningful when role === "admin"). Missing
+    // means "super" so existing admins keep full access.
+    adminRole: { type: String, enum: ["super", "moderator", "support", "finance"], default: undefined },
+    tokensValidAfter: { type: Date, default: null, private: true },
     // Reason shown on the sign-in page when a banned user tries to log
     // in. Set by the admin via PATCH /admin/users/:id/ban.
     banReason: { type: String, default: "" },
