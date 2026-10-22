@@ -29,13 +29,12 @@ const router = express.Router();
 
 const defaultRoutes = [
   {
-<<<<<<< HEAD
     path: "/files",
     route: require("./files.routes"),
-=======
+  },
+  {
     path: "/newsletter",
     route: require("./newsletter.routes"),
->>>>>>> main
   },
   {
     path: "/auth",
