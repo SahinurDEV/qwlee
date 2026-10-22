@@ -34,10 +34,12 @@ const assertEnabled = () => {
 };
 
 /** Build the Google consent URL plus the nonce to bind in a cookie. */
-const startAuth = ({ from } = {}) => {
+const safeRef = (r) => (typeof r === "string" && /^[a-f0-9]{8}$/.test(r) ? r : undefined);
+
+const startAuth = ({ from, ref } = {}) => {
   assertEnabled();
   const nonce = crypto.randomBytes(16).toString("hex");
-  const state = jwt.sign({ n: nonce, from: safeFrom(from) }, config.jwt.secret, { expiresIn: "10m" });
+  const state = jwt.sign({ n: nonce, from: safeFrom(from), ...(safeRef(ref) ? { ref: safeRef(ref) } : {}) }, config.jwt.secret, { expiresIn: "10m" });
   const url = new URL(AUTH_URL);
   url.search = new URLSearchParams({
     client_id: process.env.GOOGLE_CLIENT_ID,
@@ -115,6 +117,8 @@ const handleCallback = async (req) => {
   }
 
   const user = await findOrCreateUser(claims);
+  // Brand-new Google accounts honour a referral link (?ref=) like the form.
+  if (user.$locals?.created && safeRef(st.ref)) await require("./referral.service").attach(user, st.ref);
   if (user.isDeleted) return fail("account_deleted");
   if (user.isBan) return fail("banned");
 
@@ -146,7 +150,7 @@ const findOrCreateUser = async (claims) => {
     await user.save();
     return user;
   }
-  return User.create({
+  const created = await User.create({
     email,
     fullName: String(claims.name || email.split("@")[0]).slice(0, 80),
     username: await deriveUniqueUsername(email.split("@")[0]),
@@ -155,6 +159,8 @@ const findOrCreateUser = async (claims) => {
     googleId: claims.sub,
     image: claims.picture || "",
   });
+  created.$locals.created = true;
+  return created;
 };
 
 /** Swap the single-use login code for the user (tokens issued by caller). */

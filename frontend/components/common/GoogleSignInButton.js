@@ -20,7 +20,9 @@ export default function GoogleSignInButton({ label = "Continue with Google" }) {
   }, []);
   if (!enabled) return null;
   const from = params.get("from") || "/";
-  const href = `${baseUrl}/auth/google?from=${encodeURIComponent(from.startsWith("/") && !from.startsWith("//") ? from : "/")}`;
+  // Referral code from a sign-up link (stored by SignUp for this session).
+  const ref = params.get("ref") || (typeof window !== "undefined" ? sessionStorage.getItem("qwlee:ref") || "" : "");
+  const href = `${baseUrl}/auth/google?from=${encodeURIComponent(from.startsWith("/") && !from.startsWith("//") ? from : "/")}${/^[a-f0-9]{8}$/.test(ref) ? `&ref=${ref}` : ""}`;
   return (
     <>
       <a
