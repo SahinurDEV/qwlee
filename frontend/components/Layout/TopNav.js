@@ -48,11 +48,13 @@ import QwleeLogo from "@/components/common/QwleeLogo";
 import Avatar from "@/components/common/Avatar";
 import SearchSuggestions from "@/components/Search/SearchSuggestions";
 import CategoriesMenu from "./CategoriesMenu";
+import { useI18n } from "@/components/Context/I18nProvider";
 import NotificationsMenu from "./NotificationsMenu";
 import MessagesMenu from "./MessagesMenu";
 import MobileDrawer from "./Header/MobileDrawer";
 
 export default function TopNav() {
+  const { t } = useI18n();
   const user = useUser();
   const router = useRouter();
   const pathname = usePathname();
@@ -282,7 +284,7 @@ export default function TopNav() {
             className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-rose-600 hover:bg-rose-50 rounded-lg"
           >
             <IoLogOutOutline className="w-4 h-4" />
-            Sign out
+            {t("signOut")}
           </button>
         </div>
       </div>
@@ -312,7 +314,7 @@ export default function TopNav() {
               right nav to the right edge. */}
           {showInlineSearch && (
             <div className="hidden md:block flex-1 min-w-0 max-w-xl">
-              <SearchSuggestions size="sm" placeholder="Find a service…" />
+              <SearchSuggestions size="sm" placeholder={t("findService")} />
             </div>
           )}
 
@@ -326,7 +328,7 @@ export default function TopNav() {
               href="/gig"
               className="px-3 py-2 rounded text-gray-700 hover:text-emerald-700 hover:bg-emerald-50 transition"
             >
-              Explore
+              {t("explore")}
             </Link>
             {/* "Switch to Buying / Switch to Selling" pill removed —
                 the same toggle is still available inside the user
@@ -336,7 +338,7 @@ export default function TopNav() {
                 href="/sign-in"
                 className="ml-1 px-3 py-2 rounded text-gray-700 hover:text-emerald-700 transition"
               >
-                Sign in
+                {t("signIn")}
               </Link>
             )}
             {!authedUser && (
@@ -344,7 +346,7 @@ export default function TopNav() {
                 href="/sign-up"
                 className="ml-1 px-4 py-2 rounded-lg bg-emerald-600 text-white font-medium hover:bg-emerald-700 transition"
               >
-                Join
+                {t("join")}
               </Link>
             )}
 
