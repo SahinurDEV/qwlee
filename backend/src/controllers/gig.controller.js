@@ -96,7 +96,7 @@ const getGigs = catchAsync(async (req, res) => {
     'minRating',
     'level',
   ]);
-  const options = pick(req.query, ['sortBy', 'limit', 'page', 'populate']);
+  const options = pick(req.query, ['sortBy', 'limit', 'page']);
   // When the caller is signed in, hide their own gigs from the public
   // marketplace — a freelancer browsing in Buying mode shouldn't see
   // gigs they themselves sell (you can't buy from yourself). Skip the
@@ -105,7 +105,10 @@ const getGigs = catchAsync(async (req, res) => {
   // gig detail page or see their own gigs on their profile.
   const isLookup = !!filter.slug;
   const excludeUserId = !isLookup ? req.user?.id : undefined;
-  const result = await gigService.queryGigs(filter, options, { excludeUserId });
+  const result = await gigService.queryGigs(filter, options, {
+    excludeUserId,
+    viewer: req.user ? { id: String(req.user.id), role: req.user.role } : null,
+  });
   res.status(httpStatus.OK).json(
     response({
       message: 'All Gigs',

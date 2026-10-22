@@ -34,6 +34,11 @@ const hosts = new Set([
 
 const nextConfig = {
   images: {
+    // The built-in optimizer fetches every remote image server-side. That
+    // breaks behind proxies / split DNS (and is an SSRF surface), so by
+    // default images are served as-is. Set NEXT_IMAGE_OPTIMIZE=true at
+    // build time to enable it.
+    unoptimized: process.env.NEXT_IMAGE_OPTIMIZE !== "true",
     remotePatterns: [...hosts].map((hostname) => ({ hostname })),
   },
 };

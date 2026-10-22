@@ -1,3 +1,4 @@
+const { assertOrderParty } = require("../utils/access");
 const httpStatus = require("http-status");
 const pick = require("../utils/pick");
 const ApiError = require("../utils/ApiError");
@@ -75,6 +76,11 @@ const getFileTypeFromMimetype = (mimeType) => {
 const addOrderMessage = catchAsync(async (req, res, next) => {
   const sender = req.user.id;
   const { message, receiver, orderId, deliveryMessage } = req.body;
+  const partyOrder = await assertOrderParty(orderId, sender);
+  const otherParty = [String(partyOrder.clientId), String(partyOrder.freelancerId)].find((id) => id !== String(sender));
+  if (receiver && String(receiver) !== otherParty) {
+    throw new ApiError(httpStatus.FORBIDDEN, "Receiver is not on this order");
+  }
 
   let deliveryDetails = null;
   let messageType = "text";
@@ -166,6 +172,7 @@ const getOrderMessages = catchAsync(async (req, res, next) => {
   if (!orderId) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Order  ID is required.");
   }
+  await assertOrderParty(orderId, req.user.id);
   // Fetch messages
   const result = await orderMessageService.getOrderMessages(orderId, options);
   res.status(httpStatus.OK).json(

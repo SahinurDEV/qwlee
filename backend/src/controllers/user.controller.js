@@ -1,3 +1,4 @@
+const { toPublicUser } = require("../utils/publicUser");
 const httpStatus = require("http-status");
 const pick = require("../utils/pick");
 const ApiError = require("../utils/ApiError");
@@ -25,7 +26,11 @@ const createUser = catchAsync(async (req, res) => {
 const getUsers = catchAsync(async (req, res) => {
   const filter = pick(req.query, ["fullName", "role", "username", "email"]);
   const options = pick(req.query, ["sortBy", "limit", "page"]);
-  const result = await userService.queryUsers(filter, options);
+  const isAdmin = req.user?.role === "admin";
+  const result = await userService.queryUsers(filter, options, { isAdmin });
+  if (!isAdmin) {
+    result.results = result.results.map(toPublicUser);
+  }
   res.status(httpStatus.OK).json(
     response({
       message: "All Users",
@@ -41,6 +46,9 @@ const getUser = catchAsync(async (req, res) => {
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, "User not found");
   }
+  const isSelfOrAdmin =
+    req.user && (req.user.role === "admin" || String(req.user.id) === String(user.id));
+  if (!isSelfOrAdmin) user = toPublicUser(user);
   res.status(httpStatus.OK).json(
     response({
       message: "User",

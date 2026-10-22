@@ -1,3 +1,4 @@
+const { escapeRegex } = require("../utils/publicUser");
 const httpStatus = require("http-status");
 const ApiError = require("../utils/ApiError");
 const { sendEmailVerification } = require("./email.service");
@@ -20,16 +21,23 @@ const createUser = async (userBody) => {
   return User.create({ ...userBody, oneTimeCode });
 };
 
-const queryUsers = async (filter, options) => {
+const queryUsers = async (filter, options, { isAdmin = false } = {}) => {
   const query = {};
+  if (!isAdmin) {
+    // Public directory: only active, non-banned sellers; never search by email.
+    delete filter.email;
+    query.role = "freelancer";
+    query.isDeleted = { $ne: true };
+    query.isBan = { $ne: true };
+  }
   // Loop through each filter field and add conditions if they exist
   for (const key of Object.keys(filter)) {
     if (
       (key === "fullName" || key === "email" || key === "username") &&
       filter[key] !== ""
     ) {
-      query[key] = { $regex: filter[key], $options: "i" }; // Case-insensitive regex search for name
-    } else if (filter[key] !== "") {
+      query[key] = { $regex: escapeRegex(filter[key]), $options: "i" }; // Case-insensitive search
+    } else if (filter[key] !== "" && !(key === "role" && !isAdmin)) {
       query[key] = filter[key];
     }
   }
@@ -122,6 +130,7 @@ const aggregatePublicProfile = async (matchStage) => {
         from: "gigs",
         localField: "_id",
         foreignField: "userId",
+        pipeline: [{ $match: { gigStatus: "active", isDeleted: { $ne: true } } }],
         as: "gigs",
       },
     },
@@ -183,6 +192,7 @@ const getUsersPublicById = async (userId) => {
         from: "gigs",
         localField: "_id",
         foreignField: "userId",
+        pipeline: [{ $match: { gigStatus: "active", isDeleted: { $ne: true } } }],
         as: "gigs",
       },
     },
@@ -211,7 +221,6 @@ const getUsersPublicById = async (userId) => {
     {
       $project: {
         fullName: 1,
-        email: 1,
         gender: 1,
         username: 1,
         image: 1,
@@ -219,7 +228,6 @@ const getUsersPublicById = async (userId) => {
         role: 1,
         intro: 1,
         about: 1,
-        balance: 1,
         skills: 1,
         online: 1,
         isProfileCompleted: 1,

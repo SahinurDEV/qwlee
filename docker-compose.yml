@@ -27,6 +27,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: 7171
+      SOCKET_PORT: 8181
       MONGODB_URL: mongodb://mongo:27017/qwlee
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:8000}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8000,http://localhost:4000}

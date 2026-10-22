@@ -23,7 +23,7 @@ const io = socketIo(server, {
   perMessageDeflate: false,
 });
 
-const PORT = 8181;
+const PORT = Number(process.env.SOCKET_PORT) || 8181;
 
 io.use((socket, next) => {
   // Best-effort JWT verification. We don't fail unauthenticated sockets —
