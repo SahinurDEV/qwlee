@@ -36,9 +36,9 @@ const gigUnlove = catchAsync(async (req, res) => {
 
 const gigLoveList = catchAsync(async (req, res) => {
   const userId = req.user.id;
-  const filter = pick(req.query, ["fullName", "role", "username", "email"]);
+  const filter = {};
+  if (typeof req.query.collection === "string") filter.collectionName = req.query.collection.trim().slice(0, 40);
   const options = pick(req.query, ["sortBy", "limit", "page"]);
-  console.log(userId)
   const result = await gigLoveService.gigLoveList(filter, options, userId);
   res
     .status(httpStatus.OK)

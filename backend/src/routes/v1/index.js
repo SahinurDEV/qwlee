@@ -53,6 +53,10 @@ const defaultRoutes = [
     route: require("./help.routes"),
   },
   {
+    path: "/collections",
+    route: require("./collections.routes"),
+  },
+  {
     path: "/sessions",
     route: require("./sessions.routes"),
   },

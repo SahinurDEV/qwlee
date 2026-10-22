@@ -9,7 +9,7 @@ import { baseApi } from "../api/baseApi";
 const getMyListApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getMyList: builder.query({
-      query: () => ({ url: "/gig/love", method: "GET" }),
+      query: () => ({ url: "/gig/love?limit=200", method: "GET" }),
       providesTags: ["ReactLove"],
     }),
     addToWishlist: builder.mutation({
