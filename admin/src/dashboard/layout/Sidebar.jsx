@@ -25,6 +25,8 @@ import {
 } from "react-icons/io5";
 import cls from "../../utils/cls";
 import { confirmModal } from "../../common/confirm";
+import { useAdminQuery } from "../../utils/adminApi";
+import { TbChartLine, TbSpeakerphone, TbShieldLock, TbUsersGroup, TbGavel, TbBuildingBank, TbAdjustments } from "react-icons/tb";
 
 const NAV = [
   {
@@ -38,12 +40,14 @@ const NAV = [
       { to: "/dashboard/gigs", label: "Gigs", icon: BsClipboardData },
       { to: "/dashboard/disputes", label: "Disputes", icon: TbFlag },
       { to: "/dashboard/category", label: "Categories", icon: MdCategory },
+      { to: "/dashboard/moderation", label: "Moderation", icon: TbGavel, perm: "moderation" },
       { to: "/dashboard/searches", label: "Search logs", icon: TbSearch },
     ],
   },
   {
     section: "People",
     items: [
+      { to: "/dashboard/users", label: "All users", icon: TbUsersGroup },
       { to: "/dashboard/frelancer", label: "Freelancers", icon: FaUsersLine },
       { to: "/dashboard/buyerlist", label: "Buyers", icon: BiSolidUserPlus },
       { to: "/dashboard/seller-levels", label: "Seller levels", icon: AiOutlineSafetyCertificate },
@@ -52,6 +56,7 @@ const NAV = [
   {
     section: "Finance",
     items: [
+      { to: "/dashboard/escrow", label: "Payments & escrow", icon: TbBuildingBank, perm: "finance" },
       { to: "/dashboard/earnings", label: "Earnings", icon: AiOutlineSafetyCertificate },
       { to: "/dashboard/withdraw", label: "Withdrawals", icon: PiHandWithdraw },
     ],
@@ -61,6 +66,8 @@ const NAV = [
     items: [
       { to: "/dashboard/blog", label: "Blog", icon: TbLogs },
       { to: "/dashboard/reports", label: "Reports", icon: TbReportAnalytics },
+      { to: "/dashboard/analytics", label: "Analytics", icon: TbChartLine, perm: "analytics" },
+      { to: "/dashboard/broadcast", label: "Announcements", icon: TbSpeakerphone, perm: "broadcast" },
     ],
   },
   {
@@ -81,7 +88,12 @@ const NAV = [
   },
   {
     section: "System",
-    items: [{ to: "/dashboard/setting", label: "Settings", icon: CiSettings }],
+    items: [
+      { to: "/dashboard/site-settings", label: "Site settings", icon: TbAdjustments, perm: "settings" },
+      { to: "/dashboard/setting", label: "Payments & email", icon: CiSettings, perm: "settings" },
+      { to: "/dashboard/team", label: "Admin team", icon: TbShieldLock, perm: "settings" },
+      { to: "/dashboard/audit", label: "Audit log", icon: TbLogs, perm: "settings" },
+    ],
   },
 ];
 
@@ -91,6 +103,11 @@ export default function Sidebar({ mobileOpen, onMobileClose }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
+  // Hide sections the admin's sub-role can't use (the API enforces it).
+  const me = useAdminQuery("/admin/me");
+  const perms = me.data?.permissions || ["*"];
+  const allowed = (item) => !item.perm || perms.includes("*") || perms.includes(item.perm);
+  const nav = NAV.map((g) => ({ ...g, items: g.items.filter(allowed) })).filter((g) => g.items.length);
 
   useEffect(() => {
     try {
@@ -191,7 +208,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }) {
         )}
 
         <nav className="flex-1 overflow-y-auto py-3">
-          {NAV.map((group) => (
+          {nav.map((group) => (
             <div key={group.section} className="mb-3">
               {!collapsed && (
                 <div className="px-5 mt-3 mb-1 text-[10px] font-semibold uppercase tracking-wide text-ink-400">

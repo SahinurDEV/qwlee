@@ -21,6 +21,7 @@ import SearchSuggestions from "@/components/Search/SearchSuggestions";
 import { base } from "@/lib/constant";
 import trackSearch from "@/utils/trackSearch";
 import useUser from "@/hooks/useUser";
+import useSiteConfig from "@/hooks/useSiteConfig";
 
 const ROTATING_SUGGESTIONS = [
   "Next.js developer",
@@ -46,6 +47,7 @@ const FALLBACK_TRENDING = [
 
 
 export default function HeroQwlee() {
+  const site = useSiteConfig();
   const router = useRouter();
   // Read auth state in a client-only effect so SSR + first client paint
   // match (cookies aren't visible during SSR). useUser() parses the
@@ -134,17 +136,23 @@ export default function HeroQwlee() {
             className="qwlee-rise mt-4 md:mt-5 text-2xl sm:text-3xl md:text-5xl font-bold tracking-tight text-gray-900"
             style={{ animationDelay: "100ms" }}
           >
-            Find the right freelancer{" "}
-            <span className="bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent">
-              for any project
-            </span>
+            {site?.homepage?.heroTitle ? (
+              site.homepage.heroTitle
+            ) : (
+              <>
+                Find the right freelancer{" "}
+                <span className="bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent">
+                  for any project
+                </span>
+              </>
+            )}
           </h1>
           <p
             className="qwlee-rise mt-3 md:mt-4 text-sm md:text-lg text-gray-600 max-w-2xl mx-auto"
             style={{ animationDelay: "160ms" }}
           >
-            Web, design, video, AI, and more — hire from a global marketplace
-            of vetted professionals.
+            {site?.homepage?.heroSubtitle ||
+              "Web, design, video, AI, and more — hire from a global marketplace of vetted professionals."}
           </p>
 
           {/* Search wrapper intentionally uses qwlee-fade (opacity only)

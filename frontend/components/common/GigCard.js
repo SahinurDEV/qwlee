@@ -65,6 +65,11 @@ export default function GigCard({ item }) {
             className="object-cover group-hover:scale-105 transition-transform duration-300"
             alt={item?.title || "gig"}
           />
+          {item?.featured ? (
+            <span className="absolute left-3 top-3 z-10 rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-gray-900 shadow-sm">
+              Featured
+            </span>
+          ) : null}
         </div>
 
         <div className="p-4 flex flex-col flex-1">

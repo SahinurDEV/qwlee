@@ -19,6 +19,7 @@ import { HiOutlineMailOpen } from "react-icons/hi";
 import { GoVerified } from "react-icons/go";
 import QwleeLogo from "@/components/common/QwleeLogo";
 import useUser from "@/hooks/useUser";
+import useSiteConfig, { featureOn } from "@/hooks/useSiteConfig";
 
 const MARKETPLACE_BASE = [
   { label: "Explore services", href: "/gig" },
@@ -66,8 +67,9 @@ export default function Footer() {
   }, [currentUserId]);
   const [email, setEmail] = useState("");
 
+  const site = useSiteConfig();
   const MARKETPLACE = [
-    ...MARKETPLACE_BASE,
+    ...MARKETPLACE_BASE.filter((l) => featureOn(site, "buyerRequests") || !l.href.startsWith("/requests")),
     user
       ? { label: "Sell on Qwlee", href: "/dashboard" }
       : { label: "Become a seller", href: "/sign-up" },

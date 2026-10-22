@@ -11,11 +11,13 @@ import TopNav from "./TopNav";
 import CategoryBar from "./CategoryBar";
 import Footer from "./Footer/Footer";
 import useActivityTracker from "@/hooks/useActivityTracker";
+import AnnouncementBar from "@/components/common/AnnouncementBar";
 
 const PrimaryLayout = ({ children, isFooterAdd }) => {
   useActivityTracker();
   return (
     <>
+      <AnnouncementBar />
       <TopNav />
       <CategoryBar />
       {children}

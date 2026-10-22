@@ -35,6 +35,9 @@ import StatusPill from "../../common/StatusPill";
 import cls from "../../utils/cls";
 import { formatDate, formatMoney, formatNumber, truncate } from "../../utils/format";
 import getImageUrl from "../../utils/getImageUrl";
+import { frontendUrl } from "../../baseUrl";
+import { act } from "../control/ui";
+import GigEditModal from "../control/GigEditModal";
 
 const STATUS_TABS = [
   { v: "all", label: "All" },
@@ -72,7 +75,8 @@ export default function Gigs() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [restoreGig] = useRestoreAdminGigMutation();
 
-  const { data, isFetching } = useGetAdminGigsQuery({});
+  const { data, isFetching, refetch } = useGetAdminGigsQuery({});
+  const [editTarget, setEditTarget] = useState(null);
   const rows = data?.data?.attributes?.results || [];
 
   const counts = useMemo(() => {
@@ -213,6 +217,33 @@ export default function Gigs() {
               <>
                 <button
                   type="button"
+                  onClick={() =>
+                    act({
+                      title: g.featured ? "Remove from featured?" : "Feature this gig?",
+                      description: g.featured ? "" : "Featured gigs sort first in search and carry a badge.",
+                      path: `/admin/gigs/${g._id || g.id}/feature`,
+                      method: "PATCH",
+                      body: { featured: !g.featured },
+                      success: g.featured ? "Unfeatured" : "Featured",
+                      done: () => refetch(),
+                    })
+                  }
+                  className={`text-xs font-medium inline-flex items-center gap-1 ${g.featured ? "text-amber-600" : "text-ink-600 hover:text-ink-900"}`}
+                  title="Feature gig"
+                  data-testid="feature-gig"
+                >
+                  {g.featured ? "★ Featured" : "☆ Feature"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditTarget(g)}
+                  className="text-xs font-medium text-ink-600 hover:text-ink-900 inline-flex items-center gap-1"
+                  title="Edit gig"
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
                   onClick={() => setModerateTarget(g)}
                   className="text-xs font-medium text-primary-700 hover:text-primary-800 inline-flex items-center gap-1"
                   title="Moderate gig status"
@@ -232,7 +263,7 @@ export default function Gigs() {
               </>
             )}
             <a
-              href={`http://localhost:8000/gig/${g.slug}`}
+              href={`${frontendUrl}/gig/${g.slug}`}
               target="_blank"
               rel="noreferrer"
               className="text-xs font-medium text-ink-600 hover:text-ink-900"
@@ -324,6 +355,7 @@ export default function Gigs() {
         gig={deleteTarget}
         onClose={() => setDeleteTarget(null)}
       />
+      {editTarget ? <GigEditModal gig={editTarget} onClose={() => setEditTarget(null)} onSaved={() => refetch()} /> : null}
     </div>
   );
 }
