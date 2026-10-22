@@ -1,5 +1,5 @@
 // Black-box API tests against a running, seeded stack.
-//   API_URL=http://localhost:7171 node --test tests/
+//   API_URL=http://localhost:7171 node --test tests/*.test.js
 // Uses only Node's built-in test runner and fetch (Node 18+).
 const { test, before } = require("node:test");
 const assert = require("node:assert/strict");

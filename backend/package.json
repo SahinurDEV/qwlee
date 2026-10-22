@@ -11,7 +11,7 @@
     "seed:gigs": "node seeders/index.js --only=users,categories,gigs",
     "seed:legacy": "node src/utils/seeder.js",
     "pm2": "pm2 start src/index.js --env production",
-    "test": "node --test tests/"
+    "test": "node --test tests/*.test.js"
   },
   "author": "Sahinur Islam",
   "license": "MIT",
