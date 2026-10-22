@@ -42,6 +42,7 @@ const NAV = [
       { to: "/dashboard/disputes", label: "Disputes", icon: TbFlag },
       { to: "/dashboard/category", label: "Categories", icon: MdCategory },
       { to: "/dashboard/moderation", label: "Moderation", icon: TbGavel, perm: "moderation" },
+      { to: "/dashboard/risk-flags", label: "Risk flags", icon: TbFlag, perm: "moderation" },
       { to: "/dashboard/searches", label: "Search logs", icon: TbSearch },
     ],
   },

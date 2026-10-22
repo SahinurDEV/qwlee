@@ -169,6 +169,20 @@ Buyers post a request (`/requests/new`) with a budget and deadline. Sellers brow
 
 After upgrading an existing database run `docker compose exec backend npm run migrate` (idempotent).
 
+## Keyword filters and risk flags
+
+Admin → Site settings → "Keyword filters & risk rules" holds the rules:
+- **Blocked words:** messages, custom offers, gigs, buyer requests and request offers containing one are refused with a 400.
+- **Flagged words:** the text is accepted, but a risk flag is opened for review.
+
+Words match whole words in any case, and phrases may span spaces or line breaks. A word inside a longer word (for example `scam` in `scampi`) doesn't match.
+
+Other rules also open flags:
+- With "flag contact info" on (the default), emails, phone numbers and messenger links (WhatsApp, Telegram, Skype and so on) in messages, offers and requests open a flag.
+- Orders are flagged when an account younger than 3 days places one at or above the set amount (default $500, 0 turns it off), or when a buyer places 3 or more orders within an hour.
+
+Moderators work the queue under Moderation → Risk flags (`GET /v1/admin/risk-flags?status=&kind=`, `PATCH /v1/admin/risk-flags/:id {status: open|dismissed|actioned, note}`). Changing the rules needs the settings permission.
+
 ## Manual setup (without Docker)
 
 Prerequisites: Node.js 20.9+ and MongoDB on `localhost:27017`.

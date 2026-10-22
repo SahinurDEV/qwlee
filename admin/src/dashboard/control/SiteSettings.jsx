@@ -98,6 +98,22 @@ export default function SiteSettings() {
               </div>
             </Card>
           ) : null}
+          {s.moderation ? (
+            <Card title="Keyword filters & risk rules" subtitle="Applied to messages, custom offers, gigs, buyer requests and offers. Flags appear under Moderation → Risk flags">
+              <div className="grid md:grid-cols-2 gap-3">
+                <Field label="Blocked words (refused; one per line)">
+                  <textarea rows={5} aria-label="Blocked words" className="w-full rounded-lg border border-ink-200 p-2 text-sm" value={Array.isArray(s.moderation.blockedWords) ? s.moderation.blockedWords.join("\n") : s.moderation.blockedWords} onChange={(e) => set("moderation", { blockedWords: e.target.value })} />
+                </Field>
+                <Field label="Flagged words (allowed, sent for review)">
+                  <textarea rows={5} aria-label="Flagged words" className="w-full rounded-lg border border-ink-200 p-2 text-sm" value={Array.isArray(s.moderation.flaggedWords) ? s.moderation.flaggedWords.join("\n") : s.moderation.flaggedWords} onChange={(e) => set("moderation", { flaggedWords: e.target.value })} />
+                </Field>
+              </div>
+              <div className="mt-3"><Toggle checked={s.moderation.flagContactInfo} onChange={(v) => set("moderation", { flagContactInfo: v })} label="Flag emails, phone numbers and messenger links in messages and offers" /></div>
+              <div className="grid grid-cols-2 gap-3 mt-3">
+                <Field label="Flag orders from new accounts (< 3 days) at or above ($, 0 = off)"><input type="number" min={0} className={input} value={s.moderation.riskOrderAmount} onChange={(e) => set("moderation", { riskOrderAmount: e.target.value })} /></Field>
+              </div>
+            </Card>
+          ) : null}
           <StorageCard />
         </div>
       ) : null}

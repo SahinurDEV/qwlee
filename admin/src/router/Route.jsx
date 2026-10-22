@@ -57,6 +57,7 @@ import AuditLog from "../dashboard/control/AuditLog";
 import Team from "../dashboard/control/Team";
 import Security from "../dashboard/control/Security";
 import Approvals from "../dashboard/control/Approvals";
+import RiskFlags from "../dashboard/control/RiskFlags";
 import Newsletter from "../dashboard/control/Newsletter";
 import Coupons from "../dashboard/control/Coupons";
 import HelpArticles from "../dashboard/control/HelpArticles";
@@ -151,6 +152,7 @@ export const router = createBrowserRouter([
       { path: "team", element: <Team /> },
       { path: "security", element: <Security /> },
       { path: "approvals", element: <Approvals /> },
+      { path: "risk-flags", element: <RiskFlags /> },
       { path: "newsletter", element: <Newsletter /> },
       { path: "coupons", element: <Coupons /> },
       { path: "help", element: <HelpArticles /> },

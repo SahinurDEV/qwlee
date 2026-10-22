@@ -134,6 +134,7 @@ const orderTip = catchAsync(async (req, res) => {
 
 // Notifications + confirmation emails for a newly paid order. Never throws.
 const notifyNewOrder = async (order) => {
+  require("../services/risk.service").orderPlaced(order);
   try {
     const [buyer, seller, gig] = await Promise.all([
       User.findById(order.clientId).select("fullName email username"),

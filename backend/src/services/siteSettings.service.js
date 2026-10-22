@@ -42,6 +42,7 @@ function defaults() {
     features: { signups: true, buyerRequests: true, tips: true, googleLogin: true },
     security: { requireAdmin2fa: false, adminIpAllowlist: [] },
     growth: { referrals: true, refereePercent: 10, referrerReward: 10 },
+    moderation: { blockedWords: [], flaggedWords: [], flagContactInfo: true, riskOrderAmount: 500 },
   };
 }
 
@@ -56,6 +57,8 @@ function normalise(site = {}, base = defaults()) {
   const f = { ...base.features, ...(site.features || {}) };
   const sec = { ...base.security, ...(site.security || {}) };
   const g = { ...base.growth, ...(site.growth || {}) };
+  const mod = { ...base.moderation, ...(site.moderation || {}) };
+  const words = (v) => [...new Set((Array.isArray(v) ? v : String(v || "").split(/[\n,]+/)).map((x) => String(x).trim().toLowerCase().slice(0, 60)).filter(Boolean))].slice(0, 300);
   const ipList = (Array.isArray(sec.adminIpAllowlist) ? sec.adminIpAllowlist : String(sec.adminIpAllowlist || "").split(/[\s,]+/))
     .map((x) => String(x).trim())
     .filter((x) => require("../utils/ipMatch").validEntry(x))
@@ -88,6 +91,13 @@ function normalise(site = {}, base = defaults()) {
     // Referral programme: the invitee gets refereePercent% off their first
     // order; the inviter gets a $referrerReward coupon when it completes.
     growth: { referrals: bool(g.referrals, true), refereePercent: num(g.refereePercent, 10, 0, 50), referrerReward: num(g.referrerReward, 10, 0, 500) },
+    // Keyword filters and risk rules (risk.service).
+    moderation: {
+      blockedWords: words(mod.blockedWords),
+      flaggedWords: words(mod.flaggedWords),
+      flagContactInfo: bool(mod.flagContactInfo, true),
+      riskOrderAmount: num(mod.riskOrderAmount, 500, 0, 1000000),
+    },
   };
 }
 
