@@ -65,6 +65,8 @@ const gigSchema = mongoose.Schema(
     // could later default to "pending" once admin moderation is on.
     // Admin-curated: featured gigs sort first and get a badge.
     featured: { type: Boolean, default: false, index: true },
+    // End of the current paid promotion (see promotion.service).
+    promotedUntil: { type: Date, default: null, index: true },
     gigStatus: {
       type: String,
       enum: [
