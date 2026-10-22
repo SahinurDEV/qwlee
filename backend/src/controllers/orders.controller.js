@@ -24,6 +24,7 @@ const checkoutBody = (req) => ({
   packageName: req.body.packageName,
   extraIds: Array.isArray(req.body.extraIds) ? req.body.extraIds : [],
   messageId: req.body.messageId || undefined,
+  requestOfferId: req.body.requestOfferId || undefined,
 });
 
 const orderQuote = catchAsync(async (req, res) => {
@@ -61,6 +62,7 @@ const orderCreate = catchAsync(async (req, res) => {
         packageName: quote.packageName || "",
         extraIds: (quote.extraIds || []).join(","),
         messageId: quote.messageId || "",
+        requestOfferId: quote.requestOfferId || "",
         freelancerId: quote.freelancerId,
         clientId: String(req.user.id),
       },
@@ -146,6 +148,7 @@ const orderPlaced = async (req, res) => {
           packageName: md.packageName || undefined,
           extraIds: md.extraIds ? md.extraIds.split(",").filter(Boolean) : [],
           messageId: md.messageId || undefined,
+          requestOfferId: md.requestOfferId || undefined,
         });
         if (Math.round(quote.total * 100) !== Number(session.amount_total)) {
           throw new Error(`Amount mismatch for session ${session.id}`);

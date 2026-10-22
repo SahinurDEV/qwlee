@@ -41,7 +41,34 @@ const idOf = (v) => String(v?._id || v?.id || v || "");
  * Work out what the buyer must pay. Prices always come from the database
  * (gig package + extras, or the seller's custom offer), never the client.
  */
-const quoteCheckout = async ({ buyerId, gigId, packageName, extraIds = [], messageId }) => {
+const quoteCheckout = async ({ buyerId, gigId, packageName, extraIds = [], messageId, requestOfferId }) => {
+  if (requestOfferId) {
+    const { offer, request, gig } = await require("./buyerRequest.service").quoteRequestOffer(requestOfferId, buyerId);
+    const title = request.title;
+    return {
+      kind: "request",
+      freelancerId: idOf(offer.sellerId),
+      clientId: String(buyerId),
+      gigId: gig ? String(gig._id) : undefined,
+      requestOfferId: String(offer._id),
+      title,
+      items: [{ name: `Request: ${title}`, price: round2(offer.price), quantity: 1 }],
+      total: round2(offer.price),
+      deliveryDays: offer.deliveryDays,
+      data: {
+        title,
+        packageName: "Request offer",
+        package: { name: "Request offer", price: offer.price, deliveryDate: offer.deliveryDays, features: [offer.message] },
+        extras: [],
+        requestId: String(request._id),
+        requirementQuestions: [],
+        requirements: null,
+        requirementAnswers: [{ question: "Buyer request", answer: `${request.title}\n\n${request.description}` }],
+        revisionsLeft: offer.revisions,
+        deliveryDays: offer.deliveryDays,
+      },
+    };
+  }
   if (messageId) {
     const msg = await Message.findById(messageId);
     const offer = msg?.content?.offerDetails;
@@ -139,6 +166,9 @@ const createOrderFromQuote = async (quote, { sessionId, provider }) => {
     escrow: { status: "held", amount: quote.total, provider, heldAt: new Date() },
     requirementsStatus: needsRequirements ? "pending" : "not_required",
   });
+  if (quote.requestOfferId) {
+    await require("./buyerRequest.service").markOfferHired(quote.requestOfferId, order._id);
+  }
   if (quote.messageId) {
     await Message.updateOne(
       { _id: quote.messageId },
