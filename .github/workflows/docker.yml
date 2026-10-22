@@ -36,7 +36,7 @@ jobs:
           curl -fsS http://localhost:7171/health
           curl -fsS -o /dev/null http://localhost:8000/
           curl -fsS -o /dev/null http://localhost:4000/
-          curl -fsS -o /dev/null http://localhost:7171/seed/gig/01.jpg
+          curl -fsS -o /dev/null http://localhost:7171/seed/gig/i-will-build-a-modern-next-js-saas-website-with-authentication-and-stripe-0.jpg
       - name: Seed demo data
         run: docker compose exec -T backend npm run seed
       - uses: actions/setup-node@v4
