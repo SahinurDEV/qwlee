@@ -261,4 +261,11 @@ router.delete("/support/canned/:id", A, catchAsync2(async (req, res) => {
   helpOk(res, {}, "Deleted");
 }));
 
+// Funnels, signup cohorts, weekly KPI summary (+ manual email, super only).
+const kpi = require("../../services/kpi.service");
+router.get("/kpi/funnel", A, catchAsync2(async (req, res) => helpOk(res, await kpi.funnel(req.query))));
+router.get("/kpi/cohorts", A, catchAsync2(async (req, res) => helpOk(res, await kpi.cohorts(req.query))));
+router.get("/kpi/weekly", A, catchAsync2(async (req, res) => helpOk(res, await kpi.weeklySummary())));
+router.post("/jobs/kpi-email", A, catchAsync2(async (req, res) => helpOk(res, await kpi.sendWeekly({ force: true }), "Weekly report sent")));
+
 module.exports = router;

@@ -262,3 +262,14 @@ reply (`{name}` becomes the ticket owner's first name), save the current text
 as a new one, or delete the selected one. Any admin can read them; creating
 or deleting needs the `support` permission. API: `GET/POST
 /v1/admin/support/canned`, `PATCH/DELETE /v1/admin/support/canned/:id`.
+
+### Funnels, cohorts and the weekly KPI email
+
+Admin → Analytics also shows buyer and seller funnels for sign-ups in the
+selected window (signed up → ordered → completed; signed up → active gig →
+first sale), a monthly buyer cohort table (share of each month's new buyers
+who ordered in month 0, 1, 2…), and a 7-day vs previous-7-day summary.
+Housekeeping emails that summary to super admins every Monday (UTC), once per
+ISO week (`KpiReport` has a unique week). A super admin can send it now with
+"Send now" (`POST /v1/admin/jobs/kpi-email`). API: `GET
+/v1/admin/kpi/funnel?days=`, `/kpi/cohorts?months=`, `/kpi/weekly`.
