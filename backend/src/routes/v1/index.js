@@ -49,6 +49,10 @@ const defaultRoutes = [
     route: require("./twoFactor.routes"),
   },
   {
+    path: "/subscriptions",
+    route: require("./subscriptions.routes"),
+  },
+  {
     path: "/promotions",
     route: require("./promotions.routes"),
   },
