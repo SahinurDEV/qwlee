@@ -15,6 +15,7 @@ import Button from "../CustomCreate/Button";
 import GoogleSignInButton from "../common/GoogleSignInButton";
 import AuthCard from "../common/AuthCard";
 import useIpLocation, { flagEmoji } from "@/hooks/useIpLocation";
+import { baseUrl } from "@/lib/constant";
 
 const SignIn = () => {
   const dispatch = useDispatch();
@@ -30,6 +31,25 @@ const SignIn = () => {
   // /sign-in) shows the same banner without needing the user to
   // attempt a new login.
   const [banReason, setBanReason] = useState("");
+  // A refused sign-in returns a short-lived appeal token; with it the
+  // user can appeal right here without signing in.
+  const [appeal, setAppeal] = useState({ token: "", open: false, text: "", sending: false, sent: "" });
+  const sendAppeal = async () => {
+    setAppeal((a) => ({ ...a, sending: true }));
+    try {
+      const r = await fetch(`${baseUrl}/auth/appeal`, {
+        method: "POST",
+        headers: { "content-type": "application/json", "ngrok-skip-browser-warning": "1" },
+        body: JSON.stringify({ appealToken: appeal.token, message: appeal.text }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.message || "Could not send the appeal");
+      setAppeal((a) => ({ ...a, open: false, sending: false, sent: j.message || "Appeal sent." }));
+    } catch (e) {
+      toast.error(e.message);
+      setAppeal((a) => ({ ...a, sending: false }));
+    }
+  };
   // Two-factor: after a correct password the API asks for a code.
   const [needCode, setNeedCode] = useState(false);
   useEffect(() => {
@@ -67,6 +87,7 @@ const SignIn = () => {
 
       if (res?.code === 403 && typeof res?.message === "string" && res.message.startsWith("BANNED:")) {
         setBanReason(res.message.slice("BANNED:".length).trim());
+        setAppeal((a) => ({ ...a, token: res?.data?.attributes?.appealToken || "" }));
         return;
       }
 
@@ -165,9 +186,41 @@ const SignIn = () => {
             <p className="text-sm text-rose-700 mt-0.5 whitespace-pre-line">
               {banReason}
             </p>
-            <p className="text-xs text-rose-500 mt-1">
-              If you believe this is a mistake, contact support.
-            </p>
+            {appeal.sent ? (
+              <p className="text-xs text-emerald-700 mt-2" role="status">{appeal.sent}</p>
+            ) : !appeal.token ? (
+              <p className="text-xs text-rose-500 mt-1">
+                If you believe this is a mistake, sign in below to appeal.
+              </p>
+            ) : appeal.open ? (
+              <div className="mt-2 space-y-2">
+                <textarea
+                  aria-label="Your appeal"
+                  rows={4}
+                  maxLength={2000}
+                  value={appeal.text}
+                  onChange={(e) => setAppeal((a) => ({ ...a, text: e.target.value }))}
+                  placeholder="Explain why the suspension should be lifted (at least 20 characters)."
+                  className="w-full rounded-lg border border-rose-200 bg-white p-2 text-sm text-gray-800"
+                />
+                <button
+                  type="button"
+                  onClick={sendAppeal}
+                  disabled={appeal.sending || appeal.text.trim().length < 20}
+                  className="px-3 py-1.5 rounded-lg bg-rose-600 text-white text-xs font-medium disabled:opacity-50"
+                >
+                  {appeal.sending ? "Sending…" : "Send appeal"}
+                </button>
+              </div>
+            ) : (
+              <p className="text-xs text-rose-500 mt-1">
+                If you believe this is a mistake,{" "}
+                <button type="button" className="underline font-medium" onClick={() => setAppeal((a) => ({ ...a, open: true }))}>
+                  appeal this decision
+                </button>
+                .
+              </p>
+            )}
           </div>
         </div>
       )}

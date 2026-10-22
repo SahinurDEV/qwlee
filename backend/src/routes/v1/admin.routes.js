@@ -208,6 +208,15 @@ router.get("/roles", A, catchAsync2(async (req, res) => helpOk(res, await rolesS
 router.post("/roles", A, catchAsync2(async (req, res) => helpOk(res, await rolesSvc.create(req.body || {}), "Role created")));
 router.patch("/roles/:id", A, catchAsync2(async (req, res) => roleId(req, res) && helpOk(res, await rolesSvc.update(req.params.id, req.body || {}), "Role saved")));
 router.delete("/roles/:id", A, catchAsync2(async (req, res) => roleId(req, res) && helpOk(res, await rolesSvc.remove(req.params.id), "Role deleted")));
+// Ban appeals and bulk actions.
+const modSvc = require("../../services/moderation.service");
+router.get("/appeals", A, catchAsync2(async (req, res) => helpOk(res, await modSvc.listAppeals(req.query))));
+router.patch("/appeals/:id", A, catchAsync2(async (req, res) => {
+  if (!require("mongoose").isValidObjectId(req.params.id)) return res.status(400).json({ code: 400, message: "Invalid id" });
+  helpOk(res, await modSvc.decideAppeal(req.params.id, req.body || {}, req.user), "Appeal decided");
+}));
+router.post("/bulk/users", A, catchAsync2(async (req, res) => helpOk(res, await modSvc.bulkUsers(req.body?.ids, req.body || {}, req.user), "Done")));
+router.post("/bulk/gigs", A, catchAsync2(async (req, res) => helpOk(res, await modSvc.bulkGigs(req.body?.ids, req.body || {}, req.user), "Done")));
 // Risk flags (keyword filters, off-platform contact, order rules).
 const riskSvc = require("../../services/risk.service");
 router.get("/risk-flags", A, catchAsync2(async (req, res) => helpOk(res, await riskSvc.list(req.query))));

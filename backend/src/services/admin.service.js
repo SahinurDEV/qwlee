@@ -196,7 +196,9 @@ const queryAllGigs = async (filter = {}, options = {}) => {
 // page when the user tries to log in. Admins themselves can't be
 // banned through this endpoint — protects the system from being locked
 // out by a rogue admin action.
-const banUser = async (userId, { reason = "" } = {}) => {
+const banUser = async (userId, { reason = "", days } = {}) => {
+  const d = days === undefined || days === null || days === "" ? null : Number(days);
+  if (d !== null && !(Number.isInteger(d) && d >= 1 && d <= 365)) throw new ApiError(httpStatus.BAD_REQUEST, "days must be a whole number from 1 to 365");
   const user = await User.findById(userId);
   if (!user) throw new ApiError(httpStatus.NOT_FOUND, "User not found");
   if (user.role === "admin")
@@ -206,6 +208,7 @@ const banUser = async (userId, { reason = "" } = {}) => {
     (reason && reason.trim()) ||
     "Your account has been suspended by an administrator.";
   user.bannedAt = new Date();
+  user.bannedUntil = d ? new Date(Date.now() + d * 86400000) : null;
   await user.save();
 
   // Force-logout every active session for this user in real time. The
@@ -314,6 +317,7 @@ const unbanUser = async (userId) => {
   user.isBan = false;
   user.banReason = "";
   user.bannedAt = null;
+  user.bannedUntil = null;
   await user.save();
   return user;
 };

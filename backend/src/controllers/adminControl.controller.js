@@ -24,7 +24,7 @@ const page = (q) => {
   return { limit, page: p, skip: (p - 1) * limit };
 };
 const rx = (s) => new RegExp(String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&").slice(0, 80), "i");
-const USER_FIELDS = "fullName username email role adminRole image isEmailVerified isBan banReason balance createdAt lastSeen online isVerified verificationStatus";
+const USER_FIELDS = "fullName username email role adminRole image isEmailVerified isBan banReason bannedUntil balance createdAt lastSeen online isVerified verificationStatus";
 const list = async (Model, filter, q, { sort = { createdAt: -1 }, select, populate } = {}) => {
   const { limit, page: p, skip } = page(q);
   let query = Model.find(filter).sort(sort).skip(skip).limit(limit);

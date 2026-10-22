@@ -113,8 +113,8 @@ const getAllGigs = catchAsync(async (req, res) => {
 });
 
 const banUser = catchAsync(async (req, res) => {
-  const { reason } = req.body || {};
-  const result = await adminService.banUser(req.params.userId, { reason });
+  const { reason, days } = req.body || {};
+  const result = await adminService.banUser(req.params.userId, { reason, days });
   res.status(httpStatus.OK).json(
     response({
       message: "User banned",
