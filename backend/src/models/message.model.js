@@ -107,6 +107,7 @@ const messageSchema = mongoose.Schema(
       type: Array,
       default: [],
     },
+    readAt: { type: Date, default: null },
     readed: {
       type: Boolean,
       required: true,
