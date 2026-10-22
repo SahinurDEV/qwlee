@@ -275,10 +275,12 @@ const recordTip = async (orderId, amount, { provider, sessionId }) => {
 };
 
 const refundEscrow = async (orderId) => {
-  await Payment.updateOne(
-    { _id: orderId, "escrow.status": { $ne: "released" } },
+  const r = await Payment.updateOne(
+    { _id: orderId, "escrow.status": { $nin: ["released", "refunded"] } },
     { $set: { "escrow.status": "refunded", "escrow.refundedAt": new Date() } }
   );
+  // Return the buyer's money through the payment provider (or demo).
+  if (r.modifiedCount) await require("./refunds.service").issueRefund(orderId);
 };
 
 const submitRequirements = async (orderId, userId, answers) => {

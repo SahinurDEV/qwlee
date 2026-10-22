@@ -24,7 +24,10 @@ const DetailWithdraw = () => {
 
     const response = await cancelWithdraw(id);
     // console.log("dddddd", response.error?.data.message);
-    if (response?.data?.code === 200) {
+    if (response?.data?.code === 202) {
+      notification.info({ message: response.data.message });
+      navigate("/dashboard/approvals");
+    } else if (response?.data?.code === 200) {
       notification.success({
         message: `${response?.data?.message}`,
       });
@@ -39,7 +42,10 @@ const DetailWithdraw = () => {
     // console.log("aimannnnnnnnnnnnnnnnn",id);
     const response = await setWithdrawApprove(id);
     console.log(response);
-    if (response?.data?.code === 200) {
+    if (response?.data?.code === 202) {
+      notification.info({ message: response.data.message });
+      navigate("/dashboard/approvals");
+    } else if (response?.data?.code === 200) {
       notification.success({
         message: `${response?.data?.message}`,
       });
