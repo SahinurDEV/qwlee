@@ -103,7 +103,7 @@ export default function MobileDrawer({ open, onClose }) {
     { label: "Browse services", path: "/gig" },
   ];
 
-  const modeLinks = isSelling ? sellingLinks : buyingLinks;
+  const modeLinks = [...(isSelling ? sellingLinks : buyingLinks), { label: "Invite friends", path: "/referrals" }];
 
   return (
     <Drawer

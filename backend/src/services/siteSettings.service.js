@@ -41,6 +41,7 @@ function defaults() {
     email: { footerText: "" },
     features: { signups: true, buyerRequests: true, tips: true, googleLogin: true },
     security: { requireAdmin2fa: false, adminIpAllowlist: [] },
+    growth: { referrals: true, refereePercent: 10, referrerReward: 10 },
   };
 }
 
@@ -54,6 +55,7 @@ function normalise(site = {}, base = defaults()) {
   const e = { ...base.email, ...(site.email || {}) };
   const f = { ...base.features, ...(site.features || {}) };
   const sec = { ...base.security, ...(site.security || {}) };
+  const g = { ...base.growth, ...(site.growth || {}) };
   const ipList = (Array.isArray(sec.adminIpAllowlist) ? sec.adminIpAllowlist : String(sec.adminIpAllowlist || "").split(/[\s,]+/))
     .map((x) => String(x).trim())
     .filter((x) => require("../utils/ipMatch").validEntry(x))
@@ -83,6 +85,9 @@ function normalise(site = {}, base = defaults()) {
     email: { footerText: str(e.footerText, 300) },
     features: Object.fromEntries(Object.keys(base.features).map((k) => [k, bool(f[k], true)])),
     security: { requireAdmin2fa: bool(sec.requireAdmin2fa, false), adminIpAllowlist: ipList },
+    // Referral programme: the invitee gets refereePercent% off their first
+    // order; the inviter gets a $referrerReward coupon when it completes.
+    growth: { referrals: bool(g.referrals, true), refereePercent: num(g.refereePercent, 10, 0, 50), referrerReward: num(g.referrerReward, 10, 0, 500) },
   };
 }
 
@@ -119,6 +124,7 @@ async function getPublic() {
     seo: s.seo,
     features: s.features,
     demoPayments: s.marketplace.demoPayments,
+    growth: s.growth,
   };
 }
 

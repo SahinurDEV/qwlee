@@ -5,17 +5,34 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { IoClose, IoShieldCheckmarkOutline, IoTimeOutline } from "react-icons/io5";
 
-export default function CheckoutReview({ open, onClose, onConfirm, quote, loading, confirming, error, gig, packageName }) {
+export default function CheckoutReview({ open, onClose, onConfirm, onApplyCoupon, coupon, quote, loading, confirming, error, gig, packageName }) {
   const [agree, setAgree] = useState(false);
+  const [code, setCode] = useState("");
+  const [couponErr, setCouponErr] = useState("");
+  const [applying, setApplying] = useState(false);
+  const apply = async (value) => {
+    if (!onApplyCoupon) return;
+    setApplying(true);
+    const err = await onApplyCoupon(value);
+    setApplying(false);
+    setCouponErr(err);
+    if (!err && !value) setCode("");
+  };
   const closeRef = useRef(null);
   useEffect(() => {
     if (!open) return;
-    setAgree(false);
-    closeRef.current?.focus();
     const onKey = (e) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
+  // Reset only when the dialog opens (onClose changes on every render).
+  useEffect(() => {
+    if (!open) return;
+    setAgree(false);
+    setCode("");
+    setCouponErr("");
+    closeRef.current?.focus();
+  }, [open]);
   if (!open) return null;
   const items = quote?.items || [];
   const due = quote?.deliveryDays ? new Date(Date.now() + quote.deliveryDays * 86400000) : null;
@@ -59,6 +76,12 @@ export default function CheckoutReview({ open, onClose, onConfirm, quote, loadin
                       <td className="py-2 text-right font-medium text-gray-900">${(Number(it.price) * (it.quantity || 1)).toLocaleString()}</td>
                     </tr>
                   ))}
+                  {quote?.discount > 0 ? (
+                    <tr className="border-b border-gray-50">
+                      <td className="py-2 text-emerald-700">Coupon {quote.couponCode} ({quote.couponDescription})</td>
+                      <td className="py-2 text-right font-medium text-emerald-700">−${Number(quote.discount).toLocaleString()}</td>
+                    </tr>
+                  ) : null}
                   <tr>
                     <td className="py-2 text-gray-700">Service fee</td>
                     <td className="py-2 text-right text-gray-900">$0</td>
@@ -67,10 +90,27 @@ export default function CheckoutReview({ open, onClose, onConfirm, quote, loadin
                 <tfoot>
                   <tr>
                     <td className="pt-3 font-semibold text-gray-900">Total</td>
-                    <td className="pt-3 text-right text-xl font-bold text-gray-900">${Number(quote?.total || 0).toLocaleString()}</td>
+                    <td className="pt-3 text-right text-xl font-bold text-gray-900">${Number(quote?.charge ?? quote?.total ?? 0).toLocaleString()}</td>
                   </tr>
                 </tfoot>
               </table>
+              {onApplyCoupon ? (
+                coupon ? (
+                  <p className="flex items-center justify-between text-sm text-emerald-700">
+                    <span>Coupon {coupon} applied</span>
+                    <button type="button" className="text-xs text-gray-600 underline" onClick={() => apply("")}>Remove</button>
+                  </p>
+                ) : (
+                  <div>
+                    <label htmlFor="coupon-code" className="text-xs text-gray-600">Have a coupon?</label>
+                    <div className="mt-1 flex gap-2">
+                      <input id="coupon-code" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} maxLength={32} placeholder="CODE" className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm uppercase" />
+                      <button type="button" disabled={!code.trim() || applying} onClick={() => apply(code.trim())} className="px-3 py-1.5 rounded-lg border border-gray-300 text-sm disabled:opacity-50">{applying ? "…" : "Apply"}</button>
+                    </div>
+                    {couponErr ? <p role="alert" className="mt-1 text-xs text-rose-600">{couponErr}</p> : null}
+                  </div>
+                )
+              ) : null}
               {due ? (
                 <p className="flex items-center gap-2 text-sm text-gray-600">
                   <IoTimeOutline /> {quote.deliveryDays}-day delivery · due about {due.toLocaleDateString(undefined, { month: "short", day: "numeric" })}
@@ -96,7 +136,7 @@ export default function CheckoutReview({ open, onClose, onConfirm, quote, loadin
             disabled={!agree || loading || confirming || !!error}
             className="w-full px-4 py-3 rounded-xl bg-emerald-600 text-white font-semibold text-sm hover:bg-emerald-700 disabled:opacity-50"
           >
-            {confirming ? "Processing…" : `Confirm and pay $${Number(quote?.total || 0).toLocaleString()}`}
+            {confirming ? "Processing…" : `Confirm and pay $${Number(quote?.charge ?? quote?.total ?? 0).toLocaleString()}`}
           </button>
         </div>
       </div>

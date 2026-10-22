@@ -89,6 +89,15 @@ export default function SiteSettings() {
           <Card title="Payment providers & SMTP">
             <p className="text-sm text-ink-600">Provider keys, SMTP and email template previews live on the <a className="text-primary-700 underline" href="/dashboard/setting">Settings</a> page.</p>
           </Card>
+          {s.growth ? (
+            <Card title="Referrals" subtitle="Invitees get a first-order discount; inviters get a coupon when it completes">
+              <Toggle checked={s.growth.referrals} onChange={(v) => set("growth", { referrals: v })} label="Referral programme on" />
+              <div className="grid grid-cols-2 gap-3 mt-3">
+                <Field label="Invitee discount (%)"><input type="number" min={0} max={50} className={input} value={s.growth.refereePercent} onChange={(e) => set("growth", { refereePercent: e.target.value })} /></Field>
+                <Field label="Inviter reward ($)"><input type="number" min={0} className={input} value={s.growth.referrerReward} onChange={(e) => set("growth", { referrerReward: e.target.value })} /></Field>
+              </div>
+            </Card>
+          ) : null}
           <StorageCard />
         </div>
       ) : null}

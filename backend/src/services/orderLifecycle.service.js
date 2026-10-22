@@ -52,6 +52,16 @@ const idOf = (v) => String(v?._id || v?.id || v || "");
  */
 const quoteCheckout = async (args) => {
   const quote = await priceCheckout(args);
+  // Coupon: the buyer is charged `charge`; the platform funds the rest.
+  quote.charge = quote.total;
+  quote.discount = 0;
+  if (args.couponCode) {
+    const c = await require("./coupon.service").evaluate(args.couponCode, args.buyerId, quote.total);
+    quote.couponCode = c.code;
+    quote.discount = c.discount;
+    quote.couponDescription = c.description;
+    quote.charge = round2(quote.total - c.discount);
+  }
   // Vacation mode: no new orders while the seller is away.
   const seller = await User.findById(quote.freelancerId).select("availability");
   if (isAway(seller)) {
@@ -183,9 +193,15 @@ const createOrderFromQuote = async (quote, { sessionId, provider }) => {
     data: quote.data,
     status: "active",
     deliveryDate: new Date(Date.now() + quote.deliveryDays * 86400000),
-    escrow: { status: "held", amount: quote.total, provider, heldAt: new Date() },
+    // escrow.amount is what the buyer paid; platformFunded tops it up
+    // to the full price for the seller's payout.
+    escrow: { status: "held", amount: quote.charge ?? quote.total, platformFunded: quote.discount || 0, provider, heldAt: new Date() },
+    ...(quote.couponCode ? { coupon: { code: quote.couponCode, discount: quote.discount } } : {}),
     requirementsStatus: needsRequirements ? "pending" : "not_required",
   });
+  if (quote.couponCode) {
+    await require("./coupon.service").redeem(quote.couponCode, quote.clientId, order._id, quote.discount);
+  }
   if (quote.requestOfferId) {
     await require("./buyerRequest.service").markOfferHired(quote.requestOfferId, order._id);
   }
@@ -213,7 +229,7 @@ const loadParty = async (orderId, userId) => {
  */
 const completeOrder = async (order, { reason = "accepted", fromStatuses = OPEN } = {}) => {
   const feePercent = await appConfigService.getPlatformFeePercent();
-  const gross = Number(order.escrow?.amount ?? order.price ?? order.items?.[0]?.price ?? 0);
+  const gross = Number(order.escrow?.amount ?? order.price ?? order.items?.[0]?.price ?? 0) + Number(order.escrow?.platformFunded || 0);
   const fee = round2((gross * feePercent) / 100);
   const net = round2(gross - fee);
   const swapped = await Payment.findOneAndUpdate(
@@ -235,6 +251,7 @@ const completeOrder = async (order, { reason = "accepted", fromStatuses = OPEN }
   );
   if (!swapped) throw new ApiError(httpStatus.CONFLICT, "Order cannot be completed in its current state");
   await User.updateOne({ _id: order.freelancerId }, { $inc: { balance: net } });
+  require("./referral.service").onOrderCompleted(swapped).catch(() => {});
   return swapped;
 };
 

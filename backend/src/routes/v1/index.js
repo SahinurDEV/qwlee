@@ -33,6 +33,10 @@ const defaultRoutes = [
     route: require("./analytics.routes"),
   },
   {
+    path: "/growth",
+    route: require("./growth.routes"),
+  },
+  {
     path: "/quick-replies",
     route: require("./quickReplies.routes"),
   },
