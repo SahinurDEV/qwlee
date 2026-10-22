@@ -24,4 +24,11 @@ router.route("/stats").get(infoController.getStats);
 // Public site settings (branding, homepage, SEO, feature toggles).
 router.get("/site", require("../../controllers/adminControl.controller").publicSite);
 
+// Visitor's approximate country (for the sign-up form). Never errors.
+router.get("/geo", async (req, res) => {
+  const data = await require("../../services/geo.service").lookup(req);
+  res.set("Cache-Control", "private, max-age=3600");
+  res.json({ code: 200, message: "OK", data: { attributes: data || { country: null, countryCode: null, city: null, region: null } } });
+});
+
 module.exports = router;

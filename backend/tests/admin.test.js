@@ -56,8 +56,11 @@ test("super admin: feature + edit gig, edit user, view-as, sign out everywhere; 
   const edit = await call("PATCH", `/admin/gigs/${gid}`, { token: sup.token, body: { title: `${gig.title.slice(0, 60)} (edited)` } });
   assert.equal(edit.status, 200, JSON.stringify(edit.json));
   await call("PATCH", `/admin/gigs/${gid}/feature`, { token: sup.token, body: { featured: false } });
+  // Put the seed gig back the way we found it.
+  await call("PATCH", `/admin/gigs/${gid}`, { token: sup.token, body: { title: gig.title } });
 
   const buyer = await login("buyer@example.com", "Buyer123!");
+  const origIntro = buyer.user.intro || "";
   const upd = await call("PATCH", `/admin/users/${buyer.user.id}`, { token: sup.token, body: { intro: "Edited by admin", password: "hunter22", role: "admin" } });
   assert.equal(upd.status, 200);
   assert.equal(upd.data.user.role, "buyer", "role is not editable through the profile endpoint");
@@ -76,6 +79,7 @@ test("super admin: feature + edit gig, edit user, view-as, sign out everywhere; 
   assert.ok(row, "user edit audited");
   assert.equal(row.body.password, "[redacted]");
   assert.ok(audit.data.results.some((a) => a.action === "GET /admin/users/:id/view"), "view-as audited");
+  await call("PATCH", `/admin/users/${buyer.user.id}`, { token: sup.token, body: { intro: origIntro } });
 });
 
 test("roles: only super can change roles; last super is protected", async () => {

@@ -2,7 +2,7 @@
 // IP-based location detection. Mirrors how Fiverr auto-fills country on
 // sign-up — no typed input, just "We see you're in <city, country>".
 //
-// Calls ipapi.co (free, no key, generous free tier) once on mount and
+// Asks our API (/v1/info/geo, which looks the IP up server-side) once and
 // caches the result in sessionStorage so the second page load is instant
 // and doesn't re-burn the per-IP quota. The hook never throws — if the
 // lookup fails the consumer gets { country: null, ... } and can still
@@ -12,6 +12,7 @@
 //     useIpLocation();
 
 import { useEffect, useState } from "react";
+import { base } from "@/lib/constant";
 
 const KEY = "qwlee:iploc";
 const TTL_MS = 1000 * 60 * 60 * 6; // 6 hours
@@ -68,17 +69,20 @@ export default function useIpLocation() {
     const ctrl = new AbortController();
     (async () => {
       try {
-        const res = await fetch("https://ipapi.co/json/", {
+        // Looked up by our API (server-side) — see backend geo.service.
+        const res = await fetch(`${base}/v1/info/geo`, {
           signal: ctrl.signal,
+          headers: { "ngrok-skip-browser-warning": "1" },
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json = await res.json();
+        const json = (await res.json())?.data?.attributes || {};
+        if (!json.countryCode) throw new Error("Unknown location");
         const data = {
-          country: json.country_name || null,
-          countryCode: json.country_code || null,
+          country: json.country || null,
+          countryCode: json.countryCode || null,
           city: json.city || null,
           region: json.region || null,
-          ip: json.ip || null,
+          ip: null,
         };
         writeCache(data);
         setState({ loading: false, error: null, ...data });

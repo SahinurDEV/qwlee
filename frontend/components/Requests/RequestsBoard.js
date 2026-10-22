@@ -24,12 +24,15 @@ export default function RequestsBoard() {
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(1); }}
           placeholder="Search requests"
-          className="flex-1 px-3 py-2.5 rounded-lg border border-gray-200 focus:border-emerald-500 outline-none"
+          aria-label="Search requests"
+          type="search"
+          className="w-full min-w-0 sm:flex-1 px-3 py-2.5 rounded-lg border border-gray-200 focus:border-emerald-500 outline-none"
         />
         <select
           value={category}
           onChange={(e) => { setCategory(e.target.value); setPage(1); }}
-          className="px-3 py-2.5 rounded-lg border border-gray-200 bg-white"
+          aria-label="Category"
+          className="w-full sm:w-auto min-w-0 max-w-full px-3 py-2.5 rounded-lg border border-gray-200 bg-white"
         >
           <option value="">All categories</option>
           {(catData?.results || []).map((c) => (

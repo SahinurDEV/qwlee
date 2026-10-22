@@ -40,7 +40,7 @@ const ForgotPassword = () => {
             { type: "email", message: "That doesn't look like an email" },
           ]}
         >
-          <Input placeholder="you@example.com" size="large" />
+          <Input type="email" inputMode="email" autoComplete="email" placeholder="you@example.com" size="large" />
         </Form.Item>
         <Button loading={isLoading} name={"Send code"} />
       </Form>
