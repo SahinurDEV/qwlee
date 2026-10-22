@@ -1,7 +1,7 @@
 {
   "name": "qwlee-api",
   "version": "1.0.0",
-  "description": "Qwlee \u2014 backend API for the Qwlee freelance marketplace",
+  "description": "Qwlee — backend API for the Qwlee freelance marketplace",
   "main": "index.js",
   "scripts": {
     "dev": "nodemon src/index.js",
@@ -50,6 +50,7 @@
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.0",
     "validator": "^13.11.0",
+    "web-push": "^3.6.7",
     "winston": "^3.13.0"
   },
   "devDependencies": {
