@@ -35,6 +35,9 @@ export default function ActiveFilterChips() {
   const onlineOnly = params.get("online") === "true";
   const verifiedOnly = params.get("verifiedOnly") === "true";
   const minRating = params.get("minRating");
+  const minGigRating = params.get("minGigRating");
+  const minReviews = params.get("minReviews");
+  const hasVideo = params.get("hasVideo") === "true";
   const level = params.get("level");
 
   const chips = [];
@@ -60,6 +63,9 @@ export default function ActiveFilterChips() {
   if (language) chips.push({ keys: ["language"], label: language });
   if (country) chips.push({ keys: ["country"], label: country });
   if (minRating) chips.push({ keys: ["minRating"], label: `${minRating}+ ★` });
+  if (minGigRating) chips.push({ keys: ["minGigRating"], label: `Service ${minGigRating}+ ★` });
+  if (minReviews) chips.push({ keys: ["minReviews"], label: `${minReviews}+ reviews` });
+  if (hasVideo) chips.push({ keys: ["hasVideo"], label: "Has video" });
   if (onlineOnly) chips.push({ keys: ["online"], label: "Online sellers" });
   if (verifiedOnly)
     chips.push({ keys: ["verifiedOnly"], label: "Verified only" });

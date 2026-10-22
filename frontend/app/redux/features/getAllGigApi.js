@@ -20,6 +20,9 @@ const getAllGigApi = baseApi.injectEndpoints({
           verifiedOnly,
           minRating,
           level,
+          minGigRating,
+          minReviews,
+          hasVideo,
         } = args;
         const params = new URLSearchParams();
         if (search) params.append("title", search);
@@ -39,6 +42,9 @@ const getAllGigApi = baseApi.injectEndpoints({
         if (verifiedOnly) params.append("verifiedOnly", "true");
         if (minRating) params.append("minRating", minRating);
         if (level) params.append("level", level);
+        if (minGigRating) params.append("minGigRating", minGigRating);
+        if (minReviews) params.append("minReviews", minReviews);
+        if (hasVideo) params.append("hasVideo", "true");
         return {
           url: "/gig",
           method: "GET",

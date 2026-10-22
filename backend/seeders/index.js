@@ -136,6 +136,9 @@ async function run() {
     }
   }
 
+  // Cached rating / sales counters used by search filters and sorting.
+  await require("../src/services/gigStats.service").recomputeAll();
+
   await mongoose.disconnect();
 }
 

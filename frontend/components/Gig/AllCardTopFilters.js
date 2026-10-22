@@ -9,6 +9,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 const OPTIONS = [
   { value: "createdAt:desc", label: "Newest first" },
+  { value: "rating.avg:desc,rating.count:desc", label: "Best rated" },
+  { value: "ordersCompleted:desc", label: "Best selling" },
   { value: "price:asc", label: "Price: low to high" },
   { value: "price:desc", label: "Price: high to low" },
   { value: "title:asc", label: "Title: A → Z" },
