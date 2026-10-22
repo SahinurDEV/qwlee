@@ -382,26 +382,33 @@ const acceptDelivery = async (orderId, userId) => {
  *  - auto-complete deliveries the buyer ignored for AUTO_COMPLETE_DAYS
  *  - flag in-progress orders past their deadline as late
  */
-const runHousekeeping = async () => {
+const runHousekeeping = async ({ trigger = "timer" } = {}) => {
+  const { track } = require("./jobs.service");
   const now = new Date();
-  const due = await Payment.find({ status: { $in: OPEN }, "delivery.state": "submitted", "delivery.autoCompleteAt": { $lte: now } }).limit(100);
-  for (const order of due) {
-    try {
-      await completeOrder(order, { reason: "auto" });
-    } catch (e) {
-      logger.warn(`auto-complete ${order._id} skipped: ${e.message}`);
+  const autoCompleted = await track("autoComplete", async () => {
+    const due = await Payment.find({ status: { $in: OPEN }, "delivery.state": "submitted", "delivery.autoCompleteAt": { $lte: now } }).limit(100);
+    for (const order of due) {
+      try {
+        await completeOrder(order, { reason: "auto" });
+      } catch (e) {
+        logger.warn(`auto-complete ${order._id} skipped: ${e.message}`);
+      }
     }
-  }
-  const late = await Payment.updateMany(
-    { status: "active", deliveryDate: { $lt: now }, "delivery.state": { $ne: "submitted" }, requirementsStatus: { $ne: "pending" } },
-    { $set: { status: "late" } }
-  );
-  const autoCancelled = await require("./cancellation.service").autoAcceptExpired();
-  const subscriptions = await require("./subscription.service").billDue();
-  const announcements = await require("./announcements.service").sendDue();
-  const bansLifted = await require("./moderation.service").liftExpiredBans();
-  const kpiEmail = await require("./kpi.service").maybeSendWeekly().catch(() => ({ sent: false }));
-  return { kpiEmail, autoCompleted: due.length, markedLate: late.modifiedCount || 0, autoCancelled, subscriptions, bansLifted, announcements };
+    return due.length;
+  }, trigger);
+  const markedLate = await track("markLate", async () => {
+    const late = await Payment.updateMany(
+      { status: "active", deliveryDate: { $lt: now }, "delivery.state": { $ne: "submitted" }, requirementsStatus: { $ne: "pending" } },
+      { $set: { status: "late" } }
+    );
+    return late.modifiedCount || 0;
+  }, trigger);
+  const autoCancelled = await track("autoCancel", () => require("./cancellation.service").autoAcceptExpired(), trigger);
+  const subscriptions = await track("subscriptions", () => require("./subscription.service").billDue(), trigger);
+  const announcements = await track("announcements", () => require("./announcements.service").sendDue(), trigger);
+  const bansLifted = await track("bansLifted", () => require("./moderation.service").liftExpiredBans(), trigger);
+  const kpiEmail = await track("kpiEmail", () => require("./kpi.service").maybeSendWeekly(), trigger);
+  return { kpiEmail, autoCompleted, markedLate, autoCancelled, subscriptions, bansLifted, announcements };
 };
 
 let timer = null;
