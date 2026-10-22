@@ -43,6 +43,8 @@ const withdrawalSchema = new mongoose.Schema(
       error: String,
       at: Date,
     },
+    // Set when a bank statement row matched this payout (payoutBatch.service).
+    reconciledAt: { type: Date, default: null },
   },
   { timestamps: true }
 );
