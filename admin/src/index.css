@@ -2,6 +2,36 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Typography: Inter for UI/body text, Plus Jakarta Sans for headings.
+   Both are self-hosted via @fontsource (no request to Google). */
+:root {
+  --font-sans: "Inter Variable", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Plus Jakarta Sans Variable", "Plus Jakarta Sans", var(--font-sans);
+}
+html {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "cv11", "ss01";
+}
+body, button, input, select, textarea,
+[class^="ant-"], [class*=" ant-"] {
+  font-family: var(--font-sans);
+}
+h1, h2, h3, h4, .font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+}
+h1 { font-weight: 700; }
+h2, h3 { font-weight: 650; }
+h4 { font-weight: 600; }
+p { line-height: 1.6; }
+.tabular-nums, table td, table th { font-variant-numeric: tabular-nums; }
+
 
 .customModal {
     background: #000000;
