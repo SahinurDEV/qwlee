@@ -79,10 +79,12 @@ async function enrich() {
   // Reviewed gigs go to the back of the queue so they stay active: the
   // order seeder picks gigs at random, and without this every reviewed
   // gig could end up paused or pending, leaving search with no rated gig.
+  // The demo seller's gigs go last too: tests and demos need the seller
+  // used for sign-in to have active gigs (with extras) to order.
   const reviewedIds = new Set((await Reviews.distinct("gigId")).map(String));
-  const gigs = (await Gig.find({}).sort({ createdAt: -1 }).lean()).sort(
-    (a, b) => reviewedIds.has(String(a._id)) - reviewedIds.has(String(b._id))
-  );
+  const demoSeller = await User.findOne({ email: "seller@example.com" }).select("_id").lean();
+  const keep = (g) => reviewedIds.has(String(g._id)) || String(g.userId) === String(demoSeller?._id);
+  const gigs = (await Gig.find({}).sort({ createdAt: -1 }).lean()).sort((a, b) => keep(a) - keep(b));
   const STATUS_SCHEDULE = [
     { status: "pending", count: 2 },
     { status: "paused", count: 2 },
