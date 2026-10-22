@@ -33,6 +33,7 @@ function defaults() {
       autoCompleteDays: Number(process.env.AUTO_COMPLETE_DAYS) || 3,
       demoPayments: process.env.DEMO_PAYMENTS === "true",
       requireGigApproval: false,
+      secondApprovalOver: Number(process.env.SECOND_APPROVAL_OVER || 0),
     },
     branding: { siteName: process.env.SITE_NAME || "Qwlee", logoUrl: "", primaryColor: "#059669" },
     homepage: { heroTitle: "", heroSubtitle: "", announcement: { enabled: false, text: "", link: "", tone: "info" } },
@@ -63,6 +64,9 @@ function normalise(site = {}, base = defaults()) {
       autoCompleteDays: Math.round(num(m.autoCompleteDays, 3, 1, 30)),
       demoPayments: bool(m.demoPayments, false),
       requireGigApproval: bool(m.requireGigApproval, false),
+      // Refunds / payouts at or above this amount (USD) need a second
+      // admin's approval. 0 = off.
+      secondApprovalOver: num(m.secondApprovalOver, 0, 0, 1000000),
     },
     branding: { siteName: str(b.siteName, 40) || "Qwlee", logoUrl: url(b.logoUrl), primaryColor: color(b.primaryColor, "#059669") },
     homepage: {

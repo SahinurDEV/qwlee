@@ -52,12 +52,12 @@ export default function Escrow() {
                       <Td><div className="text-xs">{o.clientId?.fullName || "—"}</div><div className="text-xs text-ink-500">→ {o.freelancerId?.fullName || "—"}</div></Td>
                       <Td>{m(o.price)}</Td>
                       <Td><StatusPill status={o.status} /></Td>
-                      <Td><StatusPill status={o.escrow?.status === "released" ? "ok" : o.escrow?.status === "refunded" ? "error" : "pending"} label={o.escrow?.status || "—"} /></Td>
+                      <Td><StatusPill status={o.escrow?.status === "released" ? "ok" : o.escrow?.status === "refunded" ? "error" : "pending"} label={o.escrow?.status || "—"} />{o.escrow?.refund ? <div className={`text-[11px] mt-1 ${o.escrow.refund.status === "failed" ? "text-rose-600" : "text-ink-500"}`} title={o.escrow.refund.error || o.escrow.refund.id}>{o.escrow.refund.provider} refund {o.escrow.refund.status}</div> : null}</Td>
                       <Td>{o.platformFee != null ? m(o.platformFee) : "—"}</Td>
                       <Td className="text-right">
                         <div className="flex justify-end gap-1">
                           {open ? <Button size="sm" variant="secondary" onClick={() => act({ title: "Force complete this order?", description: "Escrow is released to the seller minus the platform fee.", path: `/admin/orders/${o.id}/complete`, done: refresh, success: "Order completed" })}>Complete</Button> : null}
-                          {o.escrow?.status !== "refunded" ? <Button size="sm" variant="danger" onClick={() => act({ title: "Refund the buyer", description: "Cancels the order and marks escrow refunded. If it was already released, the seller's credit is reversed. Card payments must also be refunded in Stripe.", askReason: "Reason (shown to both parties)", path: `/admin/orders/${o.id}/refund`, done: refresh, success: "Order refunded" })}>Refund</Button> : null}
+                          {o.escrow?.status !== "refunded" || o.escrow?.refund?.status === "failed" ? <Button size="sm" variant="danger" onClick={() => act({ title: "Refund the buyer", description: "Cancels the order and returns the money to the buyer (card refund through Stripe when the order was paid by card). If escrow was already released, the seller's credit is reversed.", askReason: "Reason (shown to both parties)", path: `/admin/orders/${o.id}/refund`, done: refresh, success: "Order refunded" })}>Refund</Button> : null}
                         </div>
                       </Td>
                     </tr>

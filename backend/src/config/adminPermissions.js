@@ -30,7 +30,11 @@ const RULES = [
   ["W", /^\/(categories|blog|banner|info)(\/|$)/, "content"],
   ["W", /^\/(admin\/)?support(\/|$)/, "support"],
   ["W", /^\/admin\/broadcast(\/|$)/, "broadcast"],
+  // The approvals controller checks the permission of the parked action.
+  ["W", /^\/admin\/approvals\/[^/]+\/(approve|reject)$/, "read"],
   ["GET", /^\/admin\/(escrow|payments|earnings)(\/|$)/, "finance"],
+  ["GET", /^\/withdrawal(\/|$)/, "finance"],
+  ["GET", /^\/admin\/newsletter(\/|$)/, "broadcast"],
   ["GET", /^\/admin\/analytics(\/|$)/, "analytics"],
 ];
 

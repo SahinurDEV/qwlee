@@ -156,12 +156,20 @@ const refundOrder = catchAsync(async (req, res) => {
   const reason = String(req.body?.reason || "").trim() || "Refunded by admin";
   const before = await Payment.findById(oid(req.params.orderId));
   if (!before) throw new ApiError(httpStatus.NOT_FOUND, "Order not found");
-  if (before.escrow?.status === "refunded") throw new ApiError(httpStatus.CONFLICT, "Order is already refunded");
+  if (before.escrow?.status === "refunded" && before.escrow?.refund?.status !== "failed") throw new ApiError(httpStatus.CONFLICT, "Order is already refunded");
   let order = before;
   if (before.status !== "cancelled") order = await adminService.cancelOrder(before._id, { reason: `Refund: ${reason}`, adminId: req.user.id });
   // cancelOrder already reversed any seller credit; mark escrow refunded.
-  order = await Payment.findByIdAndUpdate(before._id, { $set: { "escrow.status": "refunded", "escrow.refundedAt": new Date(), refundReason: reason.slice(0, 500) } }, { new: true });
-  ok(res, { order, note: before.escrow?.provider === "stripe" ? "Escrow marked refunded. Issue the card refund in the Stripe dashboard." : "Escrow marked refunded." }, "Order refunded");
+  const lifecycle = require("../services/orderLifecycle.service");
+  await lifecycle.refundEscrow(before._id); // no-op if cancel already refunded
+  await Payment.updateOne({ _id: before._id }, { $set: { refundReason: reason.slice(0, 500) } });
+  // Retry a previously failed provider refund.
+  const refund = await require("../services/refunds.service").issueRefund(before._id);
+  order = await Payment.findById(before._id);
+  const note = refund?.status === "failed"
+    ? `Escrow refunded but the ${refund.provider} refund failed: ${refund.error}. Retry from this page.`
+    : refund?.provider === "stripe" ? `Card refund ${refund.status} in Stripe (${refund.id}).` : "Escrow refunded (demo payment, no card charged).";
+  ok(res, { order, refund, note }, "Order refunded");
 });
 const forceComplete = catchAsync(async (req, res) => {
   const lifecycle = require("../services/orderLifecycle.service");
@@ -395,9 +403,28 @@ const team = catchAsync(async (req, res) => {
     me: { id: String(req.user._id), adminRole: perms.roleOf(req.user) },
   });
 });
+// ---------------- newsletter ----------------
+const listSubscribers = catchAsync(async (req, res) => {
+  const { Subscriber } = require("../models");
+  const f = {};
+  if (req.query.status) f.status = String(req.query.status);
+  if (req.query.search) f.email = rx(req.query.search);
+  if (req.query.format === "csv") {
+    const rows = await Subscriber.find(f).sort({ createdAt: -1 }).limit(50000).lean();
+    const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const csv = ["email,status,source,subscribed_at"]
+      .concat(rows.map((r) => [r.email, r.status, r.source, r.createdAt?.toISOString()].map(esc).join(",")))
+      .join("\n");
+    res.set("Content-Type", "text/csv; charset=utf-8");
+    res.set("Content-Disposition", 'attachment; filename="subscribers.csv"');
+    return res.send(csv);
+  }
+  ok(res, await list(Subscriber, f, req.query));
+});
+
 const me = catchAsync(async (req, res) => {
   const role = perms.roleOf(req.user);
-  ok(res, { adminRole: role, permissions: perms.ROLE_PERMISSIONS[role] });
+  ok(res, { id: String(req.user._id), adminRole: role, permissions: perms.ROLE_PERMISSIONS[role] });
 });
 
 module.exports = {
@@ -405,4 +432,5 @@ module.exports = {
   featureGig, editGig, getOrder, refundOrder, forceComplete, escrowSummary, listPayments,
   listRequests, moderateRequest, deleteRequest, listOffers, removeOffer, listReviews, deleteReview,
   getSite, updateSite, publicSite, broadcast, listBroadcasts, analytics, auditLog, team, me, twoFaStatus, twoFaSetup, twoFaEnable, twoFaDisable, twoFaReset,
+  listSubscribers,
 };

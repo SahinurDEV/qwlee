@@ -35,6 +35,7 @@ const AllCardTopFilters = ({ totalResults }) => {
       <div className="flex gap-2 items-center text-sm">
         <span className="text-gray-500">Sort by</span>
         <Select
+          aria-label="Sort services"
           value={current}
           onChange={handleChange}
           options={OPTIONS}

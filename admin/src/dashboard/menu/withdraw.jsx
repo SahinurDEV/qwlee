@@ -79,6 +79,7 @@ export default function Withdraw() {
     if (!ok) return;
     const res = await approve(row._id);
     if (res.error) toast.error(res.error?.data?.message || "Could not approve");
+    else if (res.data?.code === 202) toast(res.data.message || "Sent for a second admin's approval");
     else toast.success("Withdrawal approved");
   }
   async function handleReject(row) {
