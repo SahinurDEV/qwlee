@@ -80,11 +80,25 @@ const DetailWithdraw = () => {
         <div className=" bg-[#E6F9EF] shadow-lg h-88 w-[60%] px-8 py-8">
           <p className="font-bold">Transaction details</p>
           <div className="py-8">
-            <p className=" font-semibold">
-              AccountNumber: {user?.accountNumber}
+            <p className="font-semibold">
+              Method: {user?.method === "paypal" ? "PayPal" : user?.method === "payoneer" ? "Payoneer" : "Bank transfer"}
             </p>
-            <p className=" my-5">Account Type: {user?.accountType}</p>
-            <p>Bank Name: {user?.bankName}</p>
+            {user?.method && user.method !== "bank" ? (
+              <p className="my-5">{user.method === "paypal" ? "PayPal email" : "Payoneer payee id"}: {user?.payoutAccount}</p>
+            ) : (
+              <>
+                <p className="my-5">AccountNumber: {user?.accountNumber}</p>
+                <p className="mb-5">Account Type: {user?.accountType}</p>
+                <p>Bank Name: {user?.bankName}</p>
+              </>
+            )}
+            {user?.payout?.provider && (
+              <p className={`mt-3 text-sm ${user.payout.status === "failed" ? "text-red-600" : "text-gray-700"}`}>
+                Payout: {user.payout.provider}
+                {user.payout.id ? ` · ${user.payout.id}` : ""} · {user.payout.status}
+                {user.payout.error ? ` · ${user.payout.error}` : ""}
+              </p>
+            )}
             <p className={
   user?.status === "Failed" ? "text-red-600" :
   user?.status === "Pending" ? "text-orange-400" :
