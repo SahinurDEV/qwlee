@@ -5,8 +5,20 @@ import PageHeader from "../../common/PageHeader";
 import Card from "../../common/Card";
 import StatusPill from "../../common/StatusPill";
 import { qs, useAdminQuery } from "../../utils/adminApi";
+import Button from "../../common/Button";
+import url from "../../baseUrl";
 import { formatDate } from "../../utils/format";
 import { Empty, ErrorNote, input, Pager, Tabs, Td, Th } from "./ui";
+
+async function exportCsv(query) {
+  const res = await fetch(`${url}/v1/admin/audit${query}`, { headers: { authorization: `Bearer ${localStorage.getItem("token")}` } });
+  if (!res.ok) return alert(`Export failed (${res.status})`);
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(await res.blob());
+  a.download = "admin-audit.csv";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
 
 export default function AuditLog() {
   const [search, setSearch] = useState("");
@@ -19,7 +31,11 @@ export default function AuditLog() {
   const { data, error } = useAdminQuery(`/admin/audit${qs({ search: term, denied, adminId, page, limit: 25 })}`);
   return (
     <div>
-      <PageHeader title="Audit log" subtitle="Who did what, when. Secrets in request bodies are redacted." />
+      <PageHeader
+        title="Audit log"
+        subtitle="Who did what, when. Secrets in request bodies are redacted."
+        actions={<Button variant="secondary" onClick={() => exportCsv(qs({ search: term, denied, adminId, format: "csv" }))}>Export CSV</Button>}
+      />
       <Card>
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <Tabs tabs={[{ v: "", label: "All actions" }, { v: "true", label: "Denied attempts" }]} value={denied} onChange={(v) => { setDenied(v); setPage(1); }} />

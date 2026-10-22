@@ -78,6 +78,11 @@ const register = catchAsync(async (req, res) => {
 
 // Issue tokens, record the sign-in and send the standard login payload.
 async function sendLoginSuccess(req, res, user) {
+  // Every sign-in path (password, Google, OTP) funnels through here, so an
+  // admin with 2FA can only get tokens after the code was checked above.
+  if (user.role === "admin" && user.twoFactorEnabled && !req.twoFactorVerified) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, "This admin account uses two-factor. Sign in with email, password and code.");
+  }
   const tokens = await tokenService.generateAuthTokens(user);
 
   // Record the sign-in for the admin "monitor user" feature. Best-effort
@@ -126,6 +131,19 @@ const login = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.FORBIDDEN, `BANNED:${reason}`);
   }
   const user = isUser;
+
+  // Admin two-factor: password alone is not enough.
+  if (user.role === "admin" && user.twoFactorEnabled) {
+    const otp = req.body.otp || req.body.code;
+    if (!otp) {
+      return res.status(httpStatus.UNAUTHORIZED).json({ code: 401, message: "Enter the code from your authenticator app", data: { attributes: { twoFactorRequired: true } } });
+    }
+    const full = await require("../models").User.findById(user._id).select("+twoFactorSecret");
+    if (!(await require("../services/twoFactor.service").check(full, otp))) {
+      throw new ApiError(httpStatus.UNAUTHORIZED, "Invalid two-factor code");
+    }
+    req.twoFactorVerified = true;
+  }
 
   setTimeout(async () => {
     try {
@@ -266,7 +284,8 @@ const sendVerificationEmail = catchAsync(async (req, res,next) => {
 
 const verifyEmail = catchAsync(async (req, res,next) => {
   const user = await authService.verifyEmail(req.body, req.query);
-  const tokens = await tokenService.generateAuthTokens(user);
+  // An emailed code must not bypass an admin's two-factor.
+  const tokens = user.role === "admin" && user.twoFactorEnabled ? null : await tokenService.generateAuthTokens(user);
 
   res.status(httpStatus.OK).json(
     response({

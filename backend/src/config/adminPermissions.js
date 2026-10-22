@@ -13,6 +13,8 @@ const ADMIN_ROLES = Object.keys(ROLE_PERMISSIONS);
 
 // [methods ("*" = any, "W" = any non-GET), path regex, permission, audit GETs?]
 const RULES = [
+  // Any admin manages their own two-factor.
+  ["*", /^\/admin\/2fa(\/|$)/, "read"],
   ["*", /^\/admin\/(settings|team|audit)(\/|$)/, "settings"],
   ["*", /^\/admin\/(chats|order-chats)(\/|$)/, "support", true],
   ["GET", /^\/admin\/users\/[^/]+\/view$/, "read", true],

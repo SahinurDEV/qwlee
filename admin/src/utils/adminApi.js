@@ -15,6 +15,9 @@ export async function adminFetch(path, { method = "GET", body } = {}) {
   });
   const json = await res.json().catch(() => null);
   if (!res.ok) {
+    if (String(json?.message || "").startsWith("TWO_FACTOR_SETUP_REQUIRED") && !location.pathname.endsWith("/security")) {
+      location.assign("/dashboard/security");
+    }
     const err = new Error(json?.message || `Request failed (${res.status})`);
     err.status = res.status;
     throw err;
