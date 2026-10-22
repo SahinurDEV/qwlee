@@ -30,6 +30,7 @@ import {
 import Avatar from "@/components/common/Avatar";
 import VerificationSection from "@/components/EditProfile/VerificationSection";
 import SessionsSection from "@/components/EditProfile/SessionsSection";
+import TwoFactorSection from "@/components/EditProfile/TwoFactorSection";
 
 function normaliseSkills(rawSkills) {
   if (!Array.isArray(rawSkills)) return [];
@@ -348,7 +349,8 @@ export default function FreelancerEditProfile() {
         </SectionCard>
 
         <VerificationSection user={loginUser} />
-        <SessionsSection />
+        <TwoFactorSection />
+<SessionsSection />
 
         <div className="sticky bottom-0 bg-white/85 backdrop-blur border border-gray-200 rounded-2xl px-5 py-3 mt-6 flex items-center justify-between">
           <button

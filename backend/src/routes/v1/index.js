@@ -45,6 +45,10 @@ const defaultRoutes = [
     route: require("./notificationSettings.routes"),
   },
   {
+    path: "/two-factor",
+    route: require("./twoFactor.routes"),
+  },
+  {
     path: "/sessions",
     route: require("./sessions.routes"),
   },
