@@ -16,56 +16,56 @@ const trendingData = [
     name:"Top Deal Australia",
     description:"Limited time deal",
     discount:25,
-    img:'https://i.ibb.co/x5DCTS7/offer.png'
+    img:'/images/home/offer.png'
   },
   {
     id:2,
     name:"Top Deal Australia",
     description:"Limited time deal",
     discount:25,
-    img:'https://i.ibb.co/x5DCTS7/offer.png'
+    img:'/images/home/offer.png'
   },
   {
     id:3,
     name:"Top Deal Australia",
     description:"Limited time deal",
     discount:25,
-    img:'https://i.ibb.co/x5DCTS7/offer.png'
+    img:'/images/home/offer.png'
   },
   {
     id:4,
     name:"Top Deal Australia",
     description:"Limited time deal",
     discount:25,
-    img:'https://i.ibb.co/x5DCTS7/offer.png'
+    img:'/images/home/offer.png'
   },
   {
     id:5,
     name:"Top Deal Australia",
     description:"Limited time deal",
     discount:25,
-    img:'https://i.ibb.co/x5DCTS7/offer.png'
+    img:'/images/home/offer.png'
   },
   {
     id:6,
     name:"Top Deal Australia",
     description:"Limited time deal",
     discount:25,
-    img:'https://i.ibb.co/x5DCTS7/offer.png'
+    img:'/images/home/offer.png'
   },
   {
     id:7,
     name:"Top Deal Australia",
     description:"Limited time deal",
     discount:25,
-    img:'https://i.ibb.co/x5DCTS7/offer.png'
+    img:'/images/home/offer.png'
   },
   {
     id:8,
     name:"Top Deal Australia",
     description:"Limited time deal",
     discount:25,
-    img:'https://i.ibb.co/x5DCTS7/offer.png'
+    img:'/images/home/offer.png'
   },
 ]
 

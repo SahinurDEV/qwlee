@@ -16,7 +16,7 @@ const JoinCNNCTR = () => {
             <Image
               fill
               className="absolute object-cover"
-              src={"https://i.ibb.co.com/N3fWtBr/man-image.png"}
+              src={"/images/home/man-image.png"}
               alt="Join Qwlee"
             />
           </div>

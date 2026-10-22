@@ -69,3 +69,18 @@ test("password reset: email delivered, code works once, wrong guesses lock it", 
   r = await post("/auth/login", { email: EMAIL, password: PASSWORD });
   assert.equal(r.status, 200);
 });
+
+test("login does not reveal whether an email exists or is unverified", async () => {
+  const email = `enum-${Date.now()}@example.com`;
+  const reg = await post("/auth/register", { email, password: "Passw0rd!x", fullName: "Enum Test" });
+  assert.ok([200, 201].includes(reg.status), `register ${reg.status}`);
+  const unknown = await post("/auth/login", { email: `nobody-${Date.now()}@example.com`, password: "Wrong123!x" });
+  const unverifiedWrong = await post("/auth/login", { email, password: "Wrong123!x" });
+  const knownWrong = await post("/auth/login", { email: EMAIL, password: "Wrong123!x" });
+  for (const r of [unknown, unverifiedWrong, knownWrong]) {
+    assert.equal(r.status, 401);
+    assert.equal(r.json.message, "Incorrect email or password");
+  }
+  const unverifiedRight = await post("/auth/login", { email, password: "Passw0rd!x" });
+  assert.equal(unverifiedRight.status, 400, "correct password still learns it needs verification");
+});
