@@ -31,6 +31,8 @@ const defaultRoutes = [
   {
     path: "/analytics",
     route: require("./analytics.routes"),
+    path: "/quick-replies",
+    route: require("./quickReplies.routes"),
   },
   {
     path: "/sessions",
