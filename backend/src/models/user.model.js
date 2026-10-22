@@ -184,6 +184,12 @@ const userSchema = mongoose.Schema(
     // means "super" so existing admins keep full access.
     adminRole: { type: String, enum: ["super", "moderator", "support", "finance"], default: undefined },
     tokensValidAfter: { type: Date, default: null, private: true },
+    // Admin two-factor (TOTP). Secrets never leave the server.
+    twoFactorEnabled: { type: Boolean, default: false },
+    twoFactorSecret: { type: String, default: null, private: true },
+    twoFactorPending: { type: String, default: null, private: true },
+    twoFactorLastStep: { type: Number, default: 0, private: true },
+    twoFactorRecovery: { type: [String], default: [], private: true },
     // Reason shown on the sign-in page when a banned user tries to log
     // in. Set by the admin via PATCH /admin/users/:id/ban.
     banReason: { type: String, default: "" },

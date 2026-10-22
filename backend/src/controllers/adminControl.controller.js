@@ -242,7 +242,20 @@ const deleteReview = catchAsync(async (req, res) => {
 
 // ---------------- settings ----------------
 const getSite = catchAsync(async (req, res) => ok(res, { site: await siteSettings.get() }));
-const updateSite = catchAsync(async (req, res) => ok(res, { site: await siteSettings.update(req.body || {}) }, "Settings saved"));
+const updateSite = catchAsync(async (req, res) => {
+  const patch = req.body || {};
+  if (patch.security) {
+    // Don't let an admin lock themselves (and everyone on this network) out.
+    const next = siteSettings.normalise({ ...(await siteSettings.get()), security: { ...(await siteSettings.get()).security, ...patch.security } });
+    if (!require("../utils/ipMatch").allowed(req.ip, next.security.adminIpAllowlist)) {
+      throw new ApiError(httpStatus.BAD_REQUEST, `The allowlist must include your current address (${require("../utils/ipMatch").norm(req.ip)})`);
+    }
+    if (next.security.requireAdmin2fa && !req.user.twoFactorEnabled) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Turn on two-factor for your own account before requiring it for all admins");
+    }
+  }
+  ok(res, { site: await siteSettings.update(patch) }, "Settings saved");
+});
 const publicSite = catchAsync(async (req, res) => {
   res.set("Cache-Control", "public, max-age=30");
   ok(res, await siteSettings.getPublic());
@@ -320,6 +333,30 @@ const analytics = catchAsync(async (req, res) => {
   });
 });
 
+// ---------------- two-factor (own account) ----------------
+const twoFactor = require("../services/twoFactor.service");
+const twoFaStatus = catchAsync(async (req, res) => ok(res, { enabled: !!req.user.twoFactorEnabled, recoveryLeft: (await User.findById(req.user._id).select("+twoFactorRecovery").lean())?.twoFactorRecovery?.length || 0 }));
+const twoFaSetup = catchAsync(async (req, res) => {
+  if (req.user.twoFactorEnabled) throw new ApiError(httpStatus.CONFLICT, "Two-factor is already on");
+  ok(res, await twoFactor.setup(req.user._id));
+});
+const twoFaEnable = catchAsync(async (req, res) => ok(res, await twoFactor.enable(req.user._id, req.body?.code), "Two-factor is on"));
+const twoFaDisable = catchAsync(async (req, res) => {
+  const sec = (await siteSettings.get()).security;
+  if (sec.requireAdmin2fa) throw new ApiError(httpStatus.BAD_REQUEST, "Two-factor is required for admins on this site");
+  const full = await User.findById(req.user._id).select("+twoFactorSecret +twoFactorRecovery +twoFactorLastStep");
+  await twoFactor.disable(full, req.body?.code);
+  ok(res, { enabled: false }, "Two-factor is off");
+});
+const twoFaReset = catchAsync(async (req, res) => {
+  const target = await User.findById(oid(req.params.id));
+  if (!target || target.role !== "admin") throw new ApiError(httpStatus.NOT_FOUND, "Admin not found");
+  if (String(target._id) === String(req.user._id)) throw new ApiError(httpStatus.BAD_REQUEST, "Use your own security settings");
+  await twoFactor.reset(target._id);
+  await User.updateOne({ _id: target._id }, { $set: { tokensValidAfter: new Date() } });
+  ok(res, { id: String(target._id) }, "Two-factor reset; the admin was signed out");
+});
+
 // ---------------- audit + team ----------------
 const auditLog = catchAsync(async (req, res) => {
   const f = {};
@@ -327,12 +364,33 @@ const auditLog = catchAsync(async (req, res) => {
   if (req.query.targetId) f.targetId = String(req.query.targetId);
   if (req.query.search) f.action = rx(req.query.search);
   if (req.query.denied === "true") f.permission = /denied/;
+  if (req.query.from || req.query.to) {
+    f.createdAt = {};
+    if (req.query.from) f.createdAt.$gte = new Date(req.query.from);
+    if (req.query.to) f.createdAt.$lte = new Date(req.query.to);
+  }
+  if (req.query.format === "csv") {
+    const rows = await AdminAudit.find(f).sort({ createdAt: -1 }).limit(50000).lean();
+    const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const csv = ["time,admin,role,action,target,permission,status,ip,body"]
+      .concat(rows.map((r) => [r.createdAt?.toISOString(), r.adminEmail, r.adminRole, r.action, r.targetId, r.permission, r.status, r.ip, JSON.stringify(r.body || {})].map(esc).join(",")))
+      .join("\n");
+    res.set("Content-Type", "text/csv; charset=utf-8");
+    res.set("Content-Disposition", 'attachment; filename="admin-audit.csv"');
+    return res.send(csv);
+  }
   ok(res, await list(AdminAudit, f, req.query));
 });
 const team = catchAsync(async (req, res) => {
-  const admins = await User.find({ role: "admin" }).select("fullName email username adminRole isBan lastSeen createdAt").lean();
+  const admins = await User.find({ role: "admin" }).select("fullName email username adminRole isBan lastSeen createdAt twoFactorEnabled").lean();
+  const { Activity } = require("../models");
+  const logins = Activity
+    ? await Activity.find({ type: "login", userId: { $in: admins.map((a) => a._id) } }).sort({ createdAt: -1 }).limit(30).lean()
+    : [];
+  const nameOf = Object.fromEntries(admins.map((a) => [String(a._id), a.fullName || a.email]));
   ok(res, {
     admins: admins.map(({ _id, ...a }) => ({ id: String(_id), ...a, adminRole: a.adminRole || "super" })),
+    logins: logins.map((l) => ({ id: String(l._id), adminId: String(l.userId), admin: nameOf[String(l.userId)], ip: l.ip, userAgent: l.userAgent, at: l.createdAt })),
     roles: perms.ROLE_PERMISSIONS,
     me: { id: String(req.user._id), adminRole: perms.roleOf(req.user) },
   });
@@ -346,5 +404,5 @@ module.exports = {
   listUsers, updateUser, setRole, resetPassword, logoutEverywhere, viewUser,
   featureGig, editGig, getOrder, refundOrder, forceComplete, escrowSummary, listPayments,
   listRequests, moderateRequest, deleteRequest, listOffers, removeOffer, listReviews, deleteReview,
-  getSite, updateSite, publicSite, broadcast, listBroadcasts, analytics, auditLog, team, me,
+  getSite, updateSite, publicSite, broadcast, listBroadcasts, analytics, auditLog, team, me, twoFaStatus, twoFaSetup, twoFaEnable, twoFaDisable, twoFaReset,
 };

@@ -33,6 +33,15 @@ const verifyCallback =
       if (adminOnly) {
         const perms = require("../config/adminPermissions");
         const r = perms.resolve(req);
+        const sec = (await require("../services/siteSettings.service").get()).security || {};
+        if (!require("../utils/ipMatch").allowed(req.ip, sec.adminIpAllowlist)) {
+          require("./adminAudit").recordAdminAction(req, res, { ...r, perm: "ip-allowlist (denied)" });
+          return reject(new ApiError(httpStatus.FORBIDDEN, "Admin access is not allowed from this network"));
+        }
+        const twoFaFree = /^\/admin\/(me|2fa)(\/|$)/.test(r.path || "");
+        if (sec.requireAdmin2fa && !user.twoFactorEnabled && !twoFaFree) {
+          return reject(new ApiError(httpStatus.FORBIDDEN, "TWO_FACTOR_SETUP_REQUIRED: turn on two-factor sign-in to use the admin panel"));
+        }
         if (!perms.can(user, r.perm)) {
           require("./adminAudit").recordAdminAction(req, res, { ...r, perm: `${r.perm} (denied)` });
           return reject(new ApiError(httpStatus.FORBIDDEN, `Your admin role (${perms.roleOf(user)}) cannot do this`));
