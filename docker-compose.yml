@@ -23,6 +23,8 @@ services:
     depends_on:
       mongo:
         condition: service_healthy
+      mailpit:
+        condition: service_started
     env_file: .env
     environment:
       NODE_ENV: production
@@ -31,9 +33,26 @@ services:
       MONGODB_URL: mongodb://mongo:27017/qwlee
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:8000}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8000,http://localhost:4000}
+      # Email goes to the bundled Mailpit inbox unless you set real SMTP.
+      SMTP_HOST: ${SMTP_HOST:-mailpit}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      EMAIL_FROM: ${EMAIL_FROM:-Qwlee <no-reply@qwlee.local>}
     ports:
       - "${BACKEND_PORT:-7171}:7171"
       - "${SOCKET_PORT:-8181}:8181"
+
+  # Local email catcher: every email the app sends shows up at
+  # http://localhost:8025. Point SMTP_* at a real server to send for real.
+  mailpit:
+    image: axllent/mailpit:v1.21
+    restart: unless-stopped
+    ports:
+      - "${MAILPIT_PORT:-8025}:8025"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8025/livez"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   frontend:
     build:

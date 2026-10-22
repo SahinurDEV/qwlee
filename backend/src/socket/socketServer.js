@@ -18,7 +18,9 @@ const presence = require("./presence");
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
-  cors: { origin: "*" },
+  // Same allowlist as the REST API (CORS_ORIGINS). Falls back to any
+  // origin only when no allowlist is configured (local development).
+  cors: { origin: config.corsOrigins.length ? config.corsOrigins : "*" },
   allowEIO3: true,
   perMessageDeflate: false,
 });

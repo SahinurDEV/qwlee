@@ -80,10 +80,10 @@ module.exports = {
     smtp: {
       host: envVars.SMTP_HOST,
       port: envVars.SMTP_PORT,
-      auth: {
-        user: envVars.SMTP_USERNAME,
-        pass: envVars.SMTP_PASSWORD,
-      },
+      // Local catchers such as Mailpit accept unauthenticated mail.
+      auth: envVars.SMTP_USERNAME
+        ? { user: envVars.SMTP_USERNAME, pass: envVars.SMTP_PASSWORD }
+        : undefined,
     },
     from: envVars.EMAIL_FROM,
   },

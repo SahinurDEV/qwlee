@@ -63,16 +63,23 @@ async function getTransport() {
   return { transport: cachedTransport, from };
 }
 
+// Returns true when the message was handed to the SMTP server. Callers
+// that must tell the user an email was sent (OTP, password reset)
+// check the result instead of assuming success. Never throws.
 async function sendEmail(to, subject, html) {
   try {
-    if (!to) return;
+    if (!to) return false;
+    const { smtp } = await readSmtp();
+    if (!smtp?.host) {
+      logger.warn(`Email to ${to} skipped: SMTP is not configured`);
+      return false;
+    }
     const { transport, from } = await getTransport();
     await transport.sendMail({ from, to, subject, html });
+    return true;
   } catch (err) {
-    // Never crash a request because email delivery hiccupped. The DB
-    // already has the canonical record — the email is a notification,
-    // not a side-effect we depend on.
     logger.warn(`Email to ${to} failed: ${err.message}`);
+    return false;
   }
 }
 
@@ -245,7 +252,7 @@ function shortId(id) {
 // AUTH
 // ===========================================================================
 async function sendEmailVerification(to, otp) {
-  await sendEmail(
+  return sendEmail(
     to,
     "Welcome to Qwlee — verify your email",
     emailShell({
@@ -262,7 +269,7 @@ async function sendEmailVerification(to, otp) {
 }
 
 async function sendResetPasswordEmail(to, otp) {
-  await sendEmail(
+  return sendEmail(
     to,
     "Reset your Qwlee password",
     emailShell({

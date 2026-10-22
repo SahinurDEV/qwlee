@@ -36,9 +36,9 @@ function fromEnv() {
       host: process.env.SMTP_HOST || "",
       port: Number(process.env.SMTP_PORT) || 587,
       secure: process.env.SMTP_SECURE === "true",
-      user: process.env.SMTP_USER || "",
-      pass: process.env.SMTP_PASS || "",
-      fromEmail: process.env.SMTP_FROM_EMAIL || "",
+      user: process.env.SMTP_USER || process.env.SMTP_USERNAME || "",
+      pass: process.env.SMTP_PASS || process.env.SMTP_PASSWORD || "",
+      fromEmail: process.env.SMTP_FROM_EMAIL || process.env.EMAIL_FROM || "",
       fromName: process.env.SMTP_FROM_NAME || "",
     },
     misc: {},
@@ -189,7 +189,18 @@ async function getPublicMethods() {
   return [...built, ...custom];
 }
 
+// Platform commission taken from each completed order, in percent.
+// Admin can override it in Settings > Misc with key `platformFeePercent`;
+// otherwise PLATFORM_FEE_PERCENT from the environment, default 5.
+async function getPlatformFeePercent() {
+  const doc = await getConfig();
+  const raw = doc?.misc?.platformFeePercent ?? process.env.PLATFORM_FEE_PERCENT ?? 5;
+  const pct = Number(raw);
+  return Number.isFinite(pct) && pct >= 0 && pct <= 100 ? pct : 5;
+}
+
 module.exports = {
+  getPlatformFeePercent,
   getConfig,
   updateConfig,
   addCustomPayment,

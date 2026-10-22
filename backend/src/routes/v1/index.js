@@ -131,7 +131,8 @@ defaultRoutes.forEach((route) => {
 });
 
 /* istanbul ignore next */
-if (config.env === "development") {
+// API docs are on in development, or anywhere with ENABLE_API_DOCS=true.
+if (config.env === "development" || process.env.ENABLE_API_DOCS === "true") {
   devRoutes.forEach((route) => {
     router.use(route.path, route.route);
   });

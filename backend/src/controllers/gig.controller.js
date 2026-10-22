@@ -191,6 +191,9 @@ const deleteGig = catchAsync(async (req, res) => {
 });
 
 const publicGigs = catchAsync(async (req, res) => {
+  if (!req.query.userId) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "userId query parameter is required");
+  }
   const result = await gigService.publicGigs(req.query.userId);
   res.status(httpStatus.OK).json(
     response({

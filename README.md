@@ -26,7 +26,8 @@ Then open:
 
 - Marketplace: http://localhost:8000
 - Admin dashboard: http://localhost:4000
-- API: http://localhost:7171 (health: `/health`, docs: `/v1/docs` if enabled)
+- API: http://localhost:7171 (health: `/health`; Swagger docs at `/v1/docs` when `ENABLE_API_DOCS=true`)
+- Mailpit (every email the app sends, e.g. verification and reset codes): http://localhost:8025
 
 Load demo data (in another terminal):
 
@@ -54,7 +55,20 @@ All Docker config lives in the root `.env` (see [.env.example](.env.example)).
 | `STRIPE_*` | for payments | Use test keys locally |
 | `SMTP_*`, `EMAIL_FROM` | for email | OTP and password-reset email |
 
+| `ENABLE_API_DOCS` | no | Serve Swagger UI at `/v1/docs` outside development |
+| `PLATFORM_FEE_PERCENT` | no | Commission on completed orders (default 5). Admin can override in Settings > Misc with key `platformFeePercent` |
+
 Other payment providers and SMTP can also be configured from the admin panel.
+
+### Email
+
+Out of the box all email goes to the bundled Mailpit inbox at http://localhost:8025, so sign-up verification and password reset work without a real mail server. To send real email set `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD` and `EMAIL_FROM` in `.env` (or in the admin panel). If sending fails, password reset returns an error instead of pretending it worked.
+
+### Payments with Stripe (test mode)
+
+1. Create a free Stripe account and copy the **test** keys from https://dashboard.stripe.com/test/apikeys into `.env` as `STRIPE_SECRET_KEY` (`sk_test_...`) and `STRIPE_PUBLISHABLE_KEY` (`pk_test_...`).
+2. Install the [Stripe CLI](https://stripe.com/docs/stripe-cli) and forward webhooks: `stripe listen --forward-to localhost:7171/v1/orders/webhook`. Put the printed `whsec_...` value in `STRIPE_WEBHOOK_SECRET`.
+3. `docker compose up -d --build backend`, then pay with card `4242 4242 4242 4242`, any future date and any CVC.
 
 ## Manual setup (without Docker)
 
