@@ -24,6 +24,7 @@ import {
   IoChevronForward,
   IoHelpCircleOutline,
   IoSettingsOutline,
+  IoStatsChartOutline,
   IoLogOutOutline,
   IoSparklesOutline,
   IoCashOutline,
@@ -128,7 +129,7 @@ export default function TopNav() {
   // Pages that only make sense in one mode — if the user switches modes
   // while standing on one of these, send them somewhere neutral.
   // Everywhere else (gig browse, gig detail, profile, inbox, …) stay put.
-  const SELLER_ONLY = ["/earnings", "/gig/add", "/gig/edit"];
+  const SELLER_ONLY = ["/earnings", "/analytics", "/gig/add", "/gig/edit"];
   const BUYER_ONLY = ["/list"];
 
   function handleSwitchMode() {
@@ -150,6 +151,7 @@ export default function TopNav() {
   const sellingLinks = [
     { icon: IoStorefrontOutline, label: "Dashboard", href: "/dashboard" },
     { icon: IoCashOutline, label: "Earnings", href: "/earnings" },
+    { icon: IoStatsChartOutline, label: "Analytics", href: "/analytics" },
     { icon: IoListOutline, label: "Manage orders", href: "/order" },
     { icon: IoSparklesOutline, label: "Create a new gig", href: "/gig/add" },
     { icon: IoHeartOutline, label: "Wishlist", href: "/list" },

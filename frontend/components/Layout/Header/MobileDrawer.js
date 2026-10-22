@@ -27,7 +27,7 @@ export default function MobileDrawer({ open, onClose }) {
   const pathname = usePathname();
   const dispatch = useDispatch();
   const { isSelling, toggleViewMode } = useViewMode(user);
-  const SELLER_ONLY = ["/earnings", "/gig/add", "/gig/edit"];
+  const SELLER_ONLY = ["/earnings", "/analytics", "/gig/add", "/gig/edit"];
   const BUYER_ONLY = ["/list"];
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const { data } = useGetAllCategoryQuery({});
@@ -89,6 +89,7 @@ export default function MobileDrawer({ open, onClose }) {
   const sellingLinks = [
     { label: "Dashboard", path: "/dashboard" },
     { label: "Earnings", path: "/earnings" },
+    { label: "Analytics", path: "/analytics" },
     { label: "Manage orders", path: "/order" },
     { label: "Create a new gig", path: "/gig/add" },
     { label: "Wishlist", path: "/list" },
