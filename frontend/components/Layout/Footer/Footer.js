@@ -6,6 +6,8 @@
 // showing them. Drop real values in if/when you have them.
 
 import CurrencySelect from "@/components/common/CurrencySelect";
+import LanguageSelect from "@/components/common/LanguageSelect";
+import { useI18n } from "@/components/Context/I18nProvider";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -24,24 +26,24 @@ import useUser from "@/hooks/useUser";
 import useSiteConfig, { featureOn } from "@/hooks/useSiteConfig";
 
 const MARKETPLACE_BASE = [
-  { label: "Explore services", href: "/gig" },
-  { label: "Hire freelancers", href: "/hire-freelancers" },
-  { label: "Browse categories", href: "/services" },
-  { label: "Buyer requests", href: "/requests" },
-  { label: "Post a request", href: "/requests/new" },
+  { label: "Explore services", key: "exploreServices", href: "/gig" },
+  { label: "Hire freelancers", key: "hireFreelancers", href: "/hire-freelancers" },
+  { label: "Browse categories", key: "browseCategories", href: "/services" },
+  { label: "Buyer requests", key: "buyerRequests", href: "/requests" },
+  { label: "Post a request", key: "postRequest", href: "/requests/new" },
 ];
 
 const COMPANY = [
-  { label: "About us", href: "/about-us" },
-  { label: "Help centre", href: "/help" },
-  { label: "Contact us", href: "/contact-us" },
-  { label: "Blog", href: "/blogs" },
+  { label: "About us", key: "aboutUs", href: "/about-us" },
+  { label: "Help centre", key: "helpCentre", href: "/help" },
+  { label: "Contact us", key: "contactUs", href: "/contact-us" },
+  { label: "Blog", key: "blog", href: "/blogs" },
 ];
 
 const LEGAL = [
-  { label: "Terms of service", href: "/terms-of-service" },
-  { label: "Privacy policy", href: "/privacy-policy" },
-  { label: "Trust & safety", href: "/trust-safety" },
+  { label: "Terms of service", key: "terms", href: "/terms-of-service" },
+  { label: "Privacy policy", key: "privacy", href: "/privacy-policy" },
+  { label: "Trust & safety", key: "trust", href: "/trust-safety" },
 ];
 
 // Social handles intentionally point to placeholder URLs. Replace with
@@ -55,6 +57,7 @@ const SOCIAL = [
 
 export default function Footer() {
   const router = useRouter();
+  const { t } = useI18n();
   const currentUser = useUser();
   // Auth state in a client effect — SSR doesn't see cookies, so reading
   // useUser() directly at render flips the "Become a seller" label
@@ -74,8 +77,8 @@ export default function Footer() {
   const MARKETPLACE = [
     ...MARKETPLACE_BASE.filter((l) => featureOn(site, "buyerRequests") || !l.href.startsWith("/requests")),
     user
-      ? { label: "Sell on Qwlee", href: "/dashboard" }
-      : { label: "Become a seller", href: "/sign-up" },
+      ? { label: "Sell on Qwlee", key: "sellOnQwlee", href: "/dashboard" }
+      : { label: "Become a seller", key: "becomeSeller", href: "/sign-up" },
   ];
 
   const [subscribing, setSubscribing] = useState(false);
@@ -112,9 +115,7 @@ export default function Footer() {
               <QwleeLogo height={32} variant="white" />
             </Link>
             <p className="mt-4 text-sm text-gray-400 max-w-sm leading-relaxed">
-              Qwlee is a modern freelance marketplace where buyers hire vetted
-              experts in web, mobile, design, video, AI, and more — with
-              cloud-hosted media and escrowed payments.
+              {t("pitch")}
             </p>
 
             <form
@@ -126,7 +127,7 @@ export default function Footer() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Your email"
+                placeholder={t("yourEmail")}
                 aria-label="Newsletter email"
                 className="flex-1 px-3 py-2 rounded-lg bg-gray-800 border border-gray-700 text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500"
               />
@@ -135,28 +136,31 @@ export default function Footer() {
                 disabled={subscribing}
                 className="px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 transition disabled:opacity-60"
               >
-                {subscribing ? "Subscribing…" : "Subscribe"}
+                {subscribing ? t("subscribing") : t("subscribe")}
               </button>
             </form>
 
             <div className="mt-5 inline-flex items-center gap-2 text-xs text-gray-400">
               <GoVerified className="text-emerald-400" />
-              <span>Verified sellers · escrowed payments</span>
+              <span>{t("verifiedEscrow")}</span>
             </div>
           </div>
 
           {/* Link columns */}
-          <FooterColumn title="Marketplace" links={MARKETPLACE} />
-          <FooterColumn title="Company" links={COMPANY} />
-          <FooterColumn title="Legal" links={LEGAL} />
+          <FooterColumn title={t("marketplace")} links={MARKETPLACE.map((l) => ({ ...l, label: t(l.key) }))} />
+          <FooterColumn title={t("company")} links={COMPANY.map((l) => ({ ...l, label: t(l.key) }))} />
+          <FooterColumn title={t("legal")} links={LEGAL.map((l) => ({ ...l, label: t(l.key) }))} />
         </div>
       </div>
 
       {/* Bottom bar */}
       <div className="border-t border-gray-800">
         <div className="container mx-auto px-4 py-5 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-gray-500">
-          <p>© {new Date().getFullYear()} Qwlee. All rights reserved.</p>
-          <CurrencySelect />
+          <p>© {new Date().getFullYear()} Qwlee. {t("rights")}</p>
+          <div className="flex flex-wrap items-center gap-4">
+            <LanguageSelect />
+            <CurrencySelect />
+          </div>
 
           <div className="flex items-center gap-4">
             <a

@@ -5,6 +5,9 @@ import { Providers } from "./redux/provider";
 import { Toaster } from "sonner";
 import { MdError } from "react-icons/md";
 import { SocketProvider } from "@/components/Context/SocketProvider";
+import { I18nProvider } from "@/components/Context/I18nProvider";
+import { LANG_COOKIE, normaliseLang } from "@/lib/i18n";
+import { cookies } from "next/headers";
 
 const BASE_METADATA = {
   title: {
@@ -82,10 +85,12 @@ export async function generateMetadata() {
   };
 }
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  const lang = normaliseLang((await cookies()).get(LANG_COOKIE)?.value);
   return (
-    <html lang="en">
+    <html lang={lang}>
       <body>
+        <I18nProvider lang={lang}>
         <Providers>
           <SocketProvider>
             {/* No Suspense here: it would start streaming before pages
@@ -98,6 +103,7 @@ export default function RootLayout({ children }) {
             />
           </SocketProvider>
         </Providers>
+        </I18nProvider>
       </body>
     </html>
   );

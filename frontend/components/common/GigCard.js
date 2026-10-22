@@ -7,6 +7,7 @@
 // - Wishlist heart overlay (any signed-in user can save)
 // - Hover lift to match the rest of the Qwlee card system
 
+import { useI18n } from "@/components/Context/I18nProvider";
 import Money from "@/components/common/Money";
 import Link from "next/link";
 import { IoStar } from "react-icons/io5";
@@ -25,6 +26,7 @@ function normaliseSkills(skills) {
 }
 
 export default function GigCard({ item, sponsored = false }) {
+  const { t } = useI18n();
   if (!item) return null;
   const seller = item.userId || {};
   const skillList = normaliseSkills(seller.skills).slice(0, 3);
@@ -140,7 +142,7 @@ export default function GigCard({ item, sponsored = false }) {
           ) : null}
 
           <div className="mt-auto pt-3 border-t border-gray-100 flex items-center justify-between text-sm">
-            <span className="text-gray-500 text-xs">Starting at</span>
+            <span className="text-gray-500 text-xs">{t("startingAt")}</span>
             <Money usd={item.price} className="text-gray-900 font-semibold" />
           </div>
         </div>
