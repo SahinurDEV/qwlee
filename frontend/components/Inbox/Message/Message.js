@@ -386,7 +386,15 @@ export default function Message() {
   // Other-party local time (rough — we only have a free-text location;
   // best effort via moment locale, otherwise just show the user's own
   // local clock as a reference).
-  const localTime = moment().format("h:mm A");
+  // Set after mount: rendering the clock on the server (UTC) and again in
+  // the browser (local zone) gave different text, a hydration error (#418).
+  const [localTime, setLocalTime] = useState("");
+  useEffect(() => {
+    const tick = () => setLocalTime(moment().format("h:mm A"));
+    tick();
+    const t = setInterval(tick, 30000);
+    return () => clearInterval(t);
+  }, []);
 
   let content;
   if (isFetching && messages.length === 0) {
@@ -475,7 +483,7 @@ export default function Message() {
             )}
             {location && <span className="text-gray-400">· {location}</span>}
             <span className="hidden md:inline-flex items-center gap-1 text-gray-400">
-              <IoTimeOutline /> {localTime} local
+              <IoTimeOutline /> {localTime ? `${localTime} local` : ""}
             </span>
           </div>
         </div>
