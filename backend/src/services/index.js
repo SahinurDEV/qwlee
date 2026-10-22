@@ -17,3 +17,5 @@ module.exports.messageService = require('./message.service')
 module.exports.appConfigService = require('./appConfig.service')
 module.exports.sellerLevelService = require('./sellerLevel.service')
 module.exports.disputeService = require('./dispute.service')
+module.exports.buyerRequestService = require('./buyerRequest.service')
+

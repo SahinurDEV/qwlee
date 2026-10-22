@@ -18,7 +18,7 @@ const notificationSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["order", "message",  "payment", "unknown"],
+      enum: ["order", "message",  "payment", "request", "unknown"],
       default: "unknown",
     },
     viewStatus: { type: Boolean, enum: [true, false], default: false },

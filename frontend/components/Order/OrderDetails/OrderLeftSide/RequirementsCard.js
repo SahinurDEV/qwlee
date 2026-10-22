@@ -81,7 +81,7 @@ export default function RequirementsCard({ order, orderId, isSeller }) {
         </div>
       )}
 
-      {status === "submitted" && answers.length > 0 && (
+      {status !== "pending" && answers.length > 0 && (
         <section className="bg-white border border-gray-200 rounded-2xl p-5 md:p-6">
           <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide inline-flex items-center gap-2">
             <IoDocumentTextOutline /> Requirements
