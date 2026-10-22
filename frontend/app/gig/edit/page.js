@@ -1,17 +1,18 @@
-import EditGig from "@/components/EditGig/EditGig";
+import { Suspense } from "react";
+import EditGigWizard from "@/components/GigWizard/EditGigWizard";
 import PrimaryLayout from "@/components/Layout/PrimaryLayout";
 
 export const metadata = {
-  title: "Edit Gig | Qwlee",
-  description:
-    "Company Number: (781) 316-0189, and Company Email: e-mail such as info@qwlee.com",
-}
-const page = () => {
-  return (
-    <PrimaryLayout>
-      <EditGig />
-    </PrimaryLayout>
-  );
+  title: "Edit gig | Qwlee",
+  description: "Update your Qwlee gig.",
 };
 
-export default page;
+export default function Page() {
+  return (
+    <PrimaryLayout>
+      <Suspense fallback={null}>
+        <EditGigWizard />
+      </Suspense>
+    </PrimaryLayout>
+  );
+}
