@@ -197,6 +197,10 @@ const userSchema = mongoose.Schema(
     // ID verification — seller submits docs, admin approves, the
     // verified tick mark shows up everywhere user.isVerified is true.
     isVerified: { type: Boolean, default: false },
+    // Referral programme.
+    referralCode: { type: String, default: undefined, index: { unique: true, sparse: true }, private: true },
+    referredBy: { type: mongoose.SchemaTypes.ObjectId, ref: "User", default: null, private: true },
+    referralRewarded: { type: Boolean, default: false, private: true },
     verification: {
       status: {
         type: String,
