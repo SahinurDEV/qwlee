@@ -1,3 +1,4 @@
+const { assertChatMember } = require("../utils/access");
 const httpStatus = require("http-status");
 const pick = require("../utils/pick");
 const ApiError = require("../utils/ApiError");
@@ -119,6 +120,7 @@ const addMessage = catchAsync(async (req, res) => {
 
 const getMessages = catchAsync(async (req, res) => {
   const chatId = req.query.chatId;
+  await assertChatMember(chatId, req.user.id);
   const options = pick(req.query, [
     "limit",
     "page",

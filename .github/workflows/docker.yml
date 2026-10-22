@@ -36,6 +36,14 @@ jobs:
           curl -fsS http://localhost:7171/health
           curl -fsS -o /dev/null http://localhost:8000/
           curl -fsS -o /dev/null http://localhost:4000/
+          curl -fsS -o /dev/null http://localhost:7171/seed/gig/01.jpg
+      - name: Seed demo data
+        run: docker compose exec -T backend npm run seed
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: API tests
+        run: cd backend && API_URL=http://localhost:7171 npm test
       - name: Logs on failure
         if: failure()
         run: docker compose logs

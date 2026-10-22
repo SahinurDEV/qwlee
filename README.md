@@ -36,6 +36,8 @@ docker compose exec backend npm run seed
 
 Demo logins after seeding: `admin@example.com / Admin123!`, `seller@example.com / Seller123!`, `buyer@example.com / Buyer123!`.
 
+Seed images are committed under `backend/public/seed/` and served by the API at `/seed/...`, so demo data never depends on an external image host. Seeded image URLs use `PUBLIC_API_URL`; re-run the seed if you change it.
+
 MongoDB data persists in the `mongo-data` volume. `docker compose down -v` wipes it.
 
 ## Configuration
@@ -66,6 +68,14 @@ cd backend  && npm run seed   # optional demo data
 ```
 
 `JWT_SECRET` must match in `backend/.env` and `frontend/.env`. See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) and [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md).
+
+## Tests
+
+With a seeded stack running:
+
+```sh
+cd backend && API_URL=http://localhost:7171 npm test
+```
 
 ## Contributing
 

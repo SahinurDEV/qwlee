@@ -1,6 +1,7 @@
 const httpStatus = require("http-status");
 const ApiError = require("../utils/ApiError");
 const { Gig, User } = require("../models");
+const { PUBLIC_USER_SELECT } = require("../utils/publicUser");
 
 // Fiverr-style seller level thresholds. The frontend filter sends a
 // short identifier (`new`, `level1`, `level2`, `topRated`) and we
@@ -26,7 +27,7 @@ const createGig = async (data) => {
   return gig;
 };
 
-const queryGigs = async (filter, options, { excludeUserId } = {}) => {
+const queryGigs = async (filter, options, { excludeUserId, viewer } = {}) => {
   // Price range
   if (filter.minPrice || filter.maxPrice) {
     filter.price = {};
@@ -42,7 +43,7 @@ const queryGigs = async (filter, options, { excludeUserId } = {}) => {
   }
 
   options.populate = [
-    { path: "userId" },
+    { path: "userId", select: PUBLIC_USER_SELECT },
     { path: "categoriesId" },
   ];
 
@@ -105,7 +106,7 @@ const queryGigs = async (filter, options, { excludeUserId } = {}) => {
   for (const key of Object.keys(filter)) {
     if (seller.includes(key)) continue;
     if (key === "title" && filter[key] !== "") {
-      query[key] = { $regex: filter[key], $options: "i" };
+      query[key] = { $regex: escapeRegex(filter[key]), $options: "i" };
     } else if (key === "categories") {
       query["categoriesId"] = filter[key];
     } else if (key === "delivery" && filter[key]) {
@@ -117,6 +118,18 @@ const queryGigs = async (filter, options, { excludeUserId } = {}) => {
       }
     } else if (filter[key] !== "" && filter[key] != null) {
       query[key] = filter[key];
+    }
+  }
+
+  // Visibility: the public marketplace only shows active, non-deleted
+  // gigs. Admins see everything; a signed-in seller can also load their
+  // own non-active gig by slug (preview / edit flows).
+  query.isDeleted = { $ne: true };
+  if (viewer?.role !== "admin") {
+    if (query.slug && viewer?.id) {
+      query.$or = [{ gigStatus: "active" }, { userId: viewer.id }];
+    } else {
+      query.gigStatus = "active";
     }
   }
 
@@ -144,9 +157,14 @@ function escapeRegex(s) {
 const publicGigs = async (userId) => {
   const filter = {
     userId,
+    gigStatus: "active",
+    isDeleted: { $ne: true },
   };
   const options = {
-    populate: "userId categoriesId",
+    populate: [
+      { path: "userId", select: PUBLIC_USER_SELECT },
+      { path: "categoriesId" },
+    ],
   };
   const gigs = await Gig.paginate(filter, options);
   return gigs;
