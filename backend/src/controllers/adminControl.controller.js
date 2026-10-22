@@ -105,7 +105,19 @@ const logoutEverywhere = catchAsync(async (req, res) => {
   const user = await User.findByIdAndUpdate(oid(req.params.userId), { $set: { tokensValidAfter: new Date() } }, { new: true });
   if (!user) throw new ApiError(httpStatus.NOT_FOUND, "User not found");
   await require("../models").Token.deleteMany({ user: user._id });
+  await require("../services/session.service").revokeOthers(user._id, null);
   ok(res, { ok: true }, "User signed out everywhere");
+});
+// Per-device sessions of a user (admin view + single revoke).
+const userSessions = catchAsync(async (req, res) => {
+  const s = require("../services/session.service");
+  const rows = await s.list(oid(req.params.userId));
+  ok(res, { results: rows.map((r) => s.view(r, req.user.$locals.sid)) });
+});
+const revokeUserSession = catchAsync(async (req, res) => {
+  const done = await require("../services/session.service").revoke(oid(req.params.userId), String(req.params.sid), req.user._id);
+  if (!done) throw new ApiError(httpStatus.NOT_FOUND, "Session not found");
+  ok(res, { ok: true }, "Session signed out");
 });
 
 // Read-only "view as user": what the account sees, without logging in as
@@ -170,6 +182,12 @@ const refundOrder = catchAsync(async (req, res) => {
     ? `Escrow refunded but the ${refund.provider} refund failed: ${refund.error}. Retry from this page.`
     : refund?.provider === "stripe" ? `Card refund ${refund.status} in Stripe (${refund.id}).` : "Escrow refunded (demo payment, no card charged).";
   ok(res, { order, refund, note }, "Order refunded");
+});
+const refundTip = catchAsync(async (req, res) => {
+  const r = await require("../services/refunds.service").refundTip(oid(req.params.orderId), String(req.params.tipId), req.body?.reason || "");
+  if (r.error) throw new ApiError(r.code, r.error);
+  const note = r.refund.status === "failed" ? `Seller debited $${r.sellerDebited}, but the ${r.refund.provider} refund failed: ${r.refund.error}. Retry.` : `Tip refunded (${r.refund.provider}); seller debited $${r.sellerDebited}.`;
+  ok(res, { ...r, order: await Payment.findById(oid(req.params.orderId)) }, note);
 });
 const forceComplete = catchAsync(async (req, res) => {
   const lifecycle = require("../services/orderLifecycle.service");
@@ -433,6 +451,8 @@ const storageOrphans = catchAsync(async (req, res) => {
 });
 
 module.exports = {
+  refundTip,
+  userSessions, revokeUserSession,
   storageOrphans,
   listUsers, updateUser, setRole, resetPassword, logoutEverywhere, viewUser,
   featureGig, editGig, getOrder, refundOrder, forceComplete, escrowSummary, listPayments,

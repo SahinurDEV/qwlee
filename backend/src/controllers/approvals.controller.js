@@ -6,7 +6,7 @@ const config = require("../config/config");
 const { Approval } = require("../models");
 const perms = require("../config/adminPermissions");
 
-const PERM = { refund: "orders.write", withdrawal: "finance" };
+const PERM = { refund: "orders.write", "tip-refund": "orders.write", withdrawal: "finance" };
 const ok = (res, data, message = "OK") => res.status(200).json({ code: 200, message, data: { attributes: data } });
 
 const load = async (id) => {

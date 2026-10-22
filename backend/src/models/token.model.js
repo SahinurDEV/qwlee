@@ -23,6 +23,7 @@ const tokenSchema = mongoose.Schema(
       type: Date,
       required: true,
     },
+    sid: { type: String, index: true },
     blacklisted: {
       type: Boolean,
       default: false,

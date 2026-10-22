@@ -21,6 +21,11 @@ const jwtVerify = async (payload, done) => {
     if (user.tokensValidAfter && payload.iat * 1000 <= new Date(user.tokensValidAfter).getTime()) {
       return done(null, false);
     }
+    // Signed out on this device (per-session revoke).
+    if (payload.sid) {
+      if (!(await require("../services/session.service").isActive(payload.sid))) return done(null, false);
+      user.$locals.sid = payload.sid;
+    }
     done(null, user);
   } catch (error) {
     done(error, false);

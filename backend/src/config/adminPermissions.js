@@ -23,6 +23,7 @@ const RULES = [
   ["W", /^\/admin\/seller-levels(\/|$)/, "users.moderate"],
   ["W", /^\/admin\/gigs(\/|$)/, "gigs.write"],
   ["W", /^\/admin\/orders\/[^/]+\/(cancel|refund|complete)$/, "orders.write"],
+  ["W", /^\/admin\/orders\/[^/]+\/tips\/[^/]+\/refund$/, "orders.write"],
   ["W", /^\/withdrawal(\/|$)/, "finance"],
   ["W", /^\/dispute(s)?(\/|$)/, "disputes"],
   ["W", /^\/admin\/(requests|offers|reviews)(\/|$)/, "moderation"],

@@ -8,9 +8,10 @@ const ApiError = require('../utils/ApiError');
 const { tokenTypes } = require('../config/tokens');
 
 
-const generateToken = (userId, expires, type, secret = config.jwt.secret) => {
+const generateToken = (userId, expires, type, secret = config.jwt.secret, sid) => {
   const payload = {
     sub: userId,
+    ...(sid ? { sid } : {}),
     iat: moment().unix(),
     exp: moment().add(expires, 'seconds').unix(), // Assuming 'expires' is a duration in seconds
     type,
@@ -22,9 +23,10 @@ const generateToken = (userId, expires, type, secret = config.jwt.secret) => {
 
 
 
-const saveToken = async (token, userId, expires, type, blacklisted = false) => {
+const saveToken = async (token, userId, expires, type, blacklisted = false, sid) => {
   const tokenDoc = await Token.create({
     token,
+    ...(sid ? { sid } : {}),
     user: userId,
     expires: expires.toDate(),
     type,
@@ -44,13 +46,16 @@ const verifyToken = async (token, type) => {
 };
 
 
-const generateAuthTokens = async (user) => {
-  const accessTokenExpires = moment().add(config.jwt.accessExpirationMinutes, 'minutes');
-  const accessToken = generateToken(user.id, accessTokenExpires, tokenTypes.ACCESS);
-
+// `opts.req` starts a new device session; `opts.sid` continues one (refresh).
+const generateAuthTokens = async (user, opts = {}) => {
+  const sessionService = require('./session.service');
   const refreshTokenExpires = moment().add(config.jwt.refreshExpirationDays, 'days');
-  const refreshToken = generateToken(user.id, refreshTokenExpires, tokenTypes.REFRESH);
-  await saveToken(refreshToken, user.id, refreshTokenExpires, tokenTypes.REFRESH);
+  const sid = opts.sid || (await sessionService.create(user.id || user._id, refreshTokenExpires.toDate(), opts.req));
+  const accessTokenExpires = moment().add(config.jwt.accessExpirationMinutes, 'minutes');
+  const accessToken = generateToken(user.id, accessTokenExpires, tokenTypes.ACCESS, config.jwt.secret, sid);
+
+  const refreshToken = generateToken(user.id, refreshTokenExpires, tokenTypes.REFRESH, config.jwt.secret, sid);
+  await saveToken(refreshToken, user.id, refreshTokenExpires, tokenTypes.REFRESH, false, sid);
 
   return {
     access: {

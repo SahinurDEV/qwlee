@@ -59,6 +59,12 @@ export default function Escrow() {
                           {open ? <Button size="sm" variant="secondary" onClick={() => act({ title: "Force complete this order?", description: "Escrow is released to the seller minus the platform fee.", path: `/admin/orders/${o.id}/complete`, done: refresh, success: "Order completed" })}>Complete</Button> : null}
                           {o.escrow?.status !== "refunded" || o.escrow?.refund?.status === "failed" ? <Button size="sm" variant="danger" onClick={() => act({ title: "Refund the buyer", description: "Cancels the order and returns the money to the buyer (card refund through Stripe when the order was paid by card). If escrow was already released, the seller's credit is reversed.", askReason: "Reason (shown to both parties)", path: `/admin/orders/${o.id}/refund`, done: refresh, success: "Order refunded" })}>Refund</Button> : null}
                         </div>
+                        {(o.tips || []).map((t) => (
+                          <div key={t.sessionId} className="mt-1 flex items-center justify-end gap-2 text-[11px] text-ink-500">
+                            <span>Tip {m(t.amount)}{t.refund ? ` · ${t.refund.provider || ""} refund ${t.refund.status}` : ""}</span>
+                            {!t.refund || t.refund.status === "failed" ? <Button size="sm" variant="ghost" onClick={() => act({ title: `Refund this ${m(t.amount)} tip?`, description: "The buyer gets the tip back (card refund through Stripe when paid by card) and the seller's net share is taken from their balance.", askReason: "Reason", path: `/admin/orders/${o.id}/tips/${encodeURIComponent(t.sessionId)}/refund`, done: refresh, success: "Tip refunded" })}>Refund tip</Button> : null}
+                          </div>
+                        ))}
                       </Td>
                     </tr>
                   );
