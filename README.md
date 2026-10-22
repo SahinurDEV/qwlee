@@ -54,13 +54,18 @@ All Docker config lives in the root `.env` (see [.env.example](.env.example)).
 | `IMGBB_API_KEY` | optional | Store uploads on ImgBB; without it they go to the local `uploads` volume |
 | `STRIPE_*` | for payments | Use test keys locally |
 | `SMTP_*`, `EMAIL_FROM` | for email | OTP and password-reset email |
-
 | `ENABLE_API_DOCS` | no | Serve Swagger UI at `/v1/docs` outside development |
 | `PLATFORM_FEE_PERCENT` | no | Commission on completed orders (default 5). Admin can override in Settings > Misc with key `platformFeePercent` |
 | `DEMO_PAYMENTS` | no | When no `STRIPE_SECRET_KEY` is set, place orders without charging (default `true` in compose). **Set to `false` in production.** |
 | `AUTO_COMPLETE_DAYS` | no | Days after a delivery before the order auto-completes and escrow is released (default 3) |
 | `REQUEST_TTL_DAYS` | no | Days a buyer request stays open for offers (default 14) |
 | `ORDER_HOUSEKEEPING_MS` | no | Interval of the auto-complete / late-marking job (default 600000) |
+| `CANCEL_RESPONSE_HOURS` | no | Hours the other party has to answer a mutual cancellation request before it is auto-accepted (default 48) |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI` | optional | Google sign-in (see below) |
+| `UPLOAD_DIR`, `PRIVATE_UPLOAD_DIR` | no | Local upload folder (default `backend/uploads`) and the non-public folder for ID documents (default `<UPLOAD_DIR>/.private`) |
+| `SECOND_APPROVAL_OVER` | no | Initial value of the admin setting: refunds/payouts above this amount need a second admin (0 = off) |
+| `AUTH_RATE_LIMIT_MAX` | no | Failed `/v1/auth` requests allowed per IP per 15 minutes (default 20). The test suite runs with a higher value |
+| `GEOIP_URL` | no | IP-to-country lookup used for the buyer's country (default `https://ipapi.co/{ip}/json/`; empty disables it) |
 
 Other payment providers and SMTP can also be configured from the admin panel.
 
@@ -82,7 +87,24 @@ The "Continue with Google" button on sign-in and sign-up only appears when the b
 2. Add the authorised redirect URI `<PUBLIC_API_URL>/v1/auth/google/callback`, for example `http://localhost:7171/v1/auth/google/callback`. To use a different URI, set `GOOGLE_REDIRECT_URI`.
 3. Put both values in `.env` and run `docker compose up -d`.
 
-New Google users become buyers with a verified email. If an account with the same email already exists, it is linked. If that account had never verified its email, its password is removed so that only the real owner can get in. Tokens never appear in URLs: the callback hands the frontend a two-minute, single-use code, which it exchanges at `POST /v1/auth/google/exchange`.
+New Google users become buyers with a verified email. If an account with the same email already exists, it is linked. If that account had never verified its email, its password is removed so that only the real owner can get in. A new Google user who arrived through a referral link (`?ref=`) gets the referral coupon, just like a form sign-up. Tokens never appear in URLs: the callback hands the frontend a two-minute, single-use code, which it exchanges at `POST /v1/auth/google/exchange`.
+
+## Two-factor sign-in
+
+Any user can turn on two-factor sign-in (TOTP: Google Authenticator, 1Password, Authy…) under Profile → Edit. It gives 8 single-use recovery codes. After that, password sign-in asks for a code. Google sign-in returns a short-lived challenge, which `POST /v1/auth/2fa/verify` exchanges for tokens with the code. Admins manage theirs in the admin panel (Security), where a super admin can also require 2FA for all admins.
+
+## Admin site settings
+
+These live in the database and are edited in the admin panel (Site settings). They are read through `GET /v1/info/site` (public part only).
+
+| Setting | Default | Purpose |
+|---|---|---|
+| `features.signups`, `features.buyerRequests`, `features.tips`, `features.googleLogin` | on | Switch features off without a deploy |
+| `growth.referrals` | on | Referral programme (`/referrals` page, `GET /v1/growth/referrals/me`) |
+| `growth.refereePercent` | 10 | % off the invitee's first order (single-use coupon, max $100, 90 days). Applied for form and Google sign-ups that came through a `?ref=` link |
+| `growth.referrerReward` | 10 | Fixed $ coupon given to the inviter when the invitee's first order completes |
+
+Coupons are managed under Coupons in the admin panel (finance role). The platform funds the discount: the seller is paid, and the fee charged, on the full price; refunds return what the buyer paid.
 
 ## Order lifecycle
 
@@ -90,7 +112,7 @@ New Google users become buyers with a verified email. If an account with the sam
 2. Payment (Stripe, or demo mode) is held in **escrow** on the order.
 3. If the gig has requirement questions, the buyer answers them; the delivery clock starts then.
 4. Seller delivers; buyer accepts or requests a revision (limited by the package).
-5. On acceptance, or `AUTO_COMPLETE_DAYS` after delivery, escrow is released to the seller minus the platform fee. Cancellations and dispute refunds return escrow to the buyer.
+5. On acceptance, or `AUTO_COMPLETE_DAYS` after delivery, escrow is released to the seller minus the platform fee. Cancellations and dispute refunds return escrow to the buyer. A seller can cancel at any time and a buyer can cancel a late order; otherwise the buyer sends a cancellation request that the seller accepts or declines (auto-accepted after `CANCEL_RESPONSE_HOURS`).
 
 Categories have one level of subcategories (`GET /v1/categories` lists top-level; `?parentId=<id>` lists one parent's subcategories; `?level=all` lists both). Admins manage them on the Categories page. The marketplace can be filtered by subcategory (`/gig?subCategory=<id>`) and delivery time (`delivery=<days>`).
 

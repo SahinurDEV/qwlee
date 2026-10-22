@@ -170,7 +170,7 @@ const googleConfig = catchAsync(async (req, res) => {
 
 const googleStart = catchAsync(async (req, res) => {
   await siteSettings.assertFeature("googleLogin", "Google sign-in");
-  const { url, nonce } = googleAuth.startAuth({ from: req.query.from });
+  const { url, nonce } = googleAuth.startAuth({ from: req.query.from, ref: req.query.ref });
   res.cookie(googleAuth.STATE_COOKIE, nonce, {
     httpOnly: true,
     sameSite: "lax",

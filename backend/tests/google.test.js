@@ -142,4 +142,23 @@ test("google sign-in with two-factor needs the code (challenge)", async (t) => {
   const ok = await v(totp.codeAt(secret, step + 1));
   assert.equal(ok.status, 200);
   assert.ok((await ok.json()).data.attributes.tokens.access.token);
+test("google sign-up honours a referral link (new accounts only)", async (t) => {
+  if (!enabled) return t.skip("GOOGLE_CLIENT_ID not set on the API");
+  const j = (m, path, token, body) => fetch(`${API}/v1${path}`, { method: m, headers: { "content-type": "application/json", ...(token ? { authorization: `Bearer ${token}` } : {}) }, body: body && JSON.stringify(body) }).then((r) => r.json());
+  const buyer = (await j("POST", "/auth/login", null, { email: "buyer@example.com", password: "Buyer123!" })).data.attributes;
+  const admin = (await j("POST", "/auth/login", null, { email: "admin@example.com", password: "Admin123!" })).data.attributes;
+  const code = (await j("GET", "/growth/referrals/me", buyer.tokens.access.token)).data.attributes.code;
+  const count = async () => (await j("GET", "/admin/coupons?source=referral&limit=100", admin.tokens.access.token)).data.attributes.results.length;
+  const before = await count();
+  const r = await fetch(`${API}/v1/auth/google?from=/&ref=${code}`, { redirect: "manual" });
+  const s = { state: new URL(r.headers.get("location")).searchParams.get("state"), cookie: (r.headers.get("set-cookie") || "").split(";")[0] };
+  const email = `gref-${Date.now()}@example.com`;
+  const ex = await exchange((await callback(s, `${email}|gr-${Date.now()}|1`)).searchParams.get("code"));
+  assert.equal(ex.status, 200);
+  assert.equal(await count(), before + 1, "invitee got a welcome coupon");
+  // Existing account signing in with a ref link gets nothing.
+  const r2 = await fetch(`${API}/v1/auth/google?from=/&ref=${code}`, { redirect: "manual" });
+  const s2 = { state: new URL(r2.headers.get("location")).searchParams.get("state"), cookie: (r2.headers.get("set-cookie") || "").split(";")[0] };
+  await exchange((await callback(s2, `${email}|gr2-${Date.now()}|1`)).searchParams.get("code"));
+  assert.equal(await count(), before + 1);
 });
