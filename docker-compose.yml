@@ -26,6 +26,9 @@ services:
       mailpit:
         condition: service_started
     env_file: .env
+    # Image uploads are stored here when IMGBB_API_KEY is not set.
+    volumes:
+      - uploads:/app/uploads
     environment:
       NODE_ENV: production
       PORT: 7171
@@ -87,4 +90,5 @@ services:
       - "${ADMIN_PORT:-4000}:80"
 
 volumes:
+  uploads:
   mongo-data:

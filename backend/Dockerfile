@@ -4,7 +4,7 @@ ENV NODE_ENV=production
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 COPY . .
-RUN chown -R node:node /app
+RUN mkdir -p /app/uploads && chown -R node:node /app
 USER node
 EXPOSE 7171 8181
 HEALTHCHECK --interval=15s --timeout=5s --start-period=20s --retries=5 \

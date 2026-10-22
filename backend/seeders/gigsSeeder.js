@@ -669,4 +669,4 @@ async function seedGigs({ sellers, categories, subcategories = [] }) {
   return { gigs };
 }
 
-module.exports = { seedGigs };
+module.exports = { seedGigs, GIGS };

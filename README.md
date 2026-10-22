@@ -51,7 +51,7 @@ All Docker config lives in the root `.env` (see [.env.example](.env.example)).
 | `PUBLIC_API_URL`, `PUBLIC_SOCKET_URL` | no | URLs the browser uses to reach the API; baked in at build time, so rebuild after changing |
 | `FRONTEND_URL`, `CORS_ORIGINS` | no | Redirect target and allowed origins |
 | `*_PORT` | no | Host ports |
-| `IMGBB_API_KEY` | for uploads | Image uploads |
+| `IMGBB_API_KEY` | optional | Store uploads on ImgBB; without it they go to the local `uploads` volume |
 | `STRIPE_*` | for payments | Use test keys locally |
 | `SMTP_*`, `EMAIL_FROM` | for email | OTP and password-reset email |
 
