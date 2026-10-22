@@ -273,3 +273,14 @@ Housekeeping emails that summary to super admins every Monday (UTC), once per
 ISO week (`KpiReport` has a unique week). A super admin can send it now with
 "Send now" (`POST /v1/admin/jobs/kpi-email`). API: `GET
 /v1/admin/kpi/funnel?days=`, `/kpi/cohorts?months=`, `/kpi/weekly`.
+
+### Background job monitor
+
+Every housekeeping step (auto-complete, late orders, cancellations,
+subscription billing, scheduled announcements, ban expiry, weekly KPI email)
+is timed and recorded in `JobRun` (kept 14 days). A failing step is logged
+and recorded without stopping the others. Admin → Background jobs shows each
+step's health (ok / failing / stale = no run for 3 intervals / never), last
+run, runs and failures in the last 24 h, the last error and recent history;
+super admins can "Run housekeeping now". API: `GET /v1/admin/jobs/status`,
+`GET /v1/admin/jobs/history?job=&limit=`, `POST /v1/admin/jobs/housekeeping`.

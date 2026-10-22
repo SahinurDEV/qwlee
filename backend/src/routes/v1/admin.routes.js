@@ -268,4 +268,10 @@ router.get("/kpi/cohorts", A, catchAsync2(async (req, res) => helpOk(res, await 
 router.get("/kpi/weekly", A, catchAsync2(async (req, res) => helpOk(res, await kpi.weeklySummary())));
 router.post("/jobs/kpi-email", A, catchAsync2(async (req, res) => helpOk(res, await kpi.sendWeekly({ force: true }), "Weekly report sent")));
 
+// Job monitor (any admin reads; running housekeeping now is super only).
+const jobsSvc = require("../../services/jobs.service");
+router.get("/jobs/status", A, catchAsync2(async (req, res) => helpOk(res, await jobsSvc.status())));
+router.get("/jobs/history", A, catchAsync2(async (req, res) => helpOk(res, { results: await jobsSvc.history(req.query.job, req.query.limit) })));
+router.post("/jobs/housekeeping", A, catchAsync2(async (req, res) => helpOk(res, await require("../../services/orderLifecycle.service").runHousekeeping({ trigger: "manual" }), "Housekeeping ran")));
+
 module.exports = router;
