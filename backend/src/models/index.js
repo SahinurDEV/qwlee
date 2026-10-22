@@ -31,3 +31,4 @@ module.exports.AdminAudit = require('./adminAudit.model');
 module.exports.Announcement = require('./announcement.model');
 module.exports.Approval = require('./approval.model');
 module.exports.Subscriber = require('./subscriber.model');
+module.exports.Session = require('./session.model');

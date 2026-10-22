@@ -114,6 +114,8 @@ const ordersSchema = mongoose.Schema(
         provider: String,
         sessionId: String,
         at: { type: Date, default: Date.now },
+        // Set when an admin returns the tip to the buyer.
+        refund: { provider: String, id: String, status: String, amount: Number, error: String, at: Date, reason: String },
       },
     ],
     // Settlement snapshot written when the seller is credited, so later

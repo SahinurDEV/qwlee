@@ -29,6 +29,10 @@ const router = express.Router();
 
 const defaultRoutes = [
   {
+    path: "/sessions",
+    route: require("./sessions.routes"),
+  },
+  {
     path: "/files",
     route: require("./files.routes"),
   },

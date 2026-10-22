@@ -39,8 +39,7 @@ const register = catchAsync(async (req, res) => {
   const isUser = await userService.getUserByEmail(req.body.email);
 
   if (isUser && isUser.isEmailVerified === false) {
-    const user = await userService.isUpdateUser(isUser.id, req.body);
-    const tokens = await tokenService.generateAuthTokens(user);
+    await userService.isUpdateUser(isUser.id, req.body);
     res.status(httpStatus.CREATED).json(
       response({
         message: "Thank you for registering. Please verify your email",
@@ -52,8 +51,7 @@ const register = catchAsync(async (req, res) => {
   } else if (isUser && isUser.isDeleted === false) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Email already taken");
   } else if (isUser && isUser.isDeleted === true) {
-    const user = await userService.isUpdateUser(isUser.id, req.body);
-    const tokens = await tokenService.generateAuthTokens(user);
+    await userService.isUpdateUser(isUser.id, req.body);
 
     res.status(httpStatus.CREATED).json(
       response({
@@ -83,7 +81,7 @@ async function sendLoginSuccess(req, res, user) {
   if (user.role === "admin" && user.twoFactorEnabled && !req.twoFactorVerified) {
     throw new ApiError(httpStatus.UNAUTHORIZED, "This admin account uses two-factor. Sign in with email, password and code.");
   }
-  const tokens = await tokenService.generateAuthTokens(user);
+  const tokens = await tokenService.generateAuthTokens(user, { req });
 
   // Record the sign-in for the admin "monitor user" feature. Best-effort
   // — never block the login response if the activity write fails.
@@ -285,7 +283,7 @@ const sendVerificationEmail = catchAsync(async (req, res,next) => {
 const verifyEmail = catchAsync(async (req, res,next) => {
   const user = await authService.verifyEmail(req.body, req.query);
   // An emailed code must not bypass an admin's two-factor.
-  const tokens = user.role === "admin" && user.twoFactorEnabled ? null : await tokenService.generateAuthTokens(user);
+  const tokens = user.role === "admin" && user.twoFactorEnabled ? null : await tokenService.generateAuthTokens(user, { req });
 
   res.status(httpStatus.OK).json(
     response({
