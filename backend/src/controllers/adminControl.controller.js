@@ -78,7 +78,9 @@ const setRole = catchAsync(async (req, res) => {
     user.role = role;
   }
   if (adminRole !== undefined) {
-    if (!perms.ADMIN_ROLES.includes(adminRole)) throw new ApiError(httpStatus.BAD_REQUEST, `adminRole must be one of ${perms.ADMIN_ROLES.join(", ")}`);
+    await require("../services/adminRoles.service").load();
+    const known = Object.keys(perms.allRoles());
+    if (!known.includes(adminRole)) throw new ApiError(httpStatus.BAD_REQUEST, `adminRole must be one of ${known.join(", ")}`);
     user.adminRole = adminRole;
   }
   if (user.role !== "admin") user.adminRole = undefined;
@@ -290,28 +292,8 @@ const publicSite = catchAsync(async (req, res) => {
 
 // ---------------- broadcast ----------------
 const broadcast = catchAsync(async (req, res) => {
-  const title = String(req.body?.title || "").trim().slice(0, 120);
-  const message = String(req.body?.message || "").trim().slice(0, 2000);
-  const audience = ["all", "buyers", "sellers"].includes(req.body?.audience) ? req.body.audience : "all";
-  const link = String(req.body?.link || "").trim().slice(0, 300);
-  if (!title || !message) throw new ApiError(httpStatus.BAD_REQUEST, "Title and message are required");
-  if (link && !/^(https?:\/\/|\/)/.test(link)) throw new ApiError(httpStatus.BAD_REQUEST, "Link must be a URL or a /path");
-  const roleFilter = audience === "buyers" ? { role: "buyer" } : audience === "sellers" ? { role: "freelancer" } : { role: { $in: ["buyer", "freelancer"] } };
-  const users = await User.find({ ...roleFilter, isBan: { $ne: true } }).select("_id email fullName role").lean();
-  await Notification.insertMany(users.map((u) => ({ receiverId: u._id, role: u.role, type: "announcement", message: `${title}: ${message}`.slice(0, 2000), linkId: link })));
-  try {
-    const { io } = require("../socket/socketServer");
-    for (const u of users) io.emit(`${u.role === "buyer" ? "buyer" : "freelancer"}-notification::${u._id}`, { message: "Announcement", data: { title, message, link } });
-  } catch { /* socket optional */ }
-  let emailed = 0;
-  if (req.body?.sendEmail) {
-    const e = require("../services/email.service");
-    for (const u of users.slice(0, 2000)) {
-      if (u.email && (await e.sendAnnouncement(u.email, { recipientName: u.fullName, title, message, link }))) emailed++;
-    }
-  }
-  const doc = await Announcement.create({ title, message, audience, link, sendEmail: !!req.body?.sendEmail, recipients: users.length, emailed, createdBy: req.user.id });
-  ok(res, { announcement: doc }, `Sent to ${users.length} users`, httpStatus.CREATED);
+  const doc = await require("../services/announcements.service").create(req.body || {}, req.user.id);
+  ok(res, { announcement: doc }, doc.status === "scheduled" ? `Scheduled for ${doc.sendAt.toISOString()}` : `Sent to ${doc.recipients} users`, httpStatus.CREATED);
 });
 const listBroadcasts = catchAsync(async (req, res) => ok(res, await list(Announcement, {}, req.query, { populate: [["createdBy", "fullName email"]] })));
 
@@ -418,7 +400,7 @@ const team = catchAsync(async (req, res) => {
   ok(res, {
     admins: admins.map(({ _id, ...a }) => ({ id: String(_id), ...a, adminRole: a.adminRole || "super" })),
     logins: logins.map((l) => ({ id: String(l._id), adminId: String(l.userId), admin: nameOf[String(l.userId)], ip: l.ip, userAgent: l.userAgent, at: l.createdAt })),
-    roles: perms.ROLE_PERMISSIONS,
+    roles: perms.allRoles(),
     me: { id: String(req.user._id), adminRole: perms.roleOf(req.user) },
   });
 });
@@ -443,7 +425,7 @@ const listSubscribers = catchAsync(async (req, res) => {
 
 const me = catchAsync(async (req, res) => {
   const role = perms.roleOf(req.user);
-  ok(res, { id: String(req.user._id), adminRole: role, permissions: perms.ROLE_PERMISSIONS[role] });
+  ok(res, { id: String(req.user._id), adminRole: role, permissions: perms.permissionsOf(role) });
 });
 
 const storageOrphans = catchAsync(async (req, res) => {

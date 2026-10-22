@@ -186,12 +186,24 @@ router.post("/jobs/subscriptions", A, require("../../utils/catchAsync")(async (r
   if (Number.isNaN(asOf.getTime())) return res.status(400).json({ code: 400, message: "Invalid asOf" });
   res.json({ code: 200, message: "OK", data: { attributes: await require("../../services/subscription.service").billDue(asOf) } });
 }));
+// Send scheduled announcements now (super admin). `asOf` sends as if it were that time.
+router.post("/jobs/announcements", A, require("../../utils/catchAsync")(async (req, res) => {
+  const asOf = req.body?.asOf ? new Date(req.body.asOf) : new Date();
+  if (Number.isNaN(asOf.getTime())) return res.status(400).json({ code: 400, message: "Invalid asOf" });
+  res.json({ code: 200, message: "OK", data: { attributes: { sent: await require("../../services/announcements.service").sendDue(asOf) } } });
+}));
 router.patch("/settings/site", A, ac.updateSite);
 // Orphaned local uploads: GET = dry run, POST = delete.
 router.get("/settings/storage/orphans", A, ac.storageOrphans);
 router.post("/settings/storage/orphans", A, ac.storageOrphans);
 router.post("/broadcast", A, ac.broadcast);
 router.get("/broadcast", A, ac.listBroadcasts);
+const annSvc = require("../../services/announcements.service");
+const annOk = (res, attributes, message = "OK") => res.json({ code: 200, message, data: { attributes } });
+const annId = (req, res) => require("mongoose").isValidObjectId(req.params.id) || (res.status(400).json({ code: 400, message: "Invalid id" }), false);
+router.post("/broadcast/preview", A, require("../../utils/catchAsync")(async (req, res) => annOk(res, await annSvc.preview(req.body || {}))));
+router.patch("/broadcast/:id", A, require("../../utils/catchAsync")(async (req, res) => annId(req, res) && annOk(res, await annSvc.update(req.params.id, req.body || {}), "Saved")));
+router.post("/broadcast/:id/cancel", A, require("../../utils/catchAsync")(async (req, res) => annId(req, res) && annOk(res, await annSvc.cancel(req.params.id), "Cancelled")));
 router.get("/analytics", A, ac.analytics);
 router.get("/audit", A, ac.auditLog);
 router.get("/team", A, ac.team);
@@ -201,6 +213,13 @@ router.post("/2fa/enable", A, ac.twoFaEnable);
 router.post("/2fa/disable", A, ac.twoFaDisable);
 router.post("/team/:id/reset-2fa", A, ac.twoFaReset);
 router.get("/newsletter", A, ac.listSubscribers);
+// Custom admin roles (settings permission).
+const rolesSvc = require("../../services/adminRoles.service");
+const roleId = (req, res) => require("mongoose").isValidObjectId(req.params.id) || (res.status(400).json({ code: 400, message: "Invalid id" }), false);
+router.get("/roles", A, catchAsync2(async (req, res) => helpOk(res, await rolesSvc.list())));
+router.post("/roles", A, catchAsync2(async (req, res) => helpOk(res, await rolesSvc.create(req.body || {}), "Role created")));
+router.patch("/roles/:id", A, catchAsync2(async (req, res) => roleId(req, res) && helpOk(res, await rolesSvc.update(req.params.id, req.body || {}), "Role saved")));
+router.delete("/roles/:id", A, catchAsync2(async (req, res) => roleId(req, res) && helpOk(res, await rolesSvc.remove(req.params.id), "Role deleted")));
 // Ban appeals and bulk actions.
 const modSvc = require("../../services/moderation.service");
 router.get("/appeals", A, catchAsync2(async (req, res) => helpOk(res, await modSvc.listAppeals(req.query))));
