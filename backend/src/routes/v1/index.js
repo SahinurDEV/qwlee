@@ -41,6 +41,10 @@ const defaultRoutes = [
     route: require("./quickReplies.routes"),
   },
   {
+    path: "/two-factor",
+    route: require("./twoFactor.routes"),
+  },
+  {
     path: "/sessions",
     route: require("./sessions.routes"),
   },
