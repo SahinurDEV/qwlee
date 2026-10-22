@@ -24,6 +24,8 @@ const MARKETPLACE_BASE = [
   { label: "Explore services", href: "/gig" },
   { label: "Hire freelancers", href: "/hire-freelancers" },
   { label: "Browse categories", href: "/services" },
+  { label: "Buyer requests", href: "/requests" },
+  { label: "Post a request", href: "/requests/new" },
 ];
 
 const COMPANY = [

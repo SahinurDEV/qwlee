@@ -59,6 +59,7 @@ All Docker config lives in the root `.env` (see [.env.example](.env.example)).
 | `PLATFORM_FEE_PERCENT` | no | Commission on completed orders (default 5). Admin can override in Settings > Misc with key `platformFeePercent` |
 | `DEMO_PAYMENTS` | no | When no `STRIPE_SECRET_KEY` is set, place orders without charging (default `true` in compose). **Set to `false` in production.** |
 | `AUTO_COMPLETE_DAYS` | no | Days after a delivery before the order auto-completes and escrow is released (default 3) |
+| `REQUEST_TTL_DAYS` | no | Days a buyer request stays open for offers (default 14) |
 | `ORDER_HOUSEKEEPING_MS` | no | Interval of the auto-complete / late-marking job (default 600000) |
 
 Other payment providers and SMTP can also be configured from the admin panel.
@@ -84,6 +85,10 @@ Out of the box all email goes to the bundled Mailpit inbox at http://localhost:8
 Categories have one level of subcategories (`GET /v1/categories` lists top-level; `?parentId=<id>` lists one parent's subcategories; `?level=all` lists both). Admins manage them on the Categories page. The marketplace can be filtered by subcategory (`/gig?subCategory=<id>`) and delivery time (`delivery=<days>`).
 
 Gigs support extras, FAQ, requirement questions and an optional YouTube/Vimeo/MP4 video.
+
+### Buyer requests
+
+Buyers post a request (`/requests/new`) with a budget and deadline. Sellers browse open requests (`/requests`) and send one offer each (price, days, revisions, message). The buyer sees every offer and can decline it or hire. Hiring goes through the same server-priced escrow checkout (`POST /v1/orders/checkout {requestOfferId}`). It accepts that offer, declines the others and marks the request hired. Requests expire after `REQUEST_TTL_DAYS` (default 14).
 
 After upgrading an existing database run `docker compose exec backend npm run migrate` (idempotent).
 

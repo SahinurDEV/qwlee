@@ -4,6 +4,7 @@ const authRoute = require("./auth.routes");
 const userRoute = require("./user.routes");
 const docsRoute = require("./docs.routes");
 const gigRoute = require("./gig.routes");
+const buyerRequestRoute = require("./buyerRequest.routes");
 const categoriesRoute = require("./categories.routes");
 const blogRoute = require("./blog.routes");
 const notificationRoute = require("./notification.routes");
@@ -39,6 +40,10 @@ const defaultRoutes = [
   {
     path: "/gig",
     route: gigRoute,
+  },
+  {
+    path: "/requests",
+    route: buyerRequestRoute,
   },
   {
     path: "/categories",

@@ -30,6 +30,7 @@ const { seedBlogs } = require("./blogsSeeder");
 const { seedBanners } = require("./bannersSeeder");
 const { seedContent } = require("./contentSeeder");
 const { seedEnrich } = require("./enrichSeeder");
+const { seedRequests } = require("./requestsSeeder");
 
 // Ordered list. Each entry: [phase name, seeder fn, list of keys it produces].
 const PIPELINE = [
@@ -47,6 +48,7 @@ const PIPELINE = [
   ["blogs", seedBlogs],
   ["banners", seedBanners],
   ["content", seedContent],
+  ["requests", seedRequests],
   // Enrichment last — fills in fields added after the original seeders
   // were written: gig.stats, gig.gigStatus, review.orderId, review
   // .sellerReply, user.isVerified, payment.extensionRequest /

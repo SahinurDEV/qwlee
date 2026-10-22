@@ -24,3 +24,5 @@ module.exports.SupportMessage = require('./supportMessage.model');
 module.exports.SearchLog = require('./searchLog.model');
 module.exports.AppConfig = require('./appConfig.model');
 module.exports.Dispute = require('./dispute.model');
+module.exports.BuyerRequest = require('./buyerRequest.model');
+module.exports.RequestOffer = require('./requestOffer.model');

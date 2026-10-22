@@ -33,6 +33,7 @@ export const baseApi = createApi({
     "SupportTickets",
     "SupportTicket",
     "Disputes",
+    "Requests",
   ],
   endpoints: (builder) => ({
     // Example endpoint
