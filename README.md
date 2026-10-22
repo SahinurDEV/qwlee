@@ -174,6 +174,14 @@ Buyers post a request (`/requests/new`) with a budget and deadline. Sellers brow
 
 After upgrading an existing database run `docker compose exec backend npm run migrate` (idempotent).
 
+## Bans, appeals and bulk actions
+
+- **Temporary bans:** admins can ban for 1–365 days, or permanently, from Users → Manage → Ban (`PATCH /v1/admin/users/:id/ban {reason, days}`). A temporary ban lifts itself when it runs out, either at the user's next sign-in or in the background housekeeping run.
+- **Appeals:** a banned user who tries to sign in sees the reason and the end date. The refused sign-in returns a 30-minute appeal token, so they can appeal right there without sending their password again (`POST /v1/auth/appeal {appealToken, message}`). They can have one open appeal at a time.
+- **Reviewing appeals:** moderators handle them under People → Ban appeals (`GET /v1/admin/appeals`, `PATCH /v1/admin/appeals/:id {decision: accepted|rejected, reply}`). Accepting lifts the ban, and the user is emailed either way.
+- **Bulk users:** tick rows on Users to ban, unban or sign several accounts out at once (`POST /v1/admin/bulk/users`, up to 200). Admin accounts and yourself are skipped.
+- **Bulk gigs:** tick rows on Gigs to approve, request changes, pause, deny, feature or unfeature several gigs (`POST /v1/admin/bulk/gigs`). The note is shown to each seller on their dashboard. Unlike the single-gig action, bulk changes don't email the sellers.
+
 ## Keyword filters and risk flags
 
 Admin → Site settings → "Keyword filters & risk rules" holds the rules:

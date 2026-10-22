@@ -120,6 +120,7 @@ const handleCallback = async (req) => {
   // Brand-new Google accounts honour a referral link (?ref=) like the form.
   if (user.$locals?.created && safeRef(st.ref)) await require("./referral.service").attach(user, st.ref);
   if (user.isDeleted) return fail("account_deleted");
+  if (user.isBan) await require("./moderation.service").liftIfExpired(user);
   if (user.isBan) return fail("banned");
 
   const loginCode = crypto.randomBytes(32).toString("hex");

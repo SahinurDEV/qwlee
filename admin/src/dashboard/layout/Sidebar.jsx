@@ -53,6 +53,7 @@ const NAV = [
       { to: "/dashboard/frelancer", label: "Freelancers", icon: FaUsersLine },
       { to: "/dashboard/buyerlist", label: "Buyers", icon: BiSolidUserPlus },
       { to: "/dashboard/seller-levels", label: "Seller levels", icon: AiOutlineSafetyCertificate },
+      { to: "/dashboard/appeals", label: "Ban appeals", icon: TbGavel, perm: "users.moderate" },
     ],
   },
   {

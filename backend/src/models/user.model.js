@@ -194,6 +194,8 @@ const userSchema = mongoose.Schema(
     // in. Set by the admin via PATCH /admin/users/:id/ban.
     banReason: { type: String, default: "" },
     bannedAt: { type: Date, default: null },
+    // Temporary ban: lifted automatically after this time (null = permanent).
+    bannedUntil: { type: Date, default: null },
     // ID verification — seller submits docs, admin approves, the
     // verified tick mark shows up everywhere user.isVerified is true.
     isVerified: { type: Boolean, default: false },
