@@ -120,8 +120,10 @@ cd backend  && npm run seed   # optional demo data
 With a seeded stack running:
 
 ```sh
-cd backend && API_URL=http://localhost:7171 npm test
+scripts/test-live.sh
 ```
+
+The script snapshots the database first and restores it when the tests finish, so running the suite against a demo or live stack leaves no test orders, edits or users behind. Set `API_URL` to point it at another URL. `cd backend && npm test` runs the same tests without the snapshot (fine for a throwaway database, as in CI).
 
 ## Contributing
 

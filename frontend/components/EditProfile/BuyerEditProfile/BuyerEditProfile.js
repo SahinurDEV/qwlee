@@ -191,6 +191,7 @@ export default function BuyerEditProfile() {
             </Form.Item>
             <Form.Item label="Username">
               <Input
+                aria-label="Username"
                 size="large"
                 value={`@${user?.username || ""}`}
                 disabled

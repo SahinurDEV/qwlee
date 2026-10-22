@@ -165,12 +165,14 @@ export default function ManageOrders() {
               setPage(1);
             }}
             placeholder={isSelling ? "Search by buyer or gig…" : "Search by seller or gig…"}
+            aria-label="Search orders"
             className="flex-1 px-2 py-2 bg-transparent outline-none text-sm"
           />
         </div>
         <div className="flex items-center gap-2">
           <label className="text-xs text-gray-500">Sort by</label>
           <Select
+            aria-label="Sort orders"
             value={sortBy}
             onChange={setSortBy}
             size="middle"

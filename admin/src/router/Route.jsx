@@ -56,6 +56,7 @@ import Analytics from "../dashboard/control/Analytics";
 import AuditLog from "../dashboard/control/AuditLog";
 import Team from "../dashboard/control/Team";
 import Approvals from "../dashboard/control/Approvals";
+import Newsletter from "../dashboard/control/Newsletter";
 
 export const router = createBrowserRouter([
   {
@@ -146,6 +147,7 @@ export const router = createBrowserRouter([
       { path: "audit", element: <AuditLog /> },
       { path: "team", element: <Team /> },
       { path: "approvals", element: <Approvals /> },
+      { path: "newsletter", element: <Newsletter /> },
     ],
   },
 ]);

@@ -345,6 +345,25 @@ const team = catchAsync(async (req, res) => {
     me: { id: String(req.user._id), adminRole: perms.roleOf(req.user) },
   });
 });
+// ---------------- newsletter ----------------
+const listSubscribers = catchAsync(async (req, res) => {
+  const { Subscriber } = require("../models");
+  const f = {};
+  if (req.query.status) f.status = String(req.query.status);
+  if (req.query.search) f.email = rx(req.query.search);
+  if (req.query.format === "csv") {
+    const rows = await Subscriber.find(f).sort({ createdAt: -1 }).limit(50000).lean();
+    const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const csv = ["email,status,source,subscribed_at"]
+      .concat(rows.map((r) => [r.email, r.status, r.source, r.createdAt?.toISOString()].map(esc).join(",")))
+      .join("\n");
+    res.set("Content-Type", "text/csv; charset=utf-8");
+    res.set("Content-Disposition", 'attachment; filename="subscribers.csv"');
+    return res.send(csv);
+  }
+  ok(res, await list(Subscriber, f, req.query));
+});
+
 const me = catchAsync(async (req, res) => {
   const role = perms.roleOf(req.user);
   ok(res, { id: String(req.user._id), adminRole: role, permissions: perms.ROLE_PERMISSIONS[role] });
@@ -354,5 +373,5 @@ module.exports = {
   listUsers, updateUser, setRole, resetPassword, logoutEverywhere, viewUser,
   featureGig, editGig, getOrder, refundOrder, forceComplete, escrowSummary, listPayments,
   listRequests, moderateRequest, deleteRequest, listOffers, removeOffer, listReviews, deleteReview,
-  getSite, updateSite, publicSite, broadcast, listBroadcasts, analytics, auditLog, team, me,
+  getSite, updateSite, publicSite, broadcast, listBroadcasts, analytics, auditLog, team, me, listSubscribers,
 };
