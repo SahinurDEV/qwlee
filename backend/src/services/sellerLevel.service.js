@@ -389,6 +389,7 @@ async function listMyGigsWithStats(userId) {
       price: g.price,
       status,
       moderation: g.moderation || {},
+      subscription: g.subscription || { enabled: false, discountPercent: 0 },
       createdAt: g.createdAt,
       stats: {
         impressions: g.stats?.impressions || 0,
