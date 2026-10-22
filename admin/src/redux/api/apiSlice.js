@@ -675,7 +675,8 @@ getSearchStats: builder.query({
  getWithdrawUser: builder.query({
   providesTags: ['withdrawal'],
   query: ( ) => ({
-    url: '/withdrawal',
+    // Newest 200; the page filters and counts client-side.
+    url: '/withdrawal?limit=200',
     method:'GET',
     headers: {
       authorization: `Bearer ${localStorage.getItem('token')}`

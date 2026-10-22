@@ -26,10 +26,14 @@ import Button from "../../common/Button";
 import cls from "../../utils/cls";
 import { formatDate, formatMoney } from "../../utils/format";
 import getImageUrl from "../../utils/getImageUrl";
+import { ReconcileModal, batchApprove, exportBankCsv } from "./PayoutTools";
 
 export default function Withdraw() {
   const navigate = useNavigate();
-  const { data, isFetching, isError } = useGetWithdrawUserQuery();
+  const { data, isFetching, isError, refetch } = useGetWithdrawUserQuery();
+  const [selected, setSelected] = useState(() => new Set());
+  const [reconcileOpen, setReconcileOpen] = useState(false);
+  const [batching, setBatching] = useState(false);
   const [approve, { isLoading: approving }] = useWithdrawPostByIdMutation();
   const [reject, { isLoading: rejecting }] = useWithdrawCancelByIdMutation();
 
@@ -42,7 +46,7 @@ export default function Withdraw() {
       if (s === "approved" || s === "completed") out.approved += 1;
       else if (s === "rejected" || s === "cancelled") out.rejected += 1;
       else out.pending += 1;
-      if (s !== "rejected" && s !== "cancelled") out.amount += Number(r.amount || 0);
+      if (s !== "rejected" && s !== "cancelled") out.amount += Number(r.withdrawalAmount ?? r.amount ?? 0);
     }
     return out;
   }, [rows]);
@@ -62,7 +66,7 @@ export default function Withdraw() {
     const q = search.trim().toLowerCase();
     if (q) {
       list = list.filter((r) =>
-        [r.userId?.fullName, r.userId?.email, r.amount?.toString()]
+        [r.userId?.fullName, r.userId?.email, String(r.withdrawalAmount ?? r.amount ?? "")]
           .filter(Boolean)
           .some((s) => String(s).toLowerCase().includes(q))
       );
@@ -72,7 +76,7 @@ export default function Withdraw() {
 
   async function handleApprove(row) {
     const ok = await confirmModal({
-      title: `Approve $${row.amount}?`,
+      title: `Approve ${formatMoney(row.withdrawalAmount ?? row.amount)}?`,
       description: "The funds will be flagged as paid out.",
       confirmText: "Approve",
     });
@@ -95,7 +99,54 @@ export default function Withdraw() {
     else toast.success("Withdrawal rejected");
   }
 
+  const isOpen = (r) => (r.status || "pending").toLowerCase() === "pending";
+  const toggle = (id) =>
+    setSelected((prev) => {
+      const n = new Set(prev);
+      n.has(id) ? n.delete(id) : n.add(id);
+      return n;
+    });
+  const openVisible = visible.filter(isOpen);
+  const allPicked = openVisible.length > 0 && openVisible.every((r) => selected.has(r._id));
+  async function handleBatch() {
+    const ids = rows.filter((r) => selected.has(r._id) && isOpen(r)).map((r) => r._id);
+    const sum = rows.filter((r) => ids.includes(r._id)).reduce((s, r) => s + Number(r.withdrawalAmount ?? r.amount ?? 0), 0);
+    const ok = await confirmModal({
+      title: `Approve ${ids.length} withdrawals (${formatMoney(sum)})?`,
+      description: "PayPal and Payoneer payouts are sent now; bank ones are marked paid. Amounts that need a second approval are skipped.",
+      confirmText: "Approve all",
+    });
+    if (!ok) return;
+    setBatching(true);
+    try {
+      const r = await batchApprove(ids);
+      if (r.failed) toast(`${r.approved} approved, ${r.failed} skipped: ${r.results.filter((x) => !x.ok).map((x) => x.error).slice(0, 2).join("; ")}`);
+      else toast.success(`${r.approved} approved`);
+      setSelected(new Set());
+      refetch();
+    } catch (e) {
+      toast.error(e.message);
+    } finally {
+      setBatching(false);
+    }
+  }
+
   const columns = [
+    {
+      key: "pick",
+      label: (
+        <input
+          type="checkbox"
+          aria-label="Select all pending"
+          checked={allPicked}
+          onChange={() => setSelected(allPicked ? new Set() : new Set(openVisible.map((r) => r._id)))}
+        />
+      ),
+      render: (r) =>
+        isOpen(r) ? (
+          <input type="checkbox" aria-label="Select withdrawal" checked={selected.has(r._id)} onChange={() => toggle(r._id)} onClick={(e) => e.stopPropagation()} />
+        ) : null,
+    },
     {
       key: "user",
       label: "Freelancer",
@@ -118,7 +169,7 @@ export default function Withdraw() {
       key: "amount",
       label: "Amount",
       render: (r) => (
-        <span className="text-ink-900 font-semibold">{formatMoney(r.amount)}</span>
+        <span className="text-ink-900 font-semibold">{formatMoney(r.withdrawalAmount ?? r.amount)}</span>
       ),
     },
     {
@@ -181,7 +232,17 @@ export default function Withdraw() {
       <PageHeader
         title="Withdrawals"
         subtitle="Review and approve freelancer payout requests."
+        actions={
+          <>
+            <Button variant="secondary" onClick={exportBankCsv}>Export bank CSV</Button>
+            <Button variant="secondary" onClick={() => setReconcileOpen(true)}>Reconcile statement</Button>
+            <Button disabled={!selected.size} loading={batching} onClick={handleBatch}>
+              Approve selected{selected.size ? ` (${selected.size})` : ""}
+            </Button>
+          </>
+        }
       />
+      <ReconcileModal open={reconcileOpen} onClose={() => setReconcileOpen(false)} onDone={refetch} />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <Kpi label="Pending" value={totals.pending} tone="amber" />
