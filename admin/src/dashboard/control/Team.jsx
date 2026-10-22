@@ -6,7 +6,7 @@ import Card from "../../common/Card";
 import StatusPill from "../../common/StatusPill";
 import { useAdminQuery } from "../../utils/adminApi";
 import { timeAgo } from "../../utils/format";
-import { ErrorNote, Td, Th } from "./ui";
+import { ErrorNote, Td, Th, act } from "./ui";
 
 const PERMS = [
   ["read", "View dashboards and lists"],
@@ -24,7 +24,7 @@ const PERMS = [
 ];
 
 export default function Team() {
-  const { data, error } = useAdminQuery("/admin/team");
+  const { data, error, reload } = useAdminQuery("/admin/team");
   const roles = data?.roles || {};
   const has = (r, p) => (roles[r] || []).includes("*") || (roles[r] || []).includes(p);
   return (
@@ -35,19 +35,38 @@ export default function Team() {
         <div className="space-y-5">
           <Card title="Admins" bodyClassName="p-0">
             <table className="w-full">
-              <thead className="border-b border-ink-100"><tr><Th>Admin</Th><Th>Role</Th><Th>Status</Th><Th>Last seen</Th><Th /></tr></thead>
+              <thead className="border-b border-ink-100"><tr><Th>Admin</Th><Th>Role</Th><Th>Status</Th><Th>Two-factor</Th><Th>Last seen</Th><Th /></tr></thead>
               <tbody className="divide-y divide-ink-100">
                 {data.admins.map((a) => (
                   <tr key={a.id}>
                     <Td><div className="font-medium">{a.fullName}</div><div className="text-xs text-ink-500">{a.email}</div></Td>
                     <Td className="capitalize">{a.adminRole}{a.id === data.me.id ? <span className="ml-1 text-xs text-ink-500">(you)</span> : null}</Td>
                     <Td>{a.isBan ? <StatusPill status="error" label="Banned" /> : <StatusPill status="ok" label="Active" />}</Td>
+                    <Td>{a.twoFactorEnabled ? <StatusPill status="ok" label="On" /> : <StatusPill status="pending" label="Off" />}</Td>
                     <Td className="text-xs">{a.lastSeen ? timeAgo(a.lastSeen) : "—"}</Td>
-                    <Td className="text-right"><Link className="text-xs text-primary-700" to={`/dashboard/audit?admin=${a.id}`}>Activity</Link></Td>
+                    <Td className="text-right whitespace-nowrap">
+                      {a.twoFactorEnabled && a.id !== data.me.id ? (
+                        <button className="text-xs text-rose-700 mr-3" onClick={() => act({ title: `Reset two-factor for ${a.fullName}?`, description: "Use when they lost their device. They are signed out and must set it up again.", danger: true, path: `/admin/team/${a.id}/reset-2fa`, done: reload, success: "Two-factor reset" })}>Reset 2FA</button>
+                      ) : null}
+                      <Link className="text-xs text-primary-700" to={`/dashboard/audit?admin=${a.id}`}>Activity</Link>
+                    </Td>
                   </tr>
                 ))}
               </tbody>
             </table>
+          </Card>
+          <Card title="Recent admin sign-ins" bodyClassName="p-0">
+            {data.logins?.length ? (
+              <table className="w-full">
+                <thead className="border-b border-ink-100"><tr><Th>Admin</Th><Th>IP</Th><Th>Device</Th><Th>When</Th></tr></thead>
+                <tbody className="divide-y divide-ink-100">
+                  {data.logins.map((l) => (
+                    <tr key={l.id}><Td>{l.admin}</Td><Td className="font-mono text-xs">{l.ip || "—"}</Td><Td className="text-xs text-ink-500 max-w-xs truncate" title={l.userAgent}>{l.userAgent || "—"}</Td><Td className="text-xs">{timeAgo(l.at)}</Td></tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : <p className="p-4 text-sm text-ink-500">No sign-ins recorded yet.</p>}
+            <p className="px-4 pb-4 text-xs text-ink-500">Something unfamiliar? Use Users → Manage → “Sign out everywhere” on that admin and reset their password.</p>
           </Card>
           <Card title="Role permissions" bodyClassName="p-0">
             <div className="overflow-x-auto">

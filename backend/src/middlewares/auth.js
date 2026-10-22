@@ -33,6 +33,20 @@ const verifyCallback =
       if (adminOnly) {
         const perms = require("../config/adminPermissions");
         const r = perms.resolve(req);
+        const sec = (await require("../services/siteSettings.service").get()).security || {};
+        // A second-admin approval is replayed from 127.0.0.1; the approver
+        // already passed this check on the approve call itself.
+        const replay = req.get("x-approval-id") && /^[a-f0-9]{24}$/.test(req.get("x-approval-id")) &&
+          (await require("../models/approval.model").exists({ _id: req.get("x-approval-id"), status: "approved", consumed: false,
+            decidedBy: user._id, decidedAt: { $gt: new Date(Date.now() - 60 * 1000) } }));
+        if (!replay && !require("../utils/ipMatch").allowed(req.ip, sec.adminIpAllowlist)) {
+          require("./adminAudit").recordAdminAction(req, res, { ...r, perm: "ip-allowlist (denied)" });
+          return reject(new ApiError(httpStatus.FORBIDDEN, "Admin access is not allowed from this network"));
+        }
+        const twoFaFree = /^\/admin\/(me|2fa)(\/|$)/.test(r.path || "");
+        if (sec.requireAdmin2fa && !user.twoFactorEnabled && !twoFaFree) {
+          return reject(new ApiError(httpStatus.FORBIDDEN, "TWO_FACTOR_SETUP_REQUIRED: turn on two-factor sign-in to use the admin panel"));
+        }
         if (!perms.can(user, r.perm)) {
           require("./adminAudit").recordAdminAction(req, res, { ...r, perm: `${r.perm} (denied)` });
           return reject(new ApiError(httpStatus.FORBIDDEN, `Your admin role (${perms.roleOf(user)}) cannot do this`));

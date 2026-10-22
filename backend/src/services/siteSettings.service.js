@@ -40,6 +40,7 @@ function defaults() {
     seo: { title: "", description: "", ogImage: "" },
     email: { footerText: "" },
     features: { signups: true, buyerRequests: true, tips: true, googleLogin: true },
+    security: { requireAdmin2fa: false, adminIpAllowlist: [] },
   };
 }
 
@@ -52,6 +53,11 @@ function normalise(site = {}, base = defaults()) {
   const s = { ...base.seo, ...(site.seo || {}) };
   const e = { ...base.email, ...(site.email || {}) };
   const f = { ...base.features, ...(site.features || {}) };
+  const sec = { ...base.security, ...(site.security || {}) };
+  const ipList = (Array.isArray(sec.adminIpAllowlist) ? sec.adminIpAllowlist : String(sec.adminIpAllowlist || "").split(/[\s,]+/))
+    .map((x) => String(x).trim())
+    .filter((x) => require("../utils/ipMatch").validEntry(x))
+    .slice(0, 50);
   return {
     marketplace: {
       feePercent: num(m.feePercent, 5, 0, 50),
@@ -76,6 +82,7 @@ function normalise(site = {}, base = defaults()) {
     seo: { title: str(s.title, 70), description: str(s.description, 170), ogImage: url(s.ogImage) },
     email: { footerText: str(e.footerText, 300) },
     features: Object.fromEntries(Object.keys(base.features).map((k) => [k, bool(f[k], true)])),
+    security: { requireAdmin2fa: bool(sec.requireAdmin2fa, false), adminIpAllowlist: ipList },
   };
 }
 

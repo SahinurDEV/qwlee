@@ -17,6 +17,8 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [needOtp, setNeedOtp] = useState(false);
 
   // AdminRoute stashes the page the user was trying to reach into
   // location.state.from when it bounces an unauthenticated request.
@@ -39,9 +41,14 @@ export default function Login() {
       const res = await fetch(`${baseUrl}/v1/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, ...(needOtp ? { otp } : {}) }),
       });
       const data = await res.json();
+      if (data?.data?.attributes?.twoFactorRequired) {
+        setNeedOtp(true);
+        toast("Enter the 6-digit code from your authenticator app");
+        return;
+      }
       if (data?.code !== 200) {
         toast.error(data?.message || "Check your email and password and try again.");
         return;
@@ -117,6 +124,25 @@ export default function Login() {
               </button>
             </div>
           </div>
+
+          {needOtp ? (
+            <div>
+              <label htmlFor="otp" className="block text-sm font-medium text-ink-700 mb-1.5">
+                Authenticator code
+              </label>
+              <input
+                id="otp"
+                autoFocus
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                required
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                placeholder="123456 or a recovery code"
+                className="w-full px-3 py-2.5 text-sm border border-ink-200 rounded-lg outline-none focus:border-primary"
+              />
+            </div>
+          ) : null}
 
           <div className="text-right">
             <Link to="/forgotpassword" className="text-sm font-medium text-primary-700 hover:text-primary-800">

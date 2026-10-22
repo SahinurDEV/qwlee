@@ -157,6 +157,11 @@ router.get("/broadcast", A, ac.listBroadcasts);
 router.get("/analytics", A, ac.analytics);
 router.get("/audit", A, ac.auditLog);
 router.get("/team", A, ac.team);
+router.get("/2fa", A, ac.twoFaStatus);
+router.post("/2fa/setup", A, ac.twoFaSetup);
+router.post("/2fa/enable", A, ac.twoFaEnable);
+router.post("/2fa/disable", A, ac.twoFaDisable);
+router.post("/team/:id/reset-2fa", A, ac.twoFaReset);
 router.get("/newsletter", A, ac.listSubscribers);
 
 module.exports = router;

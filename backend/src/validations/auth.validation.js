@@ -29,6 +29,8 @@ const login = {
   body: Joi.object().keys({
     email: Joi.string().required(),
     password: Joi.string().required(),
+    // Admin two-factor: 6-digit TOTP or a recovery code.
+    otp: Joi.string().max(20).allow(""),
   }),
 };
 
