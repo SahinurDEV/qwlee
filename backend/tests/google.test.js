@@ -142,6 +142,8 @@ test("google sign-in with two-factor needs the code (challenge)", async (t) => {
   const ok = await v(totp.codeAt(secret, step + 1));
   assert.equal(ok.status, 200);
   assert.ok((await ok.json()).data.attributes.tokens.access.token);
+});
+
 test("google sign-up honours a referral link (new accounts only)", async (t) => {
   if (!enabled) return t.skip("GOOGLE_CLIENT_ID not set on the API");
   const j = (m, path, token, body) => fetch(`${API}/v1${path}`, { method: m, headers: { "content-type": "application/json", ...(token ? { authorization: `Bearer ${token}` } : {}) }, body: body && JSON.stringify(body) }).then((r) => r.json());
