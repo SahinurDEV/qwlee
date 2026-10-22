@@ -131,7 +131,9 @@ test("cancelling an open order refunds the escrow", async (t) => {
   const { r } = await checkout();
   if (r.status === 503) return t.skip("payments not configured");
   const id = r.json.orderId;
-  const c = await call("PATCH", `/orders?orderId=${id}`, { token: buyer.token, body: { status: "cancelled", reason: "Changed my mind" } });
+  // A buyer can't cancel an on-time order alone; the seller can.
+  assert.equal((await call("PATCH", `/orders?orderId=${id}`, { token: buyer.token, body: { status: "cancelled", reason: "Changed my mind", _mutual: true } })).status, 409);
+  const c = await call("PATCH", `/orders?orderId=${id}`, { token: seller.token, body: { status: "cancelled", reason: "Can't do it" } });
   assert.equal(c.status, 201, JSON.stringify(c.json));
   const order = (await call("GET", `/orders/${id}`, { token: buyer.token })).data;
   assert.equal(order.status, "cancelled");
@@ -169,4 +171,24 @@ test("gig descriptions are sanitised and extras/FAQ/requirements validated", asy
   assert.equal(bad.status, 400);
   const badVideo = await call("PATCH", `/gig/${gid}`, { token: seller.token, body: { video: "javascript:alert(1)" } });
   assert.equal(badVideo.status, 400);
+});
+
+test("mutual cancellation: request, only the other side answers, accept refunds", async (t) => {
+  const { r } = await checkout();
+  if (r.status === 503) return t.skip("payments not configured");
+  const id = r.json.orderId;
+  assert.equal((await call("POST", `/orders/${id}/cancellation`, { token: buyer.token, body: { reason: "x" } })).status, 400, "reason required");
+  const q = await call("POST", `/orders/${id}/cancellation`, { token: buyer.token, body: { reason: "Plans changed, sorry" } });
+  assert.equal(q.status, 200, JSON.stringify(q.json));
+  assert.equal(q.data.cancellationRequest.status, "pending");
+  assert.equal((await call("POST", `/orders/${id}/cancellation`, { token: buyer.token, body: { reason: "Again please" } })).status, 409, "one open request");
+  assert.equal((await call("PATCH", `/orders/${id}/cancellation`, { token: buyer.token, body: { action: "accept" } })).status, 403, "requester can't accept");
+  const d = await call("PATCH", `/orders/${id}/cancellation`, { token: seller.token, body: { action: "decline" } });
+  assert.equal(d.data.cancellationRequest.status, "declined");
+  assert.equal(d.data.status, "active");
+  await call("POST", `/orders/${id}/cancellation`, { token: seller.token, body: { reason: "I am unavailable" } });
+  const a = await call("PATCH", `/orders/${id}/cancellation`, { token: buyer.token, body: { action: "accept" } });
+  assert.equal(a.status, 200, JSON.stringify(a.json));
+  assert.equal(a.data.status, "cancelled");
+  assert.equal(a.data.escrow.status, "refunded");
 });
