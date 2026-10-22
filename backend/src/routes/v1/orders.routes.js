@@ -14,7 +14,7 @@ router
 
 router
   .route("/checkout")
-  .post(ordersController.orderCreate)
+  .post(auth("withOutAdmin"), ordersController.orderCreate)
   //   .patch(auth("admin"), categoriesController.updateCategory)
   .get(auth("withOutAdmin"), ordersController.getOrders);
 router
@@ -34,6 +34,11 @@ router
   .route("/:orderId/extension")
   .post(auth("freelancer"), ordersController.requestExtension)
   .patch(auth("common"), ordersController.respondExtension);
+
+router.post("/quote", auth("withOutAdmin"), ordersController.orderQuote);
+router.post("/:orderId/requirements", auth("withOutAdmin"), ordersController.submitRequirements);
+router.post("/:orderId/revision", auth("withOutAdmin"), ordersController.requestRevision);
+router.post("/:orderId/accept", auth("withOutAdmin"), ordersController.acceptDelivery);
 
 router
   .route("/:orderId")

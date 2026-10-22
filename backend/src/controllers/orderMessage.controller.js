@@ -82,6 +82,12 @@ const addOrderMessage = catchAsync(async (req, res, next) => {
     throw new ApiError(httpStatus.FORBIDDEN, "Receiver is not on this order");
   }
 
+  // A delivery is a state change, not just a chat message: only the
+  // seller may deliver, and only on an open order.
+  if (deliveryMessage) {
+    await require("../services/orderLifecycle.service").recordDelivery(orderId, sender);
+  }
+
   let deliveryDetails = null;
   let messageType = "text";
   let files = [];

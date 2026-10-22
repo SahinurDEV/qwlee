@@ -30,6 +30,10 @@ export default function GigPackagePicker({ gig }) {
   const packages = Array.isArray(gig?.package) ? gig.package : [];
   const [activeIdx, setActiveIdx] = useState(0);
   const active = packages[activeIdx] || packages[0];
+  const extras = Array.isArray(gig?.extras) ? gig.extras : [];
+  const [extraIds, setExtraIds] = useState([]);
+  const toggleExtra = (id) =>
+    setExtraIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
 
   // Keep the redux "feature" in sync with the active tab so any other
   // component (existing AboutCard drawer, etc.) sees the latest pick.
@@ -53,7 +57,10 @@ export default function GigPackagePicker({ gig }) {
   }
 
   const features = normaliseFeatures(active?.features);
-  const price = Number(active?.price || 0);
+  const basePrice = Number(active?.price || 0);
+  const chosenExtras = extras.filter((e) => extraIds.includes(String(e._id || e.id)));
+  // Display only; the server re-prices every order from the database.
+  const price = basePrice + chosenExtras.reduce((n, e) => n + Number(e.price || 0), 0);
   const deliveryDays = Number(active?.deliveryDate || 0);
   const isFreelancer = user?.role === "freelancer";
 
@@ -68,11 +75,9 @@ export default function GigPackagePicker({ gig }) {
       return;
     }
     const orderData = {
-      items: [{ name: gig?.title, price, quantity: 1 }],
-      freelancerId: gig?.userId?.id || gig?.userId?._id,
-      clientId: user?.id || user?._id,
       gigId: gig?._id || gig?.id,
-      deliveryDate: moment().add(deliveryDays || 7, "days").format("YYYY-MM-DD"),
+      packageName: active?.name,
+      extraIds,
     };
     const res = await createOrder(orderData);
     if (res.error) {
@@ -136,6 +141,36 @@ export default function GigPackagePicker({ gig }) {
               </li>
             ))}
           </ul>
+        )}
+
+        {extras.length > 0 && (
+          <div className="mt-5 pt-4 border-t border-gray-100">
+            <div className="text-xs uppercase tracking-wide text-gray-400 font-semibold mb-2">Gig extras</div>
+            <ul className="space-y-2">
+              {extras.map((e) => {
+                const id = String(e._id || e.id);
+                return (
+                  <li key={id}>
+                    <label className="flex items-start gap-2 text-sm text-gray-700 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={extraIds.includes(id)}
+                        onChange={() => toggleExtra(id)}
+                        className="mt-1 accent-emerald-600"
+                      />
+                      <span className="flex-1">
+                        {e.title}
+                        {Number(e.deliveryDays) > 0 && (
+                          <span className="text-xs text-gray-500"> (+{e.deliveryDays} day{Number(e.deliveryDays) > 1 ? "s" : ""})</span>
+                        )}
+                      </span>
+                      <span className="font-medium text-gray-900">+${Number(e.price || 0).toLocaleString()}</span>
+                    </label>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         )}
 
         <button

@@ -57,6 +57,9 @@ All Docker config lives in the root `.env` (see [.env.example](.env.example)).
 
 | `ENABLE_API_DOCS` | no | Serve Swagger UI at `/v1/docs` outside development |
 | `PLATFORM_FEE_PERCENT` | no | Commission on completed orders (default 5). Admin can override in Settings > Misc with key `platformFeePercent` |
+| `DEMO_PAYMENTS` | no | When no `STRIPE_SECRET_KEY` is set, place orders without charging (default `true` in compose). **Set to `false` in production.** |
+| `AUTO_COMPLETE_DAYS` | no | Days after a delivery before the order auto-completes and escrow is released (default 3) |
+| `ORDER_HOUSEKEEPING_MS` | no | Interval of the auto-complete / late-marking job (default 600000) |
 
 Other payment providers and SMTP can also be configured from the admin panel.
 
@@ -69,6 +72,18 @@ Out of the box all email goes to the bundled Mailpit inbox at http://localhost:8
 1. Create a free Stripe account and copy the **test** keys from https://dashboard.stripe.com/test/apikeys into `.env` as `STRIPE_SECRET_KEY` (`sk_test_...`) and `STRIPE_PUBLISHABLE_KEY` (`pk_test_...`).
 2. Install the [Stripe CLI](https://stripe.com/docs/stripe-cli) and forward webhooks: `stripe listen --forward-to localhost:7171/v1/orders/webhook`. Put the printed `whsec_...` value in `STRIPE_WEBHOOK_SECRET`.
 3. `docker compose up -d --build backend`, then pay with card `4242 4242 4242 4242`, any future date and any CVC.
+
+## Order lifecycle
+
+1. Buyer checks out a gig package (+ optional extras) or a custom offer. Prices are always computed on the server (`POST /v1/orders/quote` previews them).
+2. Payment (Stripe, or demo mode) is held in **escrow** on the order.
+3. If the gig has requirement questions, the buyer answers them; the delivery clock starts then.
+4. Seller delivers; buyer accepts or requests a revision (limited by the package).
+5. On acceptance, or `AUTO_COMPLETE_DAYS` after delivery, escrow is released to the seller minus the platform fee. Cancellations and dispute refunds return escrow to the buyer.
+
+Gigs support extras, FAQ, requirement questions and an optional YouTube/Vimeo/MP4 video.
+
+After upgrading an existing database run `docker compose exec backend npm run migrate` (idempotent).
 
 ## Manual setup (without Docker)
 

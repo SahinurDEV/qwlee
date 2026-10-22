@@ -18,6 +18,7 @@ import Avatar from "@/components/common/Avatar";
 
 import GigGallery from "./GigGallery";
 import GigPackagePicker from "./GigPackagePicker";
+import { GigFaq, GigVideo } from "./GigFaqVideo";
 import AboutCard from "./AboutCard";
 import GigReviews from "./GigReviews";
 import GigLoveReact from "./GigLoveReact";
@@ -119,6 +120,7 @@ export default function GigDetails({ slug }) {
             </div>
           </header>
 
+          <GigVideo url={result.video} title={result.title} />
           <GigGallery images={result.images} title={result.title} />
 
           {/* About this gig */}
@@ -131,6 +133,8 @@ export default function GigDetails({ slug }) {
               dangerouslySetInnerHTML={{ __html: result.description || "" }}
             />
           </section>
+
+          <GigFaq faq={result.faq} />
 
           {/* About the seller — pulls the existing AboutCard but framed as a section */}
           <section className="bg-white border border-gray-200 rounded-2xl p-5 md:p-7">

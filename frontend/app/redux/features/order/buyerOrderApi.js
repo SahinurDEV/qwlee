@@ -41,6 +41,26 @@ const buyerOrderApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["Orders"],
     }),
+    getOrderQuote: builder.mutation({
+      query: (body) => ({ url: "/orders/quote", method: "POST", body }),
+      transformResponse: (data) => data?.data?.attributes,
+    }),
+    submitOrderRequirements: builder.mutation({
+      query: ({ orderId, answers }) => ({
+        url: `/orders/${orderId}/requirements`,
+        method: "POST",
+        body: { answers },
+      }),
+      invalidatesTags: ["Orders"],
+    }),
+    requestOrderRevision: builder.mutation({
+      query: ({ orderId, reason }) => ({
+        url: `/orders/${orderId}/revision`,
+        method: "POST",
+        body: { reason },
+      }),
+      invalidatesTags: ["Orders", "OrderMessages"],
+    }),
     requestOrderExtension: builder.mutation({
       query: ({ orderId, newDeliveryDate, reason }) => ({
         url: `/orders/${orderId}/extension`,
@@ -67,4 +87,7 @@ export const {
   useUpdateBuyerOrderStatusMutation,
   useRequestOrderExtensionMutation,
   useRespondOrderExtensionMutation,
+  useGetOrderQuoteMutation,
+  useSubmitOrderRequirementsMutation,
+  useRequestOrderRevisionMutation,
 } = buyerOrderApi;

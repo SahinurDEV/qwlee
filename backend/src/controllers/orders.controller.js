@@ -7,49 +7,118 @@ const response = require("../config/response");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 const { ordersService } = require("../services");
+const orderLifecycle = require("../services/orderLifecycle.service");
 const { Payment, User } = require("../models");
 const mongoose = require("mongoose");
 const messageService = require("../services/message.service");
 const notificationService = require("../services/notification.service");
 const emailService = require("../services/email.service");
 const { Gig } = require("../models");
-const orderCreate = catchAsync(async (req, res) => {
-  try {
-    const metadata = {
-      freelancerId: req.body.freelancerId,
-      clientId: req.body.clientId,
-      gigId: req.body.gigId,
-      messageId: req.body.messageId || "",
-      price: req.body.price,
-      deliveryDate: req.body.deliveryDate,
-    };
+// Checkout. Prices are computed on the server from the gig package and
+// extras (or the seller's custom offer); anything price-like in the
+// request body is ignored. Pays with Stripe when configured, otherwise
+// with the built-in demo provider when DEMO_PAYMENTS=true.
+const checkoutBody = (req) => ({
+  buyerId: req.user.id,
+  gigId: req.body.gigId,
+  packageName: req.body.packageName,
+  extraIds: Array.isArray(req.body.extraIds) ? req.body.extraIds : [],
+  messageId: req.body.messageId || undefined,
+});
 
-    // Create a Stripe Checkout session
-    const session = await stripe.checkout.sessions.create({
+const orderQuote = catchAsync(async (req, res) => {
+  const quote = await orderLifecycle.quoteCheckout(checkoutBody(req));
+  res.status(httpStatus.OK).json(
+    response({ message: "Quote", status: "OK", statusCode: httpStatus.OK, data: { items: quote.items, total: quote.total, deliveryDays: quote.deliveryDays } })
+  );
+});
+
+const orderCreate = catchAsync(async (req, res) => {
+  if (req.user.role !== "buyer" && req.user.role !== "freelancer") {
+    throw new ApiError(httpStatus.FORBIDDEN, "Only marketplace users can place orders");
+  }
+  const quote = await orderLifecycle.quoteCheckout(checkoutBody(req));
+  const frontend = process.env.FRONTEND_URL || "http://localhost:8000";
+
+  const stripeSecret = process.env.STRIPE_SECRET_KEY;
+  if (stripeSecret) {
+    const stripeClient = require("stripe")(stripeSecret);
+    const session = await stripeClient.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
-      line_items: req.body.items.map((item) => {
-        return {
-          price_data: {
-            currency: "USD",
-            product_data: {
-              name: item.name,
-            },
-            unit_amount: item.price * 100,
-          },
-          quantity: item.quantity,
-        };
-      }),
-      metadata,
-      success_url: `${process.env.FRONTEND_URL || "http://localhost:8000"}/success`,
-      cancel_url: `${process.env.FRONTEND_URL || "http://localhost:8000"}/cancel`,
+      line_items: quote.items.map((item) => ({
+        price_data: {
+          currency: "usd",
+          product_data: { name: item.name },
+          unit_amount: Math.round(item.price * 100),
+        },
+        quantity: item.quantity,
+      })),
+      // Only identifiers travel through Stripe; the webhook re-quotes.
+      metadata: {
+        buyerId: String(req.user.id),
+        gigId: quote.gigId || "",
+        packageName: quote.packageName || "",
+        extraIds: (quote.extraIds || []).join(","),
+        messageId: quote.messageId || "",
+        freelancerId: quote.freelancerId,
+        clientId: String(req.user.id),
+      },
+      success_url: `${frontend}/success`,
+      cancel_url: `${frontend}/cancel`,
     });
-
-    res.status(200).send({ url: session.url });
-  } catch (error) {
-    res.status(500).send({ message: error.message });
+    return res.status(200).send({ url: session.url, provider: "stripe" });
   }
+
+  if (process.env.DEMO_PAYMENTS === "true") {
+    const crypto = require("crypto");
+    const order = await orderLifecycle.createOrderFromQuote(quote, {
+      sessionId: `demo_${crypto.randomUUID()}`,
+      provider: "demo",
+    });
+    await notifyNewOrder(order);
+    return res.status(200).send({
+      url: `${frontend}/order/${order._id}?placed=1`,
+      orderId: order._id,
+      provider: "demo",
+    });
+  }
+
+  throw new ApiError(
+    httpStatus.SERVICE_UNAVAILABLE,
+    "Payments are not configured. Set STRIPE_SECRET_KEY, or DEMO_PAYMENTS=true for a demo."
+  );
 });
+
+// Notifications + confirmation emails for a newly paid order. Never throws.
+const notifyNewOrder = async (order) => {
+  try {
+    const [buyer, seller, gig] = await Promise.all([
+      User.findById(order.clientId).select("fullName email username"),
+      User.findById(order.freelancerId).select("fullName email username"),
+      order.gigId ? Gig.findById(order.gigId).select("title") : null,
+    ]);
+    await notificationService.addCustomNotification("freelancer-notification", order.freelancerId, {
+      receiverId: order.freelancerId,
+      message: `You have a new order from ${buyer?.username || buyer?.fullName || "a buyer"}.`,
+      role: "freelancer",
+      type: "order",
+      viewStatus: false,
+    });
+    const ctx = {
+      buyerName: buyer?.fullName || buyer?.username || "there",
+      sellerName: seller?.fullName || seller?.username || "your seller",
+      gigTitle: gig?.title || order?.data?.title || "your gig",
+      orderId: order._id,
+      price: order.price,
+      deliveryDate: order.deliveryDate,
+    };
+    if (buyer?.email) emailService.sendOrderConfirmedBuyer(buyer.email, ctx);
+    if (seller?.email) emailService.sendOrderConfirmedSeller(seller.email, ctx);
+  } catch (e) {
+    logger.warn(`new-order notifications failed: ${e.message}`);
+  }
+};
 
 const orderPlaced = async (req, res) => {
   const sig = req.headers["stripe-signature"];
@@ -67,104 +136,27 @@ const orderPlaced = async (req, res) => {
 
 
     switch (eventType) {
-      case "checkout.session.completed":
-        const session = await stripe.checkout.sessions.retrieve(data.id, {
-          expand: ["line_items"],
+      case "checkout.session.completed": {
+        const session = await stripe.checkout.sessions.retrieve(data.id);
+        const md = session.metadata || {};
+        // Re-price on the server and make sure Stripe charged that amount.
+        const quote = await orderLifecycle.quoteCheckout({
+          buyerId: md.buyerId || md.clientId,
+          gigId: md.gigId || undefined,
+          packageName: md.packageName || undefined,
+          extraIds: md.extraIds ? md.extraIds.split(",").filter(Boolean) : [],
+          messageId: md.messageId || undefined,
         });
-
-        const sessionData = {
+        if (Math.round(quote.total * 100) !== Number(session.amount_total)) {
+          throw new Error(`Amount mismatch for session ${session.id}`);
+        }
+        const order = await orderLifecycle.createOrderFromQuote(quote, {
           sessionId: session.id,
-          items: session.line_items.data.map((item) => ({
-            name: item.description,
-            price: item.amount_subtotal / item.quantity / 100,
-            quantity: item.quantity,
-          })),
-          messageId: session.metadata.messageId,
-          freelancerId: session.metadata.freelancerId,
-          clientId: session.metadata.clientId,
-          gigId: session.metadata.gigId,
-          deliveryDate: session.metadata.deliveryDate,
-          data: req.body.data,
-        };
-
-        // // Check and convert freelancerId to ObjectId
-        // if (session.metadata.freelancerId && ObjectId.isValid(session.metadata.freelancerId)) {
-        //   sessionData.freelancerId = ObjectId(session.metadata.freelancerId);
-        // } else {
-        //   // Handle invalid or missing freelancerId
-        //   console.error('Invalid or missing freelancerId:', session.metadata.freelancerId);
-        //   throw new Error('Invalid or missing freelancerId');
-        // }
-        // Save sessionData to database
-
-        const order = new Payment(sessionData);
-        await order.save();
-        //when order is completed message id is accepted
-        const messageId = session.metadata.messageId;
-        if (messageId) {
-          const message = await messageService.updateMessageStatus(
-            messageId,
-            "accepted",
-            order?._id
-          );
-          if (!message) {
-            throw new ApiError(httpStatus.NOT_FOUND, "Message not found.");
-          }
-        }
-
-        // Retrieve the client details using the clientId
-        const clientId = session.metadata.clientId;
-
-        let clientName = "Unknown Client";
-        if (clientId) {
-          const client = await User.findById(clientId).select("username"); // Assuming the User model has a "name" field
-          if (client) {
-            clientName = client.username;
-          }
-        }
-
-        // Send notification to the freelancer when the order is completed
-        const freelancerId = session.metadata.freelancerId;
-        if (freelancerId) {
-          const notificationData = {
-            receiverId: freelancerId,
-            message: `You have a new order from ${clientName}.    `,
-            role: "freelancer",
-            type: "order",
-            viewStatus: false,
-          };
-
-          // Send the notification using addCustomNotification
-          await notificationService.addCustomNotification(
-            "order-created",
-            freelancerId,
-            notificationData
-          );
-        }
-
-        // Fire-and-forget email notifications to both parties. We
-        // populate fullName + email + the gig title so the templates
-        // can address each side personally.
-        try {
-          const [buyer, seller, gig] = await Promise.all([
-            clientId ? User.findById(clientId).select("fullName email username") : null,
-            freelancerId ? User.findById(freelancerId).select("fullName email username") : null,
-            session.metadata.gigId ? Gig.findById(session.metadata.gigId).select("title") : null,
-          ]);
-          const ctx = {
-            buyerName: buyer?.fullName || buyer?.username || "there",
-            sellerName: seller?.fullName || seller?.username || "your seller",
-            gigTitle: gig?.title || "your gig",
-            orderId: order._id,
-            price: sessionData.items?.[0]?.price,
-            deliveryDate: sessionData.deliveryDate,
-          };
-          if (buyer?.email) emailService.sendOrderConfirmedBuyer(buyer.email, ctx);
-          if (seller?.email) emailService.sendOrderConfirmedSeller(seller.email, ctx);
-        } catch (e) {
-          console.warn(`order-confirm email failed: ${e.message}`);
-        }
+          provider: "stripe",
+        });
+        await notifyNewOrder(order);
         break;
+      }
       default:
         // Handle other webhook events or errors as needed
     }
@@ -348,7 +340,32 @@ const respondExtension = catchAsync(async (req, res) => {
   );
 });
 
+const submitRequirements = catchAsync(async (req, res) => {
+  const order = await orderLifecycle.submitRequirements(req.params.orderId, req.user.id, req.body.answers);
+  await notificationService.addCustomNotification("freelancer-notification", order.freelancerId, {
+    receiverId: order.freelancerId, message: "The buyer submitted the order requirements. The clock has started.", role: "freelancer", type: "order", viewStatus: false,
+  }).catch(() => {});
+  res.status(httpStatus.OK).json(response({ message: "Requirements submitted", status: "OK", statusCode: httpStatus.OK, data: order }));
+});
+
+const requestRevision = catchAsync(async (req, res) => {
+  const order = await orderLifecycle.requestRevision(req.params.orderId, req.user.id, req.body.reason);
+  await notificationService.addCustomNotification("freelancer-notification", order.freelancerId, {
+    receiverId: order.freelancerId, message: "The buyer requested a revision on your delivery.", role: "freelancer", type: "order", viewStatus: false,
+  }).catch(() => {});
+  res.status(httpStatus.OK).json(response({ message: "Revision requested", status: "OK", statusCode: httpStatus.OK, data: order }));
+});
+
+const acceptDelivery = catchAsync(async (req, res) => {
+  const order = await ordersService.orderModify(req.params.orderId, { status: "delivered" }, req.user.id);
+  res.status(httpStatus.OK).json(response({ message: "Order completed", status: "OK", statusCode: httpStatus.OK, data: order }));
+});
+
 module.exports = {
+  orderQuote,
+  submitRequirements,
+  requestRevision,
+  acceptDelivery,
   orderCreate,
   getOrders,
   createOrderRequest,

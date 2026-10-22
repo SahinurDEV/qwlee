@@ -69,6 +69,32 @@ const ordersSchema = mongoose.Schema(
     },
     // Cancellation audit trail. Populated when an admin (or buyer) cancels
     // the order so we can answer "who cancelled this and why" months later.
+    // Escrow: full payment held on the order until release/refund.
+    escrow: {
+      status: { type: String, enum: ["held", "released", "refunded"], default: undefined },
+      amount: { type: Number },
+      provider: { type: String },
+      heldAt: { type: Date },
+      releasedAt: { type: Date },
+      refundedAt: { type: Date },
+    },
+    // Buyer requirements gate (Fiverr: clock starts when submitted).
+    requirementsStatus: {
+      type: String,
+      enum: ["not_required", "pending", "submitted"],
+      default: "not_required",
+    },
+    requirementsSubmittedAt: { type: Date, default: null },
+    // Seller delivery state within an open order.
+    delivery: {
+      state: { type: String, enum: ["none", "submitted", "revision", "accepted"], default: "none" },
+      count: { type: Number, default: 0 },
+      lastDeliveredAt: { type: Date, default: null },
+      autoCompleteAt: { type: Date, default: null },
+    },
+    revisions: [{ reason: String, requestedAt: Date, _id: false }],
+    completedAt: { type: Date, default: null },
+    completionReason: { type: String, default: "" },
     // Settlement snapshot written when the seller is credited, so later
     // refunds reverse exactly what was paid even if the fee changes.
     platformFeePercent: { type: Number, default: null },

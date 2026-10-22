@@ -62,7 +62,11 @@ test("admin still sees full user records", async () => {
 test("single user lookup is sanitised for strangers", async () => {
   const r = await call("GET", `/users/${seller.user.id}`);
   assert.equal(r.status, 200);
-  for (const f of PRIVATE) assert.equal(r.data[f], undefined, `leaked ${f}`);
+  const u = r.data.user;
+  assert.equal(u.username, seller.user.username);
+  for (const f of PRIVATE) assert.equal(u[f], undefined, `leaked ${f}`);
+  const self = await call("GET", `/users/${seller.user.id}`, { token: seller.token });
+  assert.equal(self.data.user.email, "seller@example.com", "owner still sees own email");
 });
 
 test("marketplace only lists active gigs and hides seller private data", async () => {
