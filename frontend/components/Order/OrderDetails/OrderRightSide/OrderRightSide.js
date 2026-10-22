@@ -29,6 +29,7 @@ import ExtendDeliveryDateModal from "./ExtendDeliveryDateModal";
 import LeaveReviewModal from "./LeaveReviewModal";
 import OpenDisputeModal from "./OpenDisputeModal";
 import TipCard from "./TipCard";
+import CancellationCard from "./CancellationCard";
 import { IoStar, IoCalendarOutline, IoFlagOutline } from "react-icons/io5";
 
 export default function OrderActions({ order, orderId, isSeller }) {
@@ -104,13 +105,6 @@ export default function OrderActions({ order, orderId, isSeller }) {
     const res = await updateOrder({ orderId, status: "delivered" });
     if (res.error) toast.error(res.error?.data?.message || "Could not update");
     else toast.success("Order marked as complete");
-  }
-
-  async function handleCancelOrder() {
-    if (!confirm("Cancel this order? This cannot be undone.")) return;
-    const res = await updateOrder({ orderId, status: "cancelled" });
-    if (res.error) toast.error(res.error?.data?.message || "Could not cancel");
-    else toast.success("Order cancelled");
   }
 
   async function handleExtensionResponse(action) {
@@ -322,16 +316,8 @@ export default function OrderActions({ order, orderId, isSeller }) {
           ) : null}
         </section>
       )}
-      {!isSeller && (status === "active" || status === "late") && (
-        <section className="bg-white border border-gray-200 rounded-2xl p-5 space-y-2">
-          <button
-            type="button"
-            onClick={handleCancelOrder}
-            className="w-full px-4 py-2 rounded-lg border border-rose-200 text-rose-600 text-sm font-medium hover:bg-rose-50"
-          >
-            Request cancellation
-          </button>
-        </section>
+      {(status === "active" || status === "late") && (
+        <CancellationCard order={order} orderId={orderId} isSeller={isSeller} />
       )}
 
       {["active", "late", "delivered"].includes(status) && (

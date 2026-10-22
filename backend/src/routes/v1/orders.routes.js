@@ -35,6 +35,16 @@ router
   .post(auth("freelancer"), ordersController.requestExtension)
   .patch(auth("common"), ordersController.respondExtension);
 
+// Mutual cancellation: POST asks, PATCH {action: accept|decline|withdraw}.
+{
+  const cancellation = require("../../services/cancellation.service");
+  const catchAsync = require("../../utils/catchAsync");
+  const send = (res, data, message) => res.json({ code: 200, message, data: { attributes: data } });
+  router.post("/:orderId/cancellation", auth("withOutAdmin"), catchAsync(async (req, res) =>
+    send(res, await cancellation.request(req.params.orderId, req.user.id, req.body?.reason), "Cancellation requested")));
+  router.patch("/:orderId/cancellation", auth("withOutAdmin"), catchAsync(async (req, res) =>
+    send(res, await cancellation.respond(req.params.orderId, req.user.id, req.body?.action), "Cancellation updated")));
+}
 router.post("/quote", auth("withOutAdmin"), ordersController.orderQuote);
 router.post("/:orderId/requirements", auth("withOutAdmin"), ordersController.submitRequirements);
 router.post("/:orderId/revision", auth("withOutAdmin"), ordersController.requestRevision);
