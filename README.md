@@ -127,6 +127,19 @@ These live in the database and are edited in the admin panel (Site settings). Th
 
 Coupons are managed under Coupons in the admin panel (finance role). The platform funds the discount: the seller is paid, and the fee charged, on the full price; refunds return what the buyer paid.
 
+
+### Homepage builder
+
+Admin → Site settings → **Homepage layout**: the hero always comes first; the
+sections under it (stats, recently viewed, recommended, categories,
+freelancers, why us, testimonials, join, blog) can be reordered and hidden,
+and up to 5 custom text blocks (title, text, optional button with an
+http(s) URL or /path, light/brand/dark style) can be placed anywhere among
+them. The homepage reads the layout on the server (`/v1/info/site`, cached
+60 s), so changes are live within a minute and the first paint is already in
+the saved order. Unknown or duplicate keys are dropped; sections missing from
+a saved layout are appended, so new sections show up by default.
+
 ## Order lifecycle
 
 1. Buyer checks out a gig package (+ optional extras) or a custom offer. Prices are always computed on the server (`POST /v1/orders/quote` previews them).
