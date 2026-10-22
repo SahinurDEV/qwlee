@@ -1,57 +1,27 @@
-"use client";
-import PrimaryLayout from "@/components/Layout/PrimaryLayout";
-import HeroQwlee from "@/components/Home/HeroQwlee/HeroQwlee";
-import MarketplaceStats from "@/components/Home/HeroSection/MarketplaceStats";
-import RecentlyViewedGigs from "@/components/Home/RecentlyViewed/RecentlyViewedGigs";
-import RecommendedGigs from "@/components/Home/Recommended/RecommendedGigs";
-import JoinCNNCTR from "@/components/Home/JoinCNNCTR/JoinCNNCTR";
-import MostPopularCategories from "@/components/Home/MostPopularCategories/MostPopularCategories";
-import MostPopularFreelancers from "@/components/Home/MostPopularFreelancers/MostPopularFreelancers";
-import Testimonials from "@/components/Home/Testimonials/Testimonials";
-import TheLatestNewsAndBlog from "@/components/Home/TheLatestNewsAndBlog/TheLatestNewsAndBlog";
-import WhyChooseUs from "@/components/Home/WhyChooseUs/WhyChooseUs";
-import Reveal from "@/components/common/Reveal";
+import HomePage from "@/components/Home/HomePage/HomePage";
 
-// Every section animates in on scroll via a shared <Reveal> wrapper.
-// The hero stays animation-free (it's above the fold and instant content
-// is the priority) — animations only kick in for sections the user
-// reaches by scrolling.
-const Home = () => {
-  return (
-    <PrimaryLayout>
-      <main>
-        <HeroQwlee />
-        <Reveal>
-          <MarketplaceStats />
-        </Reveal>
-        {/* Renders nothing for first-time visitors with empty localStorage */}
-        <Reveal>
-          <RecentlyViewedGigs />
-        </Reveal>
-        <Reveal>
-          <RecommendedGigs />
-        </Reveal>
-        <Reveal>
-          <MostPopularCategories />
-        </Reveal>
-        <Reveal>
-          <MostPopularFreelancers />
-        </Reveal>
-        <Reveal>
-          <WhyChooseUs />
-        </Reveal>
-        <Reveal>
-          <Testimonials />
-        </Reveal>
-        <Reveal>
-          <JoinCNNCTR />
-        </Reveal>
-        <Reveal>
-          <TheLatestNewsAndBlog />
-        </Reveal>
-      </main>
-    </PrimaryLayout>
-  );
-};
+// The homepage layout (section order, hidden sections, custom blocks) is
+// set in Admin → Site settings → Homepage. Read it on the server, cached
+// 60s like the rest of the site settings; the defaults apply if the API is
+// unreachable.
+async function homeLayout() {
+  const bases = [process.env.INTERNAL_API_URL, process.env.NEXT_PUBLIC_BACKEND_API_URL].filter(Boolean);
+  for (const b of bases) {
+    try {
+      const r = await fetch(`${b.replace(/\/+$/, "")}/v1/info/site`, {
+        next: { revalidate: 60 },
+        signal: AbortSignal.timeout(2000),
+        headers: { "ngrok-skip-browser-warning": "1" },
+      });
+      if (r.ok) {
+        const h = (await r.json())?.data?.attributes?.homepage;
+        return { sections: h?.sections || [], blocks: h?.blocks || [] };
+      }
+    } catch {}
+  }
+  return null;
+}
 
-export default Home;
+export default async function Home() {
+  return <HomePage layout={await homeLayout()} />;
+}

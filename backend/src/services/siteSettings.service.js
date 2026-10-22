@@ -16,9 +16,38 @@ const num = (v, d, min, max) => {
 };
 const url = (v) => {
   const s = str(v, 500);
-  if (s && !/^https?:\/\//i.test(s) && !s.startsWith("/")) throw new ApiError(httpStatus.BAD_REQUEST, `"${s}" must be an http(s) URL or a /path`);
+  if (s && !/^https?:\/\//i.test(s) && !(s.startsWith("/") && !s.startsWith("//"))) throw new ApiError(httpStatus.BAD_REQUEST, `"${s}" must be an http(s) URL or a /path`);
   return s;
 };
+// Homepage builder: the hero always comes first; these sections follow in
+// the admin's order and can be hidden. Up to 5 custom text blocks
+// ("block-1".."block-5") can be placed anywhere in the list.
+const HOME_SECTIONS = ["stats", "recentlyViewed", "recommended", "categories", "freelancers", "whyUs", "testimonials", "join", "blog"];
+const BLOCK_IDS = ["block-1", "block-2", "block-3", "block-4", "block-5"];
+function homeLayout(h) {
+  const blocks = (Array.isArray(h.blocks) ? h.blocks : [])
+    .filter((b) => b && BLOCK_IDS.includes(b.id))
+    .map((b) => ({
+      id: b.id,
+      title: str(b.title, 120),
+      text: str(b.text, 600),
+      ctaLabel: str(b.ctaLabel, 40),
+      ctaLink: url(b.ctaLink),
+      tone: ["light", "brand", "dark"].includes(b.tone) ? b.tone : "light",
+    }))
+    .filter((b) => b.title || b.text);
+  const known = [...HOME_SECTIONS, ...blocks.map((b) => b.id)];
+  const seen = new Set();
+  const sections = [];
+  for (const x of Array.isArray(h.sections) ? h.sections : []) {
+    const key = typeof x === "string" ? x : x?.key;
+    if (!known.includes(key) || seen.has(key)) continue;
+    seen.add(key);
+    sections.push({ key, enabled: typeof x === "string" ? true : bool(x.enabled, true) });
+  }
+  for (const key of known) if (!seen.has(key)) sections.push({ key, enabled: true });
+  return { sections, blocks };
+}
 const color = (v, d) => {
   const s = str(v, 7);
   if (!s) return d;
@@ -36,7 +65,7 @@ function defaults() {
       secondApprovalOver: Number(process.env.SECOND_APPROVAL_OVER || 0),
     },
     branding: { siteName: process.env.SITE_NAME || "Qwlee", logoUrl: "", primaryColor: "#059669" },
-    homepage: { heroTitle: "", heroSubtitle: "", announcement: { enabled: false, text: "", link: "", tone: "info" } },
+    homepage: { heroTitle: "", heroSubtitle: "", announcement: { enabled: false, text: "", link: "", tone: "info" }, sections: [], blocks: [] },
     seo: { title: "", description: "", ogImage: "" },
     email: { footerText: "" },
     features: { signups: true, buyerRequests: true, tips: true, googleLogin: true },
@@ -83,6 +112,7 @@ function normalise(site = {}, base = defaults()) {
         link: url(a.link),
         tone: ["info", "success", "warning"].includes(a.tone) ? a.tone : "info",
       },
+      ...homeLayout(h),
     },
     seo: { title: str(s.title, 70), description: str(s.description, 170), ogImage: url(s.ogImage) },
     email: { footerText: str(e.footerText, 300) },
@@ -145,4 +175,4 @@ async function assertFeature(name, label) {
   if (!(await feature(name))) throw new ApiError(httpStatus.FORBIDDEN, `${label} is currently turned off by the site admin`);
 }
 
-module.exports = { get, update, getPublic, feature, assertFeature, defaults, normalise };
+module.exports = { get, update, getPublic, feature, assertFeature, defaults, normalise, HOME_SECTIONS };
