@@ -178,16 +178,21 @@ const resolveDispute = async (adminId, disputeId, body) => {
   // Map resolution → order status. Real refund/payout side-effects
   // would happen in the payment service; here we only set the
   // canonical order status so the marketplace sees a final state.
+  // Map resolution to the order: releasing pays the seller from escrow
+  // (exactly once); anything else cancels and refunds the escrow.
+  const lifecycle = require("./orderLifecycle.service");
   if (resolution === "release_to_seller") {
-    order.status = "delivered";
+    await lifecycle.completeOrder(order, { reason: "dispute", fromStatuses: ["disputed", "active", "late"] });
+    await Payment.updateOne({ _id: order._id }, { $set: { activeDisputeId: null } });
   } else {
     order.status = "cancelled";
     order.cancellationReason = `Dispute: ${resolution}`;
     order.cancelledAt = new Date();
     order.cancelledFromStatus = "disputed";
+    order.activeDisputeId = null;
+    await order.save();
+    await lifecycle.refundEscrow(order._id);
   }
-  order.activeDisputeId = null;
-  await order.save();
 
   // Notify both parties
   if (order.clientId) {

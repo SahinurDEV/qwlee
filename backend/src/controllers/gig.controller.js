@@ -1,3 +1,4 @@
+const sanitizeHtml = require("../utils/sanitizeHtml");
 const httpStatus = require("http-status");
 const pick = require("../utils/pick");
 const ApiError = require("../utils/ApiError");
@@ -18,7 +19,7 @@ const createGig = catchAsync(async (req, res) => {
   }
 
   // Treat description as a string
-  const parsedDescription = he.decode(description);
+  const parsedDescription = sanitizeHtml(he.decode(description));
 
   let imagesArray = [];
 
@@ -36,6 +37,7 @@ const createGig = catchAsync(async (req, res) => {
   }
 
   const gigData = {
+    ...gigService.sanitiseGigExtrasFields(req.body),
     title,
     package: parsedPackage,
     categoriesId,
@@ -69,7 +71,7 @@ const gigImageUpload = catchAsync(async (req, res) => {
     });
   }
 
-  const gig = await gigService.updateGigById(req.query.gigId, req.body, images); // Pass the images array
+  const gig = await gigService.updateGigById(req.query.gigId, {}, images, req.user);
   res.status(httpStatus.OK).json(
     response({
       message: "Gig Images Updated",
@@ -150,9 +152,10 @@ const getGigBySlug = catchAsync(async (req, res) => {
 });
 
 const updateGig = catchAsync(async (req, res) => {
-  req.body.description = he.decode(req.body.description);
-
-  const gig = await gigService.updateGigById(req.params.gigId, req.body);
+  if (typeof req.body.description === "string") {
+    req.body.description = sanitizeHtml(he.decode(req.body.description));
+  }
+  const gig = await gigService.updateGigById(req.params.gigId, req.body, undefined, req.user);
   res.status(httpStatus.OK).json(
     response({
       message: "Gig Updated",
@@ -166,7 +169,8 @@ const updateGig = catchAsync(async (req, res) => {
 const gigSingleImageDelete = catchAsync(async (req, res) => {
   const gig = await gigService.gigSingleImageDelete(
     req.query.gigId,
-    req.query.imagePath
+    req.query.imagePath,
+    req.user
   );
   res.status(httpStatus.OK).json(
     response({
@@ -179,7 +183,7 @@ const gigSingleImageDelete = catchAsync(async (req, res) => {
 });
 
 const deleteGig = catchAsync(async (req, res) => {
-  await gigService.deleteGigById(req.params.gigId);
+  await gigService.deleteGigById(req.params.gigId, req.user);
   res.status(httpStatus.OK).json(
     response({
       message: "Gig Deleted",

@@ -26,6 +26,7 @@ import {
 } from "@/app/redux/features/orderMessage/orderMessage.api";
 import {
   useUpdateBuyerOrderStatusMutation,
+  useRequestOrderRevisionMutation,
   useRespondOrderExtensionMutation,
 } from "@/app/redux/features/order/buyerOrderApi";
 import { useSocket } from "@/components/Context/SocketProvider";
@@ -42,6 +43,7 @@ export default function Activity({ order, orderId }) {
   });
   const [sendOrderMessage, { isLoading: sending }] = useSendOrderMessageMutation();
   const [updateOrder] = useUpdateBuyerOrderStatusMutation();
+  const [requestRevision] = useRequestOrderRevisionMutation();
   const [respondExtension, { isLoading: extResponding }] =
     useRespondOrderExtensionMutation();
 
@@ -109,6 +111,14 @@ export default function Activity({ order, orderId }) {
     setAttachments([]);
   }
 
+  async function handleRequestRevision() {
+    const reason = window.prompt("What should the seller change?");
+    if (reason === null) return;
+    const res = await requestRevision({ orderId, reason });
+    if (res.error) toast.error(res.error?.data?.message || "Could not request a revision");
+    else toast.success("Revision requested");
+  }
+
   async function handleAcceptDelivery() {
     const res = await updateOrder({ orderId, status: "delivered" });
     if (res.error) toast.error(res.error?.data?.message || "Could not accept");
@@ -157,6 +167,9 @@ export default function Activity({ order, orderId }) {
               orderStatus={order?.status}
               extensionStatus={order?.extensionRequest?.status}
               onAcceptDelivery={handleAcceptDelivery}
+              onRequestRevision={handleRequestRevision}
+              deliveryState={order?.delivery?.state}
+              revisionsLeft={order?.data?.revisionsLeft}
               onRespondExtension={handleExtensionResponse}
               extResponding={extResponding}
             />
@@ -246,6 +259,9 @@ function MessageBubble({
   orderStatus,
   extensionStatus,
   onAcceptDelivery,
+  onRequestRevision,
+  deliveryState,
+  revisionsLeft,
   onRespondExtension,
   extResponding,
 }) {
@@ -279,6 +295,9 @@ function MessageBubble({
             isSeller={isSeller}
             orderStatus={orderStatus}
             onAcceptDelivery={onAcceptDelivery}
+            onRequestRevision={onRequestRevision}
+            deliveryState={deliveryState}
+            revisionsLeft={revisionsLeft}
           />
         ) : isExtensionRequest ? (
           <ExtensionRequestCard
@@ -396,8 +415,12 @@ function ExtensionResponseCard({ extension }) {
   );
 }
 
-function DeliveryCard({ delivery, mine, isSeller, orderStatus, onAcceptDelivery }) {
+function DeliveryCard({ delivery, mine, isSeller, orderStatus, onAcceptDelivery, onRequestRevision, deliveryState, revisionsLeft }) {
   const accepted = orderStatus === "delivered";
+  const closed = accepted || orderStatus === "cancelled";
+  // Legacy orders have no delivery state; keep the old accept button.
+  const awaitingBuyer = !closed && (deliveryState === "submitted" || !deliveryState || deliveryState === "none");
+  const canRevise = !closed && deliveryState === "submitted" && Number(revisionsLeft) > 0;
   return (
     <div
       className={`rounded-2xl border p-4 max-w-md ${
@@ -418,15 +441,29 @@ function DeliveryCard({ delivery, mine, isSeller, orderStatus, onAcceptDelivery 
       {Array.isArray(delivery?.files) && delivery.files.length > 0 && (
         <FilesGrid files={delivery.files} />
       )}
-      {!isSeller && (
-        <button
-          type="button"
-          onClick={onAcceptDelivery}
-          disabled={accepted}
-          className="mt-3 inline-flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 disabled:bg-gray-200 disabled:text-gray-500"
-        >
-          {accepted ? "Delivery accepted" : "Accept delivery"}
-        </button>
+      {!isSeller && (accepted || awaitingBuyer) && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={onAcceptDelivery}
+            disabled={accepted}
+            className="inline-flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 disabled:bg-gray-200 disabled:text-gray-500"
+          >
+            {accepted ? "Delivery accepted" : "Accept delivery"}
+          </button>
+          {canRevise && (
+            <button
+              type="button"
+              onClick={onRequestRevision}
+              className="inline-flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-medium border border-gray-300 text-gray-700 hover:border-emerald-300 hover:text-emerald-700"
+            >
+              Request revision ({revisionsLeft} left)
+            </button>
+          )}
+        </div>
+      )}
+      {deliveryState === "revision" && !closed && (
+        <p className="mt-2 text-xs text-amber-700">Revision requested. Waiting for the seller to redeliver.</p>
       )}
     </div>
   );

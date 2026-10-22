@@ -598,6 +598,23 @@ const GIGS = [
   },
 ];
 
+// Generic Fiverr-style add-ons, FAQ and buyer questions so every seeded
+// gig exercises extras, requirements and the FAQ section.
+const EXTRAS = [
+  { title: "Extra-fast delivery", description: "Delivered sooner than the package time.", price: 50, deliveryDays: 0 },
+  { title: "Additional revision", description: "One more round of changes.", price: 25, deliveryDays: 1 },
+  { title: "Source files", description: "All editable source files included.", price: 40, deliveryDays: 0 },
+];
+const FAQ = [
+  { question: "What do you need to get started?", answer: "Answer the requirement questions after ordering and share any assets or examples you like." },
+  { question: "Do you offer refunds?", answer: "If I cannot deliver what was agreed, you can cancel the order and the payment held in escrow is refunded." },
+  { question: "Can I request changes?", answer: "Yes. Each package includes revisions, and you can buy additional revisions as an extra." },
+];
+const REQUIREMENT_QUESTIONS = [
+  { question: "Describe your project and its goal.", required: true },
+  { question: "Share links to examples you like (optional).", required: false },
+];
+
 async function seedGigs({ sellers, categories }) {
   const sellerByUsername = Object.fromEntries(sellers.map((s) => [s.username, s]));
   const categoryByName = Object.fromEntries(categories.map((c) => [c.name, c]));
@@ -620,6 +637,10 @@ async function seedGigs({ sellers, categories }) {
       categoriesId: category._id,
       userId: seller._id,
       package: g.packages,
+      subCategoryId: g.subcategory && categoryByName[g.subcategory] ? categoryByName[g.subcategory]._id : null,
+      extras: g.extras || EXTRAS.slice(0, 1 + (i % 3)),
+      faq: g.faq || FAQ,
+      requirementQuestions: g.requirementQuestions || REQUIREMENT_QUESTIONS,
     };
   });
 

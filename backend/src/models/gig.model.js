@@ -37,6 +37,27 @@ const gigSchema = mongoose.Schema(
     package: {
       type: Array,
     },
+    // Optional sub-category (a Categories doc whose parentId is categoriesId).
+    subCategoryId: {
+      type: mongoose.SchemaTypes.ObjectId,
+      ref: "Categories",
+      default: null,
+      index: true,
+    },
+    // Paid add-ons the buyer can tick at checkout.
+    extras: [
+      {
+        title: { type: String, required: true },
+        description: { type: String, default: "" },
+        price: { type: Number, required: true, min: 0 },
+        deliveryDays: { type: Number, default: 0, min: 0 },
+      },
+    ],
+    faq: [{ question: String, answer: String, _id: false }],
+    // Questions the buyer answers after ordering (delivery clock starts then).
+    requirementQuestions: [{ question: String, required: { type: Boolean, default: false }, _id: false }],
+    // YouTube / Vimeo / direct video URL shown first in the gallery.
+    video: { type: String, default: "" },
     // Lifecycle status — Fiverr-style. Existing gigs default to
     // "active" so the new field is back-compat. Newly created gigs
     // could later default to "pending" once admin moderation is on.

@@ -24,6 +24,7 @@ import {
 } from "react-icons/io5";
 import { useGetAllCategoryQuery } from "@/app/redux/features/getAllCategoryApi";
 import { useAddGigMutation } from "@/app/redux/features/addGigApi";
+import GigExtrasEditor, { cleanGigExtras } from "@/components/common/GigExtrasEditor";
 
 const JoditEditor = dynamic(() => import("jodit-react"), { ssr: false });
 
@@ -60,6 +61,7 @@ export default function AddGig() {
   const [basicPrice, setBasicPrice] = useState("");
   const [description, setDescription] = useState("");
   const [packages, setPackages] = useState(DEFAULT_PACKAGES);
+  const [gigExtras, setGigExtras] = useState({ extras: [], faq: [], requirementQuestions: [], video: "" });
   const [images, setImages] = useState([]);
   const [errors, setErrors] = useState({});
 
@@ -125,6 +127,11 @@ export default function AddGig() {
           .filter((f) => f.feature),
       }));
       formData.append("package", JSON.stringify(cleanPackages));
+      const extra = cleanGigExtras(gigExtras);
+      formData.append("extras", JSON.stringify(extra.extras));
+      formData.append("faq", JSON.stringify(extra.faq));
+      formData.append("requirementQuestions", JSON.stringify(extra.requirementQuestions));
+      formData.append("video", extra.video);
 
       const res = await setData(formData).unwrap();
       if (res.code === 201) {
@@ -230,13 +237,18 @@ export default function AddGig() {
             />
           )}
           {step === 3 && (
-            <Description
-              editor={editor}
-              description={description}
-              setDescription={setDescription}
-              descPlain={descPlain}
-              errors={errors}
-            />
+            <>
+              <Description
+                editor={editor}
+                description={description}
+                setDescription={setDescription}
+                descPlain={descPlain}
+                errors={errors}
+              />
+              <div className="mt-8 pt-6 border-t border-gray-100">
+                <GigExtrasEditor value={gigExtras} onChange={setGigExtras} />
+              </div>
+            </>
           )}
           {step === 4 && (
             <Gallery
