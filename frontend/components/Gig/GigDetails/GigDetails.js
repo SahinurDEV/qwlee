@@ -18,6 +18,7 @@ import Avatar from "@/components/common/Avatar";
 
 import GigGallery from "./GigGallery";
 import GigPackagePicker from "./GigPackagePicker";
+import AwayBanner from "@/components/common/AwayBanner";
 import { GigFaq, GigVideo } from "./GigFaqVideo";
 import AboutCard from "./AboutCard";
 import GigReviews from "./GigReviews";
@@ -131,6 +132,7 @@ export default function GigDetails({ slug }) {
             </div>
           </header>
 
+          <AwayBanner user={seller} />
           <GigVideo url={result.video} title={result.title} />
           <GigGallery images={result.images} title={result.title} />
 
@@ -144,6 +146,16 @@ export default function GigDetails({ slug }) {
               dangerouslySetInnerHTML={{ __html: result.description || "" }}
             />
           </section>
+
+          {(result.tags || []).length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {result.tags.map((t) => (
+                <Link key={t} href={`/gig?title=${encodeURIComponent(t)}`} className="text-xs px-3 py-1 rounded-full bg-gray-100 text-gray-700 hover:bg-emerald-50 hover:text-emerald-700">
+                  {t}
+                </Link>
+              ))}
+            </div>
+          )}
 
           <GigFaq faq={result.faq} />
 

@@ -9,6 +9,7 @@
 // incoming user.skills array into {id, text} with non-empty text, since
 // the underlying lib will crash on undefined text values.
 
+import AvailabilityCard from "../AvailabilityCard";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
@@ -364,6 +365,7 @@ export default function FreelancerEditProfile() {
           </button>
         </div>
       </Form>
+      <AvailabilityCard user={loginUser} />
     </main>
   );
 }

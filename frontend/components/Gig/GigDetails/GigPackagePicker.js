@@ -20,6 +20,7 @@ import { setFeature } from "@/app/redux/slices/featureSlice";
 import { useCreateBuyerOrderMutation } from "@/app/redux/features/order/buyerOrderApi";
 import normaliseFeatures from "@/utils/normaliseFeatures";
 import ContactSellerModal from "./ContactSellerModal";
+import { isAway } from "@/components/common/AwayBanner";
 
 export default function GigPackagePicker({ gig }) {
   const dispatch = useDispatch();
@@ -176,11 +177,13 @@ export default function GigPackagePicker({ gig }) {
         <button
           type="button"
           onClick={handleContinue}
-          disabled={ordering || isFreelancer}
+          disabled={ordering || isFreelancer || isAway(gig?.userId)}
           className="mt-5 w-full px-4 py-3 rounded-xl bg-emerald-600 text-white font-semibold text-sm hover:bg-emerald-700 transition disabled:opacity-50"
         >
           {ordering
             ? "Starting checkout…"
+            : isAway(gig?.userId)
+            ? "Seller is away"
             : isFreelancer
             ? "Buyers only"
             : `Continue ($${price.toLocaleString()})`}

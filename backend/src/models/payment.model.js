@@ -95,6 +95,17 @@ const ordersSchema = mongoose.Schema(
     revisions: [{ reason: String, requestedAt: Date, _id: false }],
     completedAt: { type: Date, default: null },
     completionReason: { type: String, default: "" },
+    // Tips the buyer added after completion (credited to the seller net of fee).
+    tips: [
+      {
+        amount: Number,
+        fee: Number,
+        net: Number,
+        provider: String,
+        sessionId: String,
+        at: { type: Date, default: Date.now },
+      },
+    ],
     // Settlement snapshot written when the seller is credited, so later
     // refunds reverse exactly what was paid even if the fee changes.
     platformFeePercent: { type: Number, default: null },

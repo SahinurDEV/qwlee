@@ -56,6 +56,13 @@ async function seedRequests({ buyers, sellers, categories, subcategories = [] })
   });
   const created = await RequestOffer.insertMany(offers);
   await Promise.all(requests.map((r) => BuyerRequest.updateOne({ _id: r._id }, { $set: { offersCount: 2 } })));
+  // One seller on vacation so the "away" state is visible in the demo.
+  const { User } = require("../src/models");
+  const away = sellers[sellers.length - 1];
+  await User.updateOne(
+    { _id: away._id },
+    { $set: { availability: { away: true, from: null, until: new Date(now + 7 * 86400000), message: "On a short break, back next week!", allowMessages: true } } }
+  );
   return { requests, requestOffers: created };
 }
 

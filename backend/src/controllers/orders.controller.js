@@ -92,6 +92,38 @@ const orderCreate = catchAsync(async (req, res) => {
   );
 });
 
+const orderTip = catchAsync(async (req, res) => {
+  const { order, amount } = await orderLifecycle.quoteTip(req.params.orderId, req.user.id, Number(req.body?.amount));
+  const frontend = process.env.FRONTEND_URL || "http://localhost:8000";
+  if (process.env.STRIPE_SECRET_KEY) {
+    const stripeClient = require("stripe")(process.env.STRIPE_SECRET_KEY);
+    const session = await stripeClient.checkout.sessions.create({
+      payment_method_types: ["card"],
+      mode: "payment",
+      line_items: [{ price_data: { currency: "usd", product_data: { name: `Tip for order ${order._id}` }, unit_amount: Math.round(amount * 100) }, quantity: 1 }],
+      metadata: { kind: "tip", orderId: String(order._id), buyerId: String(req.user.id), amount: String(amount) },
+      success_url: `${frontend}/order/${order._id}?tipped=1`,
+      cancel_url: `${frontend}/order/${order._id}`,
+    });
+    return res.status(200).send({ url: session.url, provider: "stripe" });
+  }
+  if (process.env.DEMO_PAYMENTS === "true") {
+    const crypto = require("crypto");
+    await orderLifecycle.recordTip(order._id, amount, { provider: "demo", sessionId: `demo_tip_${crypto.randomUUID()}` });
+    Promise.resolve()
+      .then(() => notificationService.addCustomNotification("freelancer-notification", order.freelancerId, {
+        receiverId: order.freelancerId,
+        message: `You received a $${amount} tip.`,
+        role: "freelancer",
+        type: "payment",
+        viewStatus: false,
+      }))
+      .catch(() => null);
+    return res.status(200).send({ url: `${frontend}/order/${order._id}?tipped=1`, provider: "demo" });
+  }
+  throw new ApiError(httpStatus.SERVICE_UNAVAILABLE, "Payments are not configured");
+});
+
 // Notifications + confirmation emails for a newly paid order. Never throws.
 const notifyNewOrder = async (order) => {
   try {
@@ -141,6 +173,12 @@ const orderPlaced = async (req, res) => {
       case "checkout.session.completed": {
         const session = await stripe.checkout.sessions.retrieve(data.id);
         const md = session.metadata || {};
+        if (md.kind === "tip") {
+          const { amount } = await orderLifecycle.quoteTip(md.orderId, md.buyerId, Number(md.amount));
+          if (Math.round(amount * 100) !== Number(session.amount_total)) throw new Error(`Tip amount mismatch for ${session.id}`);
+          await orderLifecycle.recordTip(md.orderId, amount, { provider: "stripe", sessionId: session.id });
+          break;
+        }
         // Re-price on the server and make sure Stripe charged that amount.
         const quote = await orderLifecycle.quoteCheckout({
           buyerId: md.buyerId || md.clientId,
@@ -365,6 +403,7 @@ const acceptDelivery = catchAsync(async (req, res) => {
 });
 
 module.exports = {
+  orderTip,
   orderQuote,
   submitRequirements,
   requestRevision,

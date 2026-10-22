@@ -125,6 +125,15 @@ const userSchema = mongoose.Schema(
       required: false,
       default: "",
     },
+    // Vacation mode: gigs leave search and new orders are blocked
+    // between `from` and `until` (open-ended when `until` is null).
+    availability: {
+      away: { type: Boolean, default: false },
+      from: { type: Date, default: null },
+      until: { type: Date, default: null },
+      message: { type: String, default: "", maxlength: 300 },
+      allowMessages: { type: Boolean, default: true },
+    },
     responseTime: {
       type: String,
       required: false,

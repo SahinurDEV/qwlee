@@ -39,6 +39,7 @@ router.post("/quote", auth("withOutAdmin"), ordersController.orderQuote);
 router.post("/:orderId/requirements", auth("withOutAdmin"), ordersController.submitRequirements);
 router.post("/:orderId/revision", auth("withOutAdmin"), ordersController.requestRevision);
 router.post("/:orderId/accept", auth("withOutAdmin"), ordersController.acceptDelivery);
+router.post("/:orderId/tip", auth("withOutAdmin"), ordersController.orderTip);
 
 router
   .route("/:orderId")
