@@ -112,9 +112,9 @@ test("order updates reject mass assignment and seller self-acceptance", async ()
 
 test("seed images are served by the API", async () => {
   const gig = (await call("GET", "/gig?limit=1")).data.results[0];
-  const path = new URL(gig.images[0], API).pathname;
-  assert.match(path, /^\/seed\/gig\/.+\.jpg$/);
-  const res = await fetch(`${API}${path}`);
+  const url = new URL(gig.images[0], API + "/");
+  assert.match(url.pathname, /\/seed\/gig\/.+\.jpg$/);
+  const res = await fetch(url);
   assert.equal(res.status, 200);
   assert.match(res.headers.get("content-type") || "", /image\/jpeg/);
 });
