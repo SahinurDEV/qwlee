@@ -182,7 +182,8 @@ const userSchema = mongoose.Schema(
     isBan: { type: Boolean, default: false },
     // Admin sub-role (only meaningful when role === "admin"). Missing
     // means "super" so existing admins keep full access.
-    adminRole: { type: String, enum: ["super", "moderator", "support", "finance"], default: undefined },
+    // Built-in sub-role or a custom role key (adminRoles.service).
+    adminRole: { type: String, default: undefined },
     tokensValidAfter: { type: Date, default: null, private: true },
     // Admin two-factor (TOTP). Secrets never leave the server.
     twoFactorEnabled: { type: Boolean, default: false },

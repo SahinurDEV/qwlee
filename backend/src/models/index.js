@@ -39,4 +39,5 @@ module.exports.HelpArticle = require('./helpArticle.model');
 module.exports.Promotion = require('./promotion.model');
 module.exports.Subscription = require('./subscription.model');
 module.exports.RiskFlag = require('./riskFlag.model');
+module.exports.AdminRole = require('./adminRole.model');
 module.exports.Appeal = require('./appeal.model');

@@ -1,12 +1,15 @@
 // /dashboard/team — admin accounts, their sub-roles and what each role
 // may do. Role changes are made from Users → Manage (super only).
+import { useState } from "react";
 import { Link } from "react-router-dom";
+import toast from "react-hot-toast";
+import Button from "../../common/Button";
 import PageHeader from "../../common/PageHeader";
 import Card from "../../common/Card";
 import StatusPill from "../../common/StatusPill";
-import { useAdminQuery } from "../../utils/adminApi";
+import { adminFetch, useAdminQuery } from "../../utils/adminApi";
 import { timeAgo } from "../../utils/format";
-import { ErrorNote, Td, Th, act } from "./ui";
+import { ErrorNote, Field, input, Td, Th, act } from "./ui";
 
 const PERMS = [
   ["read", "View dashboards and lists"],
@@ -68,6 +71,7 @@ export default function Team() {
             ) : <p className="p-4 text-sm text-ink-500">No sign-ins recorded yet.</p>}
             <p className="px-4 pb-4 text-xs text-ink-500">Something unfamiliar? Use Users → Manage → “Sign out everywhere” on that admin and reset their password.</p>
           </Card>
+          <CustomRoles onChange={reload} />
           <Card title="Role permissions" bodyClassName="p-0">
             <div className="overflow-x-auto">
               <table className="w-full" data-testid="perm-matrix">
@@ -86,5 +90,67 @@ export default function Team() {
         </div>
       ) : null}
     </div>
+  );
+}
+
+// Custom roles: any mix of the permissions above (never full access).
+function CustomRoles({ onChange }) {
+  const { data, reload } = useAdminQuery("/admin/roles");
+  const [form, setForm] = useState(null); // {id?, name, description, permissions:Set}
+  const [saving, setSaving] = useState(false);
+  const refresh = () => { reload(); onChange?.(); };
+  const save = async () => {
+    setSaving(true);
+    try {
+      const body = { name: form.name, description: form.description, permissions: [...form.permissions] };
+      if (form.id) await adminFetch(`/admin/roles/${form.id}`, { method: "PATCH", body });
+      else await adminFetch("/admin/roles", { method: "POST", body });
+      toast.success(form.id ? "Role saved; its admins sign in again" : "Role created");
+      setForm(null);
+      refresh();
+    } catch (e) {
+      toast.error(e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+  return (
+    <Card title="Custom roles" subtitle="Give an admin only the access they need. Assign roles from Users → Manage." actions={!form ? <Button size="sm" onClick={() => setForm({ name: "", description: "", permissions: new Set(["read"]) })}>New role</Button> : null}>
+      {form ? (
+        <div className="space-y-3 mb-4 border border-ink-100 rounded-xl p-4" data-testid="role-form">
+          <div className="grid sm:grid-cols-2 gap-3">
+            <Field label="Name"><input aria-label="Role name" className={input} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></Field>
+            <Field label="Description"><input aria-label="Role description" className={input} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></Field>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-1">
+            {PERMS.map(([p, label]) => (
+              <label key={p} className="flex items-center gap-2 text-sm">
+                <input type="checkbox" aria-label={`Permission ${p}`} disabled={p === "read"} checked={form.permissions.has(p)} onChange={() => { const n = new Set(form.permissions); n.has(p) ? n.delete(p) : n.add(p); setForm({ ...form, permissions: n }); }} />
+                {label} <code className="text-[11px] text-ink-500">{p}</code>
+              </label>
+            ))}
+          </div>
+          <div className="flex gap-2"><Button loading={saving} onClick={save}>{form.id ? "Save role" : "Create role"}</Button><Button variant="secondary" onClick={() => setForm(null)}>Cancel</Button></div>
+        </div>
+      ) : null}
+      {data?.custom?.length ? (
+        <table className="w-full">
+          <thead className="border-b border-ink-100"><tr><Th>Role</Th><Th>Permissions</Th><Th>Admins</Th><Th /></tr></thead>
+          <tbody className="divide-y divide-ink-100">
+            {data.custom.map((r) => (
+              <tr key={r.id}>
+                <Td><div className="font-medium">{r.name}</div><code className="text-[11px] text-ink-500">{r.key}</code>{r.description ? <div className="text-xs text-ink-500">{r.description}</div> : null}</Td>
+                <Td className="text-xs">{r.permissions.join(", ")}</Td>
+                <Td>{r.admins}</Td>
+                <Td className="text-right whitespace-nowrap">
+                  <button className="text-xs text-primary-700 mr-3" onClick={() => setForm({ id: r.id, name: r.name, description: r.description || "", permissions: new Set(r.permissions) })}>Edit</button>
+                  <button className="text-xs text-rose-700" onClick={() => act({ title: `Delete the ${r.name} role?`, danger: true, method: "DELETE", path: `/admin/roles/${r.id}`, done: refresh, success: "Role deleted" })}>Delete</button>
+                </Td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : !form ? <p className="text-sm text-ink-500">No custom roles yet. The built-in roles are super, moderator, support and finance.</p> : null}
+    </Card>
   );
 }

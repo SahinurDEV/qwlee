@@ -213,6 +213,13 @@ router.post("/2fa/enable", A, ac.twoFaEnable);
 router.post("/2fa/disable", A, ac.twoFaDisable);
 router.post("/team/:id/reset-2fa", A, ac.twoFaReset);
 router.get("/newsletter", A, ac.listSubscribers);
+// Custom admin roles (settings permission).
+const rolesSvc = require("../../services/adminRoles.service");
+const roleId = (req, res) => require("mongoose").isValidObjectId(req.params.id) || (res.status(400).json({ code: 400, message: "Invalid id" }), false);
+router.get("/roles", A, catchAsync2(async (req, res) => helpOk(res, await rolesSvc.list())));
+router.post("/roles", A, catchAsync2(async (req, res) => helpOk(res, await rolesSvc.create(req.body || {}), "Role created")));
+router.patch("/roles/:id", A, catchAsync2(async (req, res) => roleId(req, res) && helpOk(res, await rolesSvc.update(req.params.id, req.body || {}), "Role saved")));
+router.delete("/roles/:id", A, catchAsync2(async (req, res) => roleId(req, res) && helpOk(res, await rolesSvc.remove(req.params.id), "Role deleted")));
 // Ban appeals and bulk actions.
 const modSvc = require("../../services/moderation.service");
 router.get("/appeals", A, catchAsync2(async (req, res) => helpOk(res, await modSvc.listAppeals(req.query))));
