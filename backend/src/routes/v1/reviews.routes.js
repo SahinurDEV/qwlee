@@ -6,7 +6,12 @@ const reviewController = require("../../controllers/reviews.controller");
 router
   .route("/")
   .post(auth("common"), reviewController.createReview)
-  .get(auth("common"), reviewController.getReviews);
+  .get(reviewController.getReviews); // public, like gig pages
+
+router.get("/summary", require("../../utils/catchAsync")(async (req, res) => {
+  const data = await require("../../services/reviews.service").getSummary(req.query);
+  res.json({ code: 200, message: "Review summary", data: { attributes: data } });
+}));
 
 // Buyer asks "did I already review this order?" — used by the order
 // detail page to switch between Leave / Edit / show-your-review.

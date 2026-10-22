@@ -51,6 +51,12 @@ const reviewSchema = mongoose.Schema(
       min: 1,
       max: 5,
     },
+    // Optional Fiverr-style breakdown (1-5 each).
+    subRatings: {
+      communication: { type: Number, min: 1, max: 5, default: undefined },
+      service: { type: Number, min: 1, max: 5, default: undefined },
+      recommend: { type: Number, min: 1, max: 5, default: undefined },
+    },
     sellerReply: { type: sellerReplySchema, default: () => ({}) },
   },
   {

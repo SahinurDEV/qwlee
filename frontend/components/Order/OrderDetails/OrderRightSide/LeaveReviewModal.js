@@ -19,6 +19,7 @@ export default function LeaveReviewModal({ open, onClose, order, onSuccess }) {
   const [rating, setRating] = useState(0);
   const [hover, setHover] = useState(0);
   const [text, setText] = useState("");
+  const [subs, setSubs] = useState({ communication: 0, service: 0, recommend: 0 });
   const [createReview, { isLoading }] = useCreateReviewMutation();
 
   // Reset when the modal opens for a fresh review.
@@ -44,6 +45,7 @@ export default function LeaveReviewModal({ open, onClose, order, onSuccess }) {
       orderId: order?.id || order?._id,
       rating,
       review: text.trim(),
+      subRatings: Object.fromEntries(Object.entries(subs).filter(([, v]) => v > 0)),
     });
     if (res?.error) {
       toast.error(res.error?.data?.message || "Couldn't submit your review");
@@ -145,6 +147,23 @@ export default function LeaveReviewModal({ open, onClose, order, onSuccess }) {
                   : "Tap a star"}
               </span>
             </div>
+          </div>
+
+          {/* Optional breakdown */}
+          <div className="space-y-2">
+            {[["communication", "Seller communication"], ["service", "Service as described"], ["recommend", "Would recommend"]].map(([k, label]) => (
+              <div key={k} className="flex items-center justify-between gap-3">
+                <span className="text-sm text-gray-700">{label}</span>
+                <div className="flex" role="radiogroup" aria-label={label}>
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <button key={n} type="button" role="radio" aria-checked={subs[k] === n} aria-label={`${label}: ${n} star${n > 1 ? "s" : ""}`}
+                      onClick={() => setSubs((x) => ({ ...x, [k]: n }))} className="p-0.5">
+                      <IoStar className={`w-5 h-5 ${subs[k] >= n ? "text-amber-500" : "text-gray-200"}`} />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
 
           {/* Review text */}
