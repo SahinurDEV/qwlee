@@ -69,6 +69,10 @@ const buyerOrderApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["Orders", "OrderMessages"],
     }),
+    tipOrder: builder.mutation({
+      query: ({ orderId, amount }) => ({ url: `/orders/${orderId}/tip`, method: "POST", body: { amount } }),
+      invalidatesTags: ["Orders"],
+    }),
     respondOrderExtension: builder.mutation({
       query: ({ orderId, action }) => ({
         url: `/orders/${orderId}/extension`,
@@ -82,6 +86,7 @@ const buyerOrderApi = baseApi.injectEndpoints({
 
 export const {
   useCreateBuyerOrderMutation,
+  useTipOrderMutation,
   useGetBuyerAllOrderQuery,
   useGetBuyerOrderDetailsQuery,
   useUpdateBuyerOrderStatusMutation,

@@ -59,6 +59,7 @@ export default function AddGig() {
   const [title, setTitle] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [subCategoryId, setSubCategoryId] = useState("");
+  const [tagsText, setTagsText] = useState("");
   const [basicPrice, setBasicPrice] = useState("");
   const [description, setDescription] = useState("");
   const [packages, setPackages] = useState(DEFAULT_PACKAGES);
@@ -117,6 +118,8 @@ export default function AddGig() {
       formData.append("description", description);
       formData.append("categoriesId", categoryId);
       if (subCategoryId) formData.append("subCategoryId", subCategoryId);
+      const tags = tagsText.split(",").map((t) => t.trim()).filter(Boolean).slice(0, 5);
+      if (tags.length) formData.append("tags", JSON.stringify(tags));
       formData.append("price", basicPrice);
       images.forEach((img) => formData.append("images", img));
       // Sanitise packages: drop empty feature rows + numeric coercion.
@@ -224,6 +227,8 @@ export default function AddGig() {
               setCategoryId={(v) => { setCategoryId(v); setSubCategoryId(""); }}
               subCategoryId={subCategoryId}
               setSubCategoryId={setSubCategoryId}
+              tagsText={tagsText}
+              setTagsText={setTagsText}
               categories={categories}
               errors={errors}
             />
@@ -358,7 +363,7 @@ function Stepper({ step }) {
 
 /* ---------- Step 1: Overview ---------- */
 
-function Overview({ title, setTitle, titleCount, categoryId, setCategoryId, subCategoryId, setSubCategoryId, categories, errors }) {
+function Overview({ title, setTitle, titleCount, categoryId, setCategoryId, subCategoryId, setSubCategoryId, tagsText, setTagsText, categories, errors }) {
   const { data: subData } = useGetAllCategoryQuery({ parentId: categoryId, limit: 100 }, { skip: !categoryId });
   const subCategories = categoryId ? subData?.results || [] : [];
   return (
@@ -422,6 +427,18 @@ function Overview({ title, setTitle, titleCount, categoryId, setCategoryId, subC
           </select>
         </div>
       )}
+
+      <div>
+        <Label htmlFor="tags">Search tags</Label>
+        <div className="text-xs text-gray-500 mb-2">Up to 5 comma-separated keywords buyers would search for.</div>
+        <input
+          id="tags"
+          value={tagsText}
+          onChange={(e) => setTagsText(e.target.value)}
+          placeholder="nextjs, landing page, react"
+          className="w-full px-3 py-3 rounded-lg border border-gray-200 focus:border-emerald-500 outline-none text-base"
+        />
+      </div>
     </div>
   );
 }

@@ -38,6 +38,8 @@ const gigSchema = mongoose.Schema(
       type: Array,
     },
     // Optional sub-category (a Categories doc whose parentId is categoriesId).
+    // Search tags (Fiverr allows 5), lower-case.
+    tags: { type: [String], default: [], index: true },
     subCategoryId: {
       type: mongoose.SchemaTypes.ObjectId,
       ref: "Categories",

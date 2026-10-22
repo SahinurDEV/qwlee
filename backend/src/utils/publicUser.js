@@ -14,6 +14,7 @@ const PUBLIC_USER_FIELDS = [
   "online",
   "lastSeen",
   "perHourRate",
+  "availability",
   "responseTime",
   "language",
   "review",
