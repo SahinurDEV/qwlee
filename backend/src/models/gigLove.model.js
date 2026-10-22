@@ -13,11 +13,15 @@ const gigLoveSchema = mongoose.Schema(
       ref: "User",
       required: true,
     },
+    // Named collection (Fiverr "lists"). "" = the default "Saved" list.
+    collectionName: { type: String, default: "", trim: true, maxlength: 40 },
   },
   {
     timestamps: true,
   }
 );
+gigLoveSchema.index({ userId: 1, gigId: 1 });
+gigLoveSchema.index({ userId: 1, collectionName: 1 });
 
 // add plugin that converts mongoose to json
 gigLoveSchema.plugin(toJSON);

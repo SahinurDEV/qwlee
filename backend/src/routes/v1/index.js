@@ -49,6 +49,10 @@ const defaultRoutes = [
     route: require("./twoFactor.routes"),
   },
   {
+    path: "/collections",
+    route: require("./collections.routes"),
+  },
+  {
     path: "/sessions",
     route: require("./sessions.routes"),
   },
