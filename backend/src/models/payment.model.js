@@ -57,6 +57,16 @@ const ordersSchema = mongoose.Schema(
     // status reset to active) or declines (request marked declined,
     // original date stays). `status === "none"` means no current
     // request — keeps the field self-describing for the UI.
+    // Mutual cancellation request (see cancellation.service).
+    cancellationRequest: {
+      status: { type: String, enum: ["none", "pending", "accepted", "auto-accepted", "declined", "withdrawn"], default: "none" },
+      by: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+      byRole: { type: String, default: "" },
+      reason: { type: String, default: "" },
+      requestedAt: { type: Date, default: null },
+      respondBy: { type: Date, default: null },
+      respondedAt: { type: Date, default: null },
+    },
     extensionRequest: {
       newDeliveryDate: { type: Date, default: null },
       reason: { type: String, default: "" },

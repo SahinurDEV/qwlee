@@ -178,7 +178,7 @@ const sendStatusEmails = async (order, prevStatus, body = {}) => {
   }
 };
 
-const orderModify = async (paymentId, body, userId) => {
+const orderModify = async (paymentId, body, userId, opts = {}) => {
   const order = await Payment.findById(paymentId);
   if (!order) {
     throw new ApiError(httpStatus.NOT_FOUND, "Order not found");
@@ -203,6 +203,10 @@ const orderModify = async (paymentId, body, userId) => {
     }
   } else if (nextStatus !== "cancelled") {
     throw new ApiError(httpStatus.BAD_REQUEST, "Unsupported status change");
+  } else if (isBuyer && prevStatus !== "late" && !opts.mutual) {
+    // Fiverr rules: the seller may cancel, the buyer may cancel a late
+    // order; otherwise the buyer asks and the seller agrees.
+    throw new ApiError(httpStatus.CONFLICT, "Ask the seller to agree: send a cancellation request instead.");
   }
   if (!OPEN.includes(prevStatus)) {
     throw new ApiError(
