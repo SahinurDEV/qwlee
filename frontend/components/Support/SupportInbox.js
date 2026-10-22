@@ -161,6 +161,7 @@ export default function SupportInbox() {
                   maxLength={200}
                   required
                   placeholder="Short summary of the issue"
+                  aria-label="Subject"
                   className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-emerald-500"
                 />
               </div>
@@ -169,6 +170,7 @@ export default function SupportInbox() {
                   Category
                 </label>
                 <select
+                  aria-label="Category"
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
                   className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-emerald-500 bg-white"
@@ -190,6 +192,7 @@ export default function SupportInbox() {
                   maxLength={4000}
                   rows={6}
                   required
+                  aria-label="Describe the issue"
                   placeholder="Be as specific as possible: order ids, dates, anything you've tried…"
                   className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-emerald-500 resize-none"
                 />

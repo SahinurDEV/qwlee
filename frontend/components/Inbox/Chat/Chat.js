@@ -218,6 +218,7 @@ export default function Chat() {
             onChange={(e) => setQuery(e.target.value)}
             className="w-full bg-transparent outline-none px-2 text-gray-800"
             placeholder="Search by name…"
+            aria-label="Search conversations"
           />
         </div>
       </div>

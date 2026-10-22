@@ -145,5 +145,6 @@ router.get("/broadcast", A, ac.listBroadcasts);
 router.get("/analytics", A, ac.analytics);
 router.get("/audit", A, ac.auditLog);
 router.get("/team", A, ac.team);
+router.get("/newsletter", A, ac.listSubscribers);
 
 module.exports = router;
