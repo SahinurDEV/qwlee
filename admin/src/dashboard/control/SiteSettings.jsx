@@ -79,6 +79,7 @@ export default function SiteSettings() {
               </div>
             </div>
           </Card>
+          <HomepageBuilder home={s.homepage} onChange={(patch) => set("homepage", patch)} />
           <Card title="SEO" subtitle="Default title and description for search engines and link previews">
             <div className="space-y-3">
               <Field label={`Meta title (${s.seo.title.length}/70)`}><input className={input} maxLength={70} value={s.seo.title} onChange={(e) => set("seo", { title: e.target.value })} /></Field>
@@ -145,6 +146,72 @@ function StorageCard() {
         {r && r.orphans > 0 && !r.applied ? <Button variant="danger" loading={busy} onClick={() => go("POST")}>Delete {r.orphans} file(s)</Button> : null}
       </div>
       {r ? <p className="mt-3 text-sm text-ink-600">Scanned {r.scanned} file(s): {r.orphans} unused ({(r.orphanBytes / 1024).toFixed(0)} KB){r.applied ? `, ${r.deleted} deleted` : ""}. Images on ImgBB are not managed here.</p> : null}
+    </Card>
+  );
+}
+
+const SECTION_LABELS = {
+  stats: "Marketplace stats",
+  recentlyViewed: "Recently viewed (returning visitors only)",
+  recommended: "Recommended gigs",
+  categories: "Popular categories",
+  freelancers: "Popular freelancers",
+  whyUs: "Why choose us",
+  testimonials: "Testimonials",
+  join: "Join / become a seller",
+  blog: "Latest news and blog",
+};
+const BLOCK_IDS = ["block-1", "block-2", "block-3", "block-4", "block-5"];
+
+// Homepage builder: order and show/hide the sections under the hero, and
+// write up to 5 custom text blocks that can be placed among them.
+function HomepageBuilder({ home, onChange }) {
+  const sections = home.sections || [];
+  const blocks = home.blocks || [];
+  const label = (key) => SECTION_LABELS[key] || `Custom: ${blocks.find((b) => b.id === key)?.title || key}`;
+  const move = (i, d) => {
+    const n = [...sections];
+    const j = i + d;
+    if (j < 0 || j >= n.length) return;
+    [n[i], n[j]] = [n[j], n[i]];
+    onChange({ sections: n });
+  };
+  const toggle = (i) => onChange({ sections: sections.map((x, k) => (k === i ? { ...x, enabled: !x.enabled } : x)) });
+  const remove = (id) => onChange({ blocks: blocks.filter((b) => b.id !== id), sections: sections.filter((x) => x.key !== id) });
+  const editBlock = (id, patch) => onChange({ blocks: blocks.map((b) => (b.id === id ? { ...b, ...patch } : b)) });
+  const addBlock = () => {
+    const id = BLOCK_IDS.find((x) => !blocks.some((b) => b.id === x));
+    if (!id) return toast.error("At most 5 custom blocks");
+    onChange({ blocks: [...blocks, { id, title: "New block", text: "", ctaLabel: "", ctaLink: "", tone: "light" }], sections: [{ key: id, enabled: true }, ...sections] });
+  };
+  return (
+    <Card title="Homepage layout" subtitle="The hero is always first. Reorder with the arrows, hide sections, and add your own blocks. Save to publish (live within a minute).">
+      <ol className="divide-y divide-ink-100 border border-ink-100 rounded-xl" data-testid="home-sections">
+        {sections.map((x, i) => (
+          <li key={x.key} className="flex items-center gap-2 px-3 py-2 text-sm">
+            <span className="w-5 text-ink-400 text-xs">{i + 1}</span>
+            <span className={`flex-1 ${x.enabled ? "" : "text-ink-400 line-through"}`}>{label(x.key)}</span>
+            <button type="button" aria-label={`Move ${x.key} up`} className="px-1.5 text-ink-500 disabled:opacity-30" disabled={i === 0} onClick={() => move(i, -1)}>↑</button>
+            <button type="button" aria-label={`Move ${x.key} down`} className="px-1.5 text-ink-500 disabled:opacity-30" disabled={i === sections.length - 1} onClick={() => move(i, 1)}>↓</button>
+            <label className="flex items-center gap-1 text-xs"><input type="checkbox" aria-label={`Show ${x.key}`} checked={x.enabled} onChange={() => toggle(i)} /> Show</label>
+          </li>
+        ))}
+      </ol>
+      <div className="mt-4 space-y-3">
+        {blocks.map((b) => (
+          <div key={b.id} className="rounded-xl border border-ink-200 p-3 space-y-2" data-testid={`block-${b.id}`}>
+            <div className="flex items-center justify-between"><code className="text-xs text-ink-500">{b.id}</code><button type="button" className="text-xs text-rose-700" onClick={() => remove(b.id)}>Remove</button></div>
+            <Field label="Title"><input aria-label={`${b.id} title`} className={input} maxLength={120} value={b.title} onChange={(e) => editBlock(b.id, { title: e.target.value })} /></Field>
+            <Field label="Text"><textarea aria-label={`${b.id} text`} rows={3} maxLength={600} className="w-full rounded-lg border border-ink-200 p-2 text-sm" value={b.text} onChange={(e) => editBlock(b.id, { text: e.target.value })} /></Field>
+            <div className="grid grid-cols-3 gap-2">
+              <Field label="Button label"><input aria-label={`${b.id} button label`} className={input} maxLength={40} value={b.ctaLabel} onChange={(e) => editBlock(b.id, { ctaLabel: e.target.value })} /></Field>
+              <Field label="Button link"><input aria-label={`${b.id} button link`} className={input} placeholder="/gig" value={b.ctaLink} onChange={(e) => editBlock(b.id, { ctaLink: e.target.value })} /></Field>
+              <Field label="Style"><select aria-label={`${b.id} style`} className={select} value={b.tone} onChange={(e) => editBlock(b.id, { tone: e.target.value })}><option value="light">Light</option><option value="brand">Brand</option><option value="dark">Dark</option></select></Field>
+            </div>
+          </div>
+        ))}
+        <Button size="sm" variant="secondary" onClick={addBlock}>Add custom block</Button>
+      </div>
     </Card>
   );
 }
