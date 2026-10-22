@@ -112,6 +112,7 @@ function GigContent() {
 
   const gigs = data?.data?.attributes?.results || [];
   const total = data?.data?.attributes?.totalResults || 0;
+  const promoted = data?.data?.attributes?.promoted || [];
 
   useEffect(() => {
     if (isError && error?.message) toast.error(error.message);
@@ -194,6 +195,12 @@ function GigContent() {
           />
         ) : (
           <>
+            {promoted.length > 0 && (
+              <div className="mb-6">
+                <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Sponsored</div>
+                <AllCard data={promoted} sponsored />
+              </div>
+            )}
             <AllCard data={gigs} />
             {total > LIMIT && (
               <Pagination

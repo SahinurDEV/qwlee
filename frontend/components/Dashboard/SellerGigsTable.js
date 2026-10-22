@@ -17,6 +17,7 @@ import {
   IoStatsChartOutline,
   IoAlertCircleOutline,
   IoCreateOutline,
+  IoMegaphoneOutline,
 } from "react-icons/io5";
 
 import { useGetMyGigsStatsQuery } from "@/app/redux/features/sellerLevelApi";
@@ -192,6 +193,16 @@ export default function SellerGigsTable() {
                         >
                           <IoEyeOutline className="w-3.5 h-3.5" />
                           View
+                        </Link>
+                      )}
+                      {g.status === "active" && (
+                        <Link
+                          href={`/promotions?gig=${g._id}`}
+                          className="text-amber-700 hover:text-amber-800 inline-flex items-center gap-1"
+                          title="Promote this gig"
+                        >
+                          <IoMegaphoneOutline className="w-3.5 h-3.5" />
+                          Promote
                         </Link>
                       )}
                       <Link
