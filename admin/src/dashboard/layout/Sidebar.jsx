@@ -101,6 +101,7 @@ const NAV = [
       { to: "/dashboard/team", label: "Admin team", icon: TbShieldLock, perm: "settings" },
       { to: "/dashboard/security", label: "My security", icon: TbLock },
       { to: "/dashboard/audit", label: "Audit log", icon: TbLogs, perm: "settings" },
+      { to: "/dashboard/jobs", label: "Background jobs", icon: TbLogs, perm: "settings" },
     ],
   },
 ];
