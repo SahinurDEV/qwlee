@@ -21,6 +21,15 @@ router
   // Admin-only: approving/declining payouts. (Was "common", which let
   // any signed-in user approve or repeatedly decline-and-refund.)
   .patch(auth("admin"), withdrawalController.withdrawalCancel)
-  .post(auth("admin"), withdrawalController.withdrawalApprove);
+  .post(
+    auth("admin"),
+    require("../../middlewares/secondApproval")("withdrawal", async (req) => {
+      const { Withdrawal } = require("../../models");
+      if (!require("mongoose").isValidObjectId(req.params.withdrawalId)) return null;
+      const w = await Withdrawal.findById(req.params.withdrawalId).select("withdrawalAmount status").lean();
+      return w && w.status === "Pending" && { id: w._id, amount: Number(w.withdrawalAmount || 0), summary: `Payout ${w._id}` };
+    }),
+    withdrawalController.withdrawalApprove
+  );
 
 module.exports = router;
