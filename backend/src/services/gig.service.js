@@ -42,7 +42,7 @@ const createGig = async (data) => {
   return gig;
 };
 
-const queryGigs = async (filter, options, { excludeUserId, viewer } = {}) => {
+const queryGigs = async (filter, options, { excludeUserId, viewer, ...extra } = {}) => {
   // Admin-featured gigs: ?featured=true filters; otherwise they sort first.
   const featuredOnly = filter.featured === "true" || filter.featured === true;
   delete filter.featured;
@@ -184,6 +184,7 @@ const queryGigs = async (filter, options, { excludeUserId, viewer } = {}) => {
   }
 
   if (featuredOnly) query.featured = true;
+  if (extra.promotedOnly) query.promotedUntil = { $gt: new Date() };
   const gigs = await Gig.paginate(query, options);
   return gigs;
 };

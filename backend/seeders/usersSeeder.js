@@ -70,6 +70,8 @@ const SELLERS = [
     skills: ["Next.js", "React", "Node.js", "PostgreSQL", "TypeScript", "AWS"],
     perHourRate: "85",
     responseTime: "1",
+    // Demo earnings so withdrawals and promotions can be tried out.
+    balance: 250,
     isEmailVerified: true,
     isProfileCompleted: true,
     online: true,

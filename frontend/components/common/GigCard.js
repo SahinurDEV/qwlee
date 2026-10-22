@@ -14,6 +14,7 @@ import ImageWithFallback from "@/components/common/ImageWithFallback";
 import Avatar from "@/components/common/Avatar";
 import VerifiedBadge from "@/components/common/VerifiedBadge";
 import useWishlist from "@/hooks/useWishlist";
+import { baseUrl } from "@/lib/constant";
 
 function normaliseSkills(skills) {
   if (!Array.isArray(skills)) return [];
@@ -22,7 +23,7 @@ function normaliseSkills(skills) {
     .filter(Boolean);
 }
 
-export default function GigCard({ item }) {
+export default function GigCard({ item, sponsored = false }) {
   if (!item) return null;
   const seller = item.userId || {};
   const skillList = normaliseSkills(seller.skills).slice(0, 3);
@@ -40,7 +41,13 @@ export default function GigCard({ item }) {
   }
 
   return (
-    <div className="group relative flex flex-col bg-white rounded-2xl border border-gray-200 hover:border-emerald-300 hover:shadow-md transition overflow-hidden h-full">
+    <div
+      className="group relative flex flex-col bg-white rounded-2xl border border-gray-200 hover:border-emerald-300 hover:shadow-md transition overflow-hidden h-full"
+      onClickCapture={sponsored ? () => {
+        // Count the sponsored click; never blocks navigation.
+        try { navigator.sendBeacon?.(`${baseUrl}/promotions/click/${gigId}`); } catch {}
+      } : undefined}
+    >
       <button
         type="button"
         onClick={handleHeart}
@@ -65,7 +72,11 @@ export default function GigCard({ item }) {
             className="object-cover group-hover:scale-105 transition-transform duration-300"
             alt={item?.title || "gig"}
           />
-          {item?.featured ? (
+          {sponsored ? (
+            <span className="absolute left-3 top-3 z-10 rounded-full bg-gray-900/80 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm">
+              Sponsored
+            </span>
+          ) : item?.featured ? (
             <span className="absolute left-3 top-3 z-10 rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-gray-900 shadow-sm">
               Featured
             </span>

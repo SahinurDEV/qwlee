@@ -36,3 +36,4 @@ module.exports.Coupon = require('./coupon.model');
 module.exports.QuickReply = require('./quickReply.model');
 module.exports.PushSubscription = require('./pushSubscription.model');
 module.exports.HelpArticle = require('./helpArticle.model');
+module.exports.Promotion = require('./promotion.model');
