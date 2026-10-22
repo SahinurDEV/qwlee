@@ -13,6 +13,8 @@ const ADMIN_ROLES = Object.keys(ROLE_PERMISSIONS);
 
 // [methods ("*" = any, "W" = any non-GET), path regex, permission, audit GETs?]
 const RULES = [
+  // Any admin manages their own two-factor.
+  ["*", /^\/admin\/2fa(\/|$)/, "read"],
   ["*", /^\/admin\/(settings|team|audit)(\/|$)/, "settings"],
   ["*", /^\/admin\/(chats|order-chats)(\/|$)/, "support", true],
   ["GET", /^\/admin\/users\/[^/]+\/view$/, "read", true],
@@ -28,6 +30,8 @@ const RULES = [
   ["W", /^\/(categories|blog|banner|info)(\/|$)/, "content"],
   ["W", /^\/(admin\/)?support(\/|$)/, "support"],
   ["W", /^\/admin\/broadcast(\/|$)/, "broadcast"],
+  // The approvals controller checks the permission of the parked action.
+  ["W", /^\/admin\/approvals\/[^/]+\/(approve|reject)$/, "read"],
   ["GET", /^\/admin\/(escrow|payments|earnings)(\/|$)/, "finance"],
   ["GET", /^\/withdrawal(\/|$)/, "finance"],
   ["GET", /^\/admin\/newsletter(\/|$)/, "broadcast"],

@@ -45,7 +45,14 @@ export default function SiteSettings() {
               <Field label="Auto-complete after (days)" hint="A delivery the buyer ignores is accepted automatically (1–30)."><input type="number" min={1} max={30} className={input} value={s.marketplace.autoCompleteDays} onChange={(e) => set("marketplace", { autoCompleteDays: e.target.value })} /></Field>
             </div>
             <Toggle label="Demo payments" hint="Checkout completes without charging a card. Turn off in production." checked={s.marketplace.demoPayments} onChange={(v) => set("marketplace", { demoPayments: v })} />
+            <Field label="Second approval over ($)" hint="Refunds and payouts of this amount or more need a second admin. 0 = off."><input type="number" min={0} className={input} value={s.marketplace.secondApprovalOver ?? 0} onChange={(e) => set("marketplace", { secondApprovalOver: e.target.value })} /></Field>
             <Toggle label="Require gig approval" hint="New gigs start as 'pending' until a moderator approves them." checked={s.marketplace.requireGigApproval} onChange={(v) => set("marketplace", { requireGigApproval: v })} />
+          </Card>
+          <Card title="Admin security" subtitle="Applies to every admin account">
+            <Toggle label="Require two-factor for admins" hint="Admins without it can only open My security until they turn it on. Turn it on for yourself first." checked={!!s.security?.requireAdmin2fa} onChange={(v) => set("security", { requireAdmin2fa: v })} />
+            <Field label="Admin IP allowlist" hint="One IP or IPv4 range (CIDR) per line, e.g. 203.0.113.7 or 10.0.0.0/8. Empty = any network. Must include your current address.">
+              <textarea rows={3} className={input + " font-mono"} value={Array.isArray(s.security?.adminIpAllowlist) ? s.security.adminIpAllowlist.join("\n") : s.security?.adminIpAllowlist || ""} onChange={(e) => set("security", { adminIpAllowlist: e.target.value })} />
+            </Field>
           </Card>
           <Card title="Feature toggles">
             {FEATURES.map(([k, label, hint]) => <Toggle key={k} label={label} hint={hint} checked={s.features[k]} onChange={(v) => set("features", { [k]: v })} />)}

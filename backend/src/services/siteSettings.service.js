@@ -33,12 +33,14 @@ function defaults() {
       autoCompleteDays: Number(process.env.AUTO_COMPLETE_DAYS) || 3,
       demoPayments: process.env.DEMO_PAYMENTS === "true",
       requireGigApproval: false,
+      secondApprovalOver: Number(process.env.SECOND_APPROVAL_OVER || 0),
     },
     branding: { siteName: process.env.SITE_NAME || "Qwlee", logoUrl: "", primaryColor: "#059669" },
     homepage: { heroTitle: "", heroSubtitle: "", announcement: { enabled: false, text: "", link: "", tone: "info" } },
     seo: { title: "", description: "", ogImage: "" },
     email: { footerText: "" },
     features: { signups: true, buyerRequests: true, tips: true, googleLogin: true },
+    security: { requireAdmin2fa: false, adminIpAllowlist: [] },
   };
 }
 
@@ -51,12 +53,20 @@ function normalise(site = {}, base = defaults()) {
   const s = { ...base.seo, ...(site.seo || {}) };
   const e = { ...base.email, ...(site.email || {}) };
   const f = { ...base.features, ...(site.features || {}) };
+  const sec = { ...base.security, ...(site.security || {}) };
+  const ipList = (Array.isArray(sec.adminIpAllowlist) ? sec.adminIpAllowlist : String(sec.adminIpAllowlist || "").split(/[\s,]+/))
+    .map((x) => String(x).trim())
+    .filter((x) => require("../utils/ipMatch").validEntry(x))
+    .slice(0, 50);
   return {
     marketplace: {
       feePercent: num(m.feePercent, 5, 0, 50),
       autoCompleteDays: Math.round(num(m.autoCompleteDays, 3, 1, 30)),
       demoPayments: bool(m.demoPayments, false),
       requireGigApproval: bool(m.requireGigApproval, false),
+      // Refunds / payouts at or above this amount (USD) need a second
+      // admin's approval. 0 = off.
+      secondApprovalOver: num(m.secondApprovalOver, 0, 0, 1000000),
     },
     branding: { siteName: str(b.siteName, 40) || "Qwlee", logoUrl: url(b.logoUrl), primaryColor: color(b.primaryColor, "#059669") },
     homepage: {
@@ -72,6 +82,7 @@ function normalise(site = {}, base = defaults()) {
     seo: { title: str(s.title, 70), description: str(s.description, 170), ogImage: url(s.ogImage) },
     email: { footerText: str(e.footerText, 300) },
     features: Object.fromEntries(Object.keys(base.features).map((k) => [k, bool(f[k], true)])),
+    security: { requireAdmin2fa: bool(sec.requireAdmin2fa, false), adminIpAllowlist: ipList },
   };
 }
 

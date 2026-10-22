@@ -26,7 +26,7 @@ import {
 import cls from "../../utils/cls";
 import { confirmModal } from "../../common/confirm";
 import { useAdminQuery } from "../../utils/adminApi";
-import { TbChartLine, TbSpeakerphone,
+import { TbChartLine, TbSpeakerphone, TbChecks, TbLock,
   TbMail, TbShieldLock, TbUsersGroup, TbGavel, TbBuildingBank, TbAdjustments } from "react-icons/tb";
 
 const NAV = [
@@ -58,6 +58,7 @@ const NAV = [
     section: "Finance",
     items: [
       { to: "/dashboard/escrow", label: "Payments & escrow", icon: TbBuildingBank, perm: "finance" },
+      { to: "/dashboard/approvals", label: "Approvals", icon: TbChecks, perm: "finance" },
       { to: "/dashboard/earnings", label: "Earnings", icon: AiOutlineSafetyCertificate, perm: "finance" },
       { to: "/dashboard/withdraw", label: "Withdrawals", icon: PiHandWithdraw, perm: "finance" },
     ],
@@ -94,6 +95,7 @@ const NAV = [
       { to: "/dashboard/site-settings", label: "Site settings", icon: TbAdjustments, perm: "settings" },
       { to: "/dashboard/setting", label: "Payments & email", icon: CiSettings, perm: "settings" },
       { to: "/dashboard/team", label: "Admin team", icon: TbShieldLock, perm: "settings" },
+      { to: "/dashboard/security", label: "My security", icon: TbLock },
       { to: "/dashboard/audit", label: "Audit log", icon: TbLogs, perm: "settings" },
     ],
   },

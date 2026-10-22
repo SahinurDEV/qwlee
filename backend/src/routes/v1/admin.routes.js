@@ -124,7 +124,22 @@ router.get("/users/:userId/view", A, ac.viewUser);
 router.patch("/gigs/:gigId/feature", A, ac.featureGig);
 router.patch("/gigs/:gigId", A, ac.editGig);
 router.get("/orders/:orderId", A, ac.getOrder);
-router.post("/orders/:orderId/refund", A, ac.refundOrder);
+const secondApproval = require("../../middlewares/secondApproval");
+router.post(
+  "/orders/:orderId/refund",
+  A,
+  secondApproval("refund", async (req) => {
+    const { Payment } = require("../../models");
+    if (!require("mongoose").isValidObjectId(req.params.orderId)) return null;
+    const o = await Payment.findById(req.params.orderId).select("price escrow").lean();
+    return o && { id: o._id, amount: Number(o.escrow?.amount ?? o.price ?? 0), summary: `Refund order ${o._id}` };
+  }),
+  ac.refundOrder
+);
+const approvals = require("../../controllers/approvals.controller");
+router.get("/approvals", A, approvals.list);
+router.post("/approvals/:id/approve", A, approvals.approve);
+router.post("/approvals/:id/reject", A, approvals.reject);
 router.post("/orders/:orderId/complete", A, ac.forceComplete);
 router.get("/escrow", A, ac.escrowSummary);
 router.get("/payments", A, ac.listPayments);
@@ -145,6 +160,11 @@ router.get("/broadcast", A, ac.listBroadcasts);
 router.get("/analytics", A, ac.analytics);
 router.get("/audit", A, ac.auditLog);
 router.get("/team", A, ac.team);
+router.get("/2fa", A, ac.twoFaStatus);
+router.post("/2fa/setup", A, ac.twoFaSetup);
+router.post("/2fa/enable", A, ac.twoFaEnable);
+router.post("/2fa/disable", A, ac.twoFaDisable);
+router.post("/team/:id/reset-2fa", A, ac.twoFaReset);
 router.get("/newsletter", A, ac.listSubscribers);
 
 module.exports = router;

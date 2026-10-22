@@ -83,7 +83,8 @@ export async function act({ title, description, danger, path, method = "POST", b
   } else if (!(await confirmModal({ title, description, danger, confirmText: "Confirm" }))) return;
   try {
     const r = await adminFetch(path, { method, body: askReason ? { ...(body || {}), reason } : body });
-    toast.success(success || "Done");
+    if (r?.needsApproval) toast("Sent to another admin for approval (Admin → Approvals).");
+    else toast.success(r?.note || success || "Done");
     done?.(r);
   } catch (e) {
     toast.error(e.message);
