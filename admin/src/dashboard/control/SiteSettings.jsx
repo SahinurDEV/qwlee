@@ -89,8 +89,37 @@ export default function SiteSettings() {
           <Card title="Payment providers & SMTP">
             <p className="text-sm text-ink-600">Provider keys, SMTP and email template previews live on the <a className="text-primary-700 underline" href="/dashboard/setting">Settings</a> page.</p>
           </Card>
+          <StorageCard />
         </div>
       ) : null}
     </div>
+  );
+}
+
+// Unused local uploads (old avatars, removed gig images, replaced ID docs).
+function StorageCard() {
+  const [r, setR] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const go = async (method) => {
+    if (method === "POST" && !window.confirm(`Delete ${r?.orphans} unused file(s)? This can't be undone.`)) return;
+    setBusy(true);
+    try {
+      const x = await adminFetch("/admin/settings/storage/orphans", { method });
+      setR(x);
+      if (method === "POST") toast.success(`Deleted ${x.deleted} file(s)`);
+    } catch (e) {
+      toast.error(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <Card title="Storage" subtitle="Locally stored uploads nothing points to any more (older than 24h)">
+      <div className="flex flex-wrap items-center gap-3">
+        <Button variant="secondary" loading={busy} onClick={() => go("GET")}>Scan for unused files</Button>
+        {r && r.orphans > 0 && !r.applied ? <Button variant="danger" loading={busy} onClick={() => go("POST")}>Delete {r.orphans} file(s)</Button> : null}
+      </div>
+      {r ? <p className="mt-3 text-sm text-ink-600">Scanned {r.scanned} file(s): {r.orphans} unused ({(r.orphanBytes / 1024).toFixed(0)} KB){r.applied ? `, ${r.deleted} deleted` : ""}. Images on ImgBB are not managed here.</p> : null}
+    </Card>
   );
 }

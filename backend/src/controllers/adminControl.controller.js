@@ -427,7 +427,13 @@ const me = catchAsync(async (req, res) => {
   ok(res, { id: String(req.user._id), adminRole: role, permissions: perms.ROLE_PERMISSIONS[role] });
 });
 
+const storageOrphans = catchAsync(async (req, res) => {
+  const r = await require("../services/uploadsCleanup.service").run({ apply: req.method === "POST", minAgeHours: 24 });
+  ok(res, r, req.method === "POST" ? `Deleted ${r.deleted} unused file(s)` : "Scan complete");
+});
+
 module.exports = {
+  storageOrphans,
   listUsers, updateUser, setRole, resetPassword, logoutEverywhere, viewUser,
   featureGig, editGig, getOrder, refundOrder, forceComplete, escrowSummary, listPayments,
   listRequests, moderateRequest, deleteRequest, listOffers, removeOffer, listReviews, deleteReview,
