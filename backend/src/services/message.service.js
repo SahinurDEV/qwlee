@@ -13,6 +13,21 @@ const addMessage = async (messageBody) => {
   }
 };
 
+/** Mark the viewer's inbound messages read and tell the sender(s). */
+const markRead = async (chatId, userId) => {
+  const unread = await Message.find({ chat: chatId, receiver: userId, readed: false }, { sender: 1 }).lean();
+  if (!unread.length) return 0;
+  const at = new Date();
+  await Message.updateMany({ _id: { $in: unread.map((m) => m._id) } }, { $set: { readed: true, readAt: at } });
+  try {
+    const { io } = require("../socket/socketServer");
+    for (const sender of new Set(unread.map((m) => String(m.sender)))) {
+      io.to(sender).emit("messages-read", { chatId: String(chatId), readerId: String(userId), readAt: at });
+    }
+  } catch { /* socket optional */ }
+  return unread.length;
+};
+
 const getMessages = async (chatId, options, userId) => {
   try {
     const { limit = 50, page = 1 } = options; // Set default limit and page values
@@ -32,8 +47,8 @@ const getMessages = async (chatId, options, userId) => {
     })
       .populate([
         { path: "replyTo", select: "message file fileType" },
-        { path: "sender", select: "fullName image email role online" },
-        { path: "receiver", select: "fullName image email role online" },
+        { path: "sender", select: "fullName image role online" },
+        { path: "receiver", select: "fullName image role online" },
       ])
       .skip(skip)
       .limit(limit);
@@ -41,10 +56,8 @@ const getMessages = async (chatId, options, userId) => {
     // Reading the thread marks the viewer's inbound messages as read.
     // Don't await — the client doesn't need the count back, and the
     // update is idempotent. Failure here shouldn't fail the request.
-    Message.updateMany(
-      { chat: chatId, receiver: userId, readed: false },
-      { $set: { readed: true } }
-    ).catch(() => {});
+    // The sender gets a live "seen" receipt.
+    markRead(chatId, userId).catch(() => {});
 
     const result = {
       data: messages,
@@ -216,6 +229,7 @@ const getMessageByChatId = async (id) => {
 };
 
 module.exports = {
+  markRead,
   addMessage,
   getMessages,
   deleteMessage,
