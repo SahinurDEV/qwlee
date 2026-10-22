@@ -47,6 +47,10 @@ const createGig = catchAsync(async (req, res) => {
   };
 
   gigData.title = String(title).trim().slice(0, 120);
+  // Admin setting: new gigs wait for approval in the moderation queue.
+  if ((await require("../services/siteSettings.service").get()).marketplace.requireGigApproval) {
+    gigData.gigStatus = "pending";
+  }
   gigData.slug = `${gigService.slugify(title)}-${Date.now().toString(36)}`;
 
   const gig = await gigService.createGig(gigData);
@@ -96,6 +100,7 @@ const getGigs = catchAsync(async (req, res) => {
     'verifiedOnly',
     'minRating',
     'level',
+    'featured',
   ]);
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
   // When the caller is signed in, hide their own gigs from the public

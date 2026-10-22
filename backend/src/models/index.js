@@ -26,3 +26,6 @@ module.exports.AppConfig = require('./appConfig.model');
 module.exports.Dispute = require('./dispute.model');
 module.exports.BuyerRequest = require('./buyerRequest.model');
 module.exports.RequestOffer = require('./requestOffer.model');
+
+module.exports.AdminAudit = require('./adminAudit.model');
+module.exports.Announcement = require('./announcement.model');

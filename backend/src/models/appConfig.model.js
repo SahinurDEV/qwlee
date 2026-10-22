@@ -85,6 +85,8 @@ const appConfigSchema = new mongoose.Schema(
     // commission %, support email shown on contact page, etc.) so the
     // admin can drop in arbitrary settings without a schema change.
     misc: { type: Object, default: {} },
+    // Admin-editable site settings (see services/siteSettings.service.js).
+    site: { type: Object, default: {} },
   },
   { timestamps: true }
 );

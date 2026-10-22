@@ -72,7 +72,7 @@ const orderCreate = catchAsync(async (req, res) => {
     return res.status(200).send({ url: session.url, provider: "stripe" });
   }
 
-  if (process.env.DEMO_PAYMENTS === "true") {
+  if ((await require("../services/siteSettings.service").get()).marketplace.demoPayments) {
     const crypto = require("crypto");
     const order = await orderLifecycle.createOrderFromQuote(quote, {
       sessionId: `demo_${crypto.randomUUID()}`,
@@ -93,6 +93,7 @@ const orderCreate = catchAsync(async (req, res) => {
 });
 
 const orderTip = catchAsync(async (req, res) => {
+  await require("../services/siteSettings.service").assertFeature("tips", "Tipping");
   const { order, amount } = await orderLifecycle.quoteTip(req.params.orderId, req.user.id, Number(req.body?.amount));
   const frontend = process.env.FRONTEND_URL || "http://localhost:8000";
   if (process.env.STRIPE_SECRET_KEY) {
@@ -107,7 +108,7 @@ const orderTip = catchAsync(async (req, res) => {
     });
     return res.status(200).send({ url: session.url, provider: "stripe" });
   }
-  if (process.env.DEMO_PAYMENTS === "true") {
+  if ((await require("../services/siteSettings.service").get()).marketplace.demoPayments) {
     const crypto = require("crypto");
     await orderLifecycle.recordTip(order._id, amount, { provider: "demo", sessionId: `demo_tip_${crypto.randomUUID()}` });
     Promise.resolve()

@@ -111,4 +111,36 @@ router.patch(
   adminLevelController.setOverride
 );
 
+// ---- Full-control endpoints (permissions + audit: config/adminPermissions.js)
+const ac = require("../../controllers/adminControl.controller");
+const A = auth("admin");
+router.get("/me", A, ac.me);
+router.get("/users", A, ac.listUsers);
+router.patch("/users/:userId", A, ac.updateUser);
+router.patch("/users/:userId/role", A, ac.setRole);
+router.post("/users/:userId/reset-password", A, ac.resetPassword);
+router.post("/users/:userId/logout-all", A, ac.logoutEverywhere);
+router.get("/users/:userId/view", A, ac.viewUser);
+router.patch("/gigs/:gigId/feature", A, ac.featureGig);
+router.patch("/gigs/:gigId", A, ac.editGig);
+router.get("/orders/:orderId", A, ac.getOrder);
+router.post("/orders/:orderId/refund", A, ac.refundOrder);
+router.post("/orders/:orderId/complete", A, ac.forceComplete);
+router.get("/escrow", A, ac.escrowSummary);
+router.get("/payments", A, ac.listPayments);
+router.get("/requests", A, ac.listRequests);
+router.patch("/requests/:requestId", A, ac.moderateRequest);
+router.delete("/requests/:requestId", A, ac.deleteRequest);
+router.get("/offers", A, ac.listOffers);
+router.delete("/offers/:offerId", A, ac.removeOffer);
+router.get("/reviews", A, ac.listReviews);
+router.delete("/reviews/:reviewId", A, ac.deleteReview);
+router.get("/settings/site", A, ac.getSite);
+router.patch("/settings/site", A, ac.updateSite);
+router.post("/broadcast", A, ac.broadcast);
+router.get("/broadcast", A, ac.listBroadcasts);
+router.get("/analytics", A, ac.analytics);
+router.get("/audit", A, ac.auditLog);
+router.get("/team", A, ac.team);
+
 module.exports = router;

@@ -63,6 +63,8 @@ const gigSchema = mongoose.Schema(
     // Lifecycle status — Fiverr-style. Existing gigs default to
     // "active" so the new field is back-compat. Newly created gigs
     // could later default to "pending" once admin moderation is on.
+    // Admin-curated: featured gigs sort first and get a badge.
+    featured: { type: Boolean, default: false, index: true },
     gigStatus: {
       type: String,
       enum: [

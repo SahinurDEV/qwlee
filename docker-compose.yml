@@ -74,6 +74,8 @@ services:
         condition: service_healthy
     environment:
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      # Server-side calls (SEO settings) go straight to the backend.
+      INTERNAL_API_URL: ${INTERNAL_API_URL:-http://backend:7171}
     ports:
       - "${FRONTEND_PORT:-8000}:8000"
 
@@ -82,6 +84,7 @@ services:
       context: ./admin
       args:
         VITE_API_BASE_URL: ${PUBLIC_API_URL:-http://localhost:7171}
+        VITE_FRONTEND_URL: ${FRONTEND_URL:-http://localhost:8000}
     restart: unless-stopped
     depends_on:
       backend:

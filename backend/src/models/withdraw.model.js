@@ -29,6 +29,7 @@ const withdrawalSchema = new mongoose.Schema(
       enum: ["Pending", "Completed", "Failed"],
       default: "Pending",
     },
+    cancelReason: { type: String, default: "" },
   },
   { timestamps: true }
 );

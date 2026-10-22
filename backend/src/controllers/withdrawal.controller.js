@@ -23,7 +23,7 @@ const getSingleUserWithdrawals = catchAsync(async (req, res)=> {
 });
 
 const withdrawalCancel = catchAsync(async (req, res) => {
-    const withdrawal = await withdrawalService.withdrawalCancel(req.params.withdrawalId);
+    const withdrawal = await withdrawalService.withdrawalCancel(req.params.withdrawalId, req.body?.reason);
     res.status(httpStatus.OK).json(response({ message:"Withdrawal Cancelled", status: "OK", statusCode:httpStatus.OK , data: withdrawal}));
 });
 

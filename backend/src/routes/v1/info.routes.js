@@ -21,4 +21,7 @@ router
 // Public marketplace counters for the homepage stat strip.
 router.route("/stats").get(infoController.getStats);
 
+// Public site settings (branding, homepage, SEO, feature toggles).
+router.get("/site", require("../../controllers/adminControl.controller").publicSite);
+
 module.exports = router;

@@ -194,7 +194,7 @@ async function getPublicMethods() {
 // otherwise PLATFORM_FEE_PERCENT from the environment, default 5.
 async function getPlatformFeePercent() {
   const doc = await getConfig();
-  const raw = doc?.misc?.platformFeePercent ?? process.env.PLATFORM_FEE_PERCENT ?? 5;
+  const raw = doc?.site?.marketplace?.feePercent ?? doc?.misc?.platformFeePercent ?? process.env.PLATFORM_FEE_PERCENT ?? 5;
   const pct = Number(raw);
   return Number.isFinite(pct) && pct >= 0 && pct <= 100 ? pct : 5;
 }

@@ -43,6 +43,7 @@ const ordersSchema = mongoose.Schema(
     // Set when a dispute is opened so we can pop the order back to
     // its prior state if the dispute is dropped/cancelled.
     preDisputeStatus: { type: String, default: "" },
+    refundReason: { type: String, default: "" },
     activeDisputeId: {
       type: mongoose.SchemaTypes.ObjectId,
       ref: "Dispute",
