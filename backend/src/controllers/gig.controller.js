@@ -101,6 +101,9 @@ const getGigs = catchAsync(async (req, res) => {
     'minRating',
     'level',
     'featured',
+    'minGigRating',
+    'minReviews',
+    'hasVideo',
   ]);
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
   // When the caller is signed in, hide their own gigs from the public

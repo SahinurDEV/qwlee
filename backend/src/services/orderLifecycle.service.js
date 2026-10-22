@@ -252,6 +252,7 @@ const completeOrder = async (order, { reason = "accepted", fromStatuses = OPEN }
   if (!swapped) throw new ApiError(httpStatus.CONFLICT, "Order cannot be completed in its current state");
   await User.updateOne({ _id: order.freelancerId }, { $inc: { balance: net } });
   require("./referral.service").onOrderCompleted(swapped).catch(() => {});
+  require("./gigStats.service").recomputeLater(swapped.gigId);
   return swapped;
 };
 

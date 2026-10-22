@@ -263,6 +263,7 @@ const listReviews = catchAsync(async (req, res) => {
 const deleteReview = catchAsync(async (req, res) => {
   const doc = await Reviews.findByIdAndDelete(oid(req.params.reviewId));
   if (!doc) throw new ApiError(httpStatus.NOT_FOUND, "Review not found");
+  require("../services/gigStats.service").recomputeLater(doc.gigId);
   ok(res, { deleted: true }, "Review removed");
 });
 

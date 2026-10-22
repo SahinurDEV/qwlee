@@ -64,7 +64,9 @@ async function run() {
     if (Object.keys(set).length) await db.collection("users").updateOne({ _id: u._id }, { $set: set });
   }
 
-  console.log(JSON.stringify({ idDocsMoved, idDocsExternal, categoriesBackfilled: cats.modifiedCount, gigsSanitised: gigsFixed, escrowHeld: held.modifiedCount, escrowReleased: released.modifiedCount,
+  const gigStats = await require("../src/services/gigStats.service").recomputeAll();
+
+  console.log(JSON.stringify({ gigStats, idDocsMoved, idDocsExternal, categoriesBackfilled: cats.modifiedCount, gigsSanitised: gigsFixed, escrowHeld: held.modifiedCount, escrowReleased: released.modifiedCount,
     escrowRefunded: refunded.modifiedCount, requirementsBackfilled: req.modifiedCount, deliveryBackfilled: del.modifiedCount }));
   await mongoose.disconnect();
 }

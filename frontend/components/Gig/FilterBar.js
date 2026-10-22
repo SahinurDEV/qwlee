@@ -78,6 +78,10 @@ export default function FilterBar() {
   const verifiedOnly = params.get("verifiedOnly") === "true";
   const minRating = params.get("minRating") || "";
   const level = params.get("level") || "";
+  const minGigRating = params.get("minGigRating") || "";
+  const minReviews = params.get("minReviews") || "";
+  const hasVideo = params.get("hasVideo") === "true";
+  const serviceCount = (minGigRating ? 1 : 0) + (minReviews ? 1 : 0) + (hasVideo ? 1 : 0);
 
   function applyParams(mutate) {
     const next = new URLSearchParams(params.toString());
@@ -302,6 +306,64 @@ export default function FilterBar() {
                 }
               />
             </div>
+          </PopoverShell>
+        )}
+      </Pill>
+
+      {/* Service quality */}
+      <Pill label="Service" active={serviceCount > 0} badge={serviceCount || null}>
+        {({ close }) => (
+          <PopoverShell
+            title="Service"
+            onClear={() =>
+              applyParams((n) => {
+                ["minGigRating", "minReviews", "hasVideo"].forEach((k) => n.delete(k));
+                close();
+              })
+            }
+            onApply={close}
+          >
+            <SectionLabel>Service rating</SectionLabel>
+            <div className="flex flex-wrap gap-1.5 mb-3">
+              {["", "4", "4.5", "4.8"].map((r) => (
+                <button
+                  key={r || "any"}
+                  type="button"
+                  aria-pressed={minGigRating === r}
+                  onClick={() => applyParams((n) => setOrDelete(n, "minGigRating", r))}
+                  className={`text-xs px-2.5 py-1.5 rounded-full border ${
+                    minGigRating === r
+                      ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                      : "bg-white border-gray-200 text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  {r ? `${r}+ ★` : "Any rating"}
+                </button>
+              ))}
+            </div>
+            <SectionLabel>Number of reviews</SectionLabel>
+            <div className="flex flex-wrap gap-1.5 mb-3">
+              {["", "1", "10", "50"].map((r) => (
+                <button
+                  key={r || "any"}
+                  type="button"
+                  aria-pressed={minReviews === r}
+                  onClick={() => applyParams((n) => setOrDelete(n, "minReviews", r))}
+                  className={`text-xs px-2.5 py-1.5 rounded-full border ${
+                    minReviews === r
+                      ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                      : "bg-white border-gray-200 text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  {r ? `${r}+ reviews` : "Any"}
+                </button>
+              ))}
+            </div>
+            <Toggle
+              label="Has a video"
+              checked={hasVideo}
+              onChange={(v) => applyParams((n) => setOrDelete(n, "hasVideo", v ? "true" : ""))}
+            />
           </PopoverShell>
         )}
       </Pill>

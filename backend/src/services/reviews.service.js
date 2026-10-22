@@ -57,6 +57,8 @@ const createReview = async (payload, userId) => {
     ...(Object.keys(subRatings).length ? { subRatings } : {}),
   });
 
+  require("./gigStats.service").recomputeLater(order.gigId);
+
   // Email the seller that they got a review.
   try {
     const [buyer, seller, gig] = await Promise.all([

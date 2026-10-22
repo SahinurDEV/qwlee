@@ -46,6 +46,9 @@ function GigContent() {
   const verifiedOnly = params.get("verifiedOnly") === "true";
   const minRating = params.get("minRating") || undefined;
   const level = params.get("level") || undefined;
+  const minGigRating = params.get("minGigRating") || undefined;
+  const minReviews = params.get("minReviews") || undefined;
+  const hasVideo = params.get("hasVideo") === "true";
 
   const [searchInput, setSearchInput] = useState(title);
   const [currentPage, setCurrentPage] = useState(1);
@@ -100,6 +103,9 @@ function GigContent() {
     verifiedOnly,
     minRating,
     level,
+    minGigRating,
+    minReviews,
+    hasVideo,
     limit: LIMIT,
     page: currentPage,
   });
