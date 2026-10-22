@@ -27,8 +27,9 @@ async function seedReviews({ orders, buyers, sellers }) {
   const docs = [];
   const sellerRatings = new Map(); // sellerId → { sum, count }
 
-  for (const order of deliveredOrders) {
-    if (!chance(0.85)) continue; // ~15% of completed orders go unreviewed
+  for (const [n, order] of deliveredOrders.entries()) {
+    // The first three are always reviewed so every seed has rated gigs.
+    if (n >= 3 && !chance(0.85)) continue; // ~15% of completed orders go unreviewed
     const rating = chance(0.7) ? 5 : chance(0.7) ? 4 : 3;
     const review = pick(REVIEW_TEMPLATES[rating]);
 
