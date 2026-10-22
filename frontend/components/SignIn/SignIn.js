@@ -171,7 +171,7 @@ const SignIn = () => {
           label="Email"
           rules={[{ required: true, message: "Please enter your email" }]}
         >
-          <Input placeholder="you@example.com" className="py-2" size="large" />
+          <Input type="email" inputMode="email" autoComplete="email" placeholder="you@example.com" className="py-2" size="large" />
         </Form.Item>
         <Form.Item
           name="password"

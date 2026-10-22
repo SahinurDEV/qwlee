@@ -26,7 +26,8 @@ import {
 import cls from "../../utils/cls";
 import { confirmModal } from "../../common/confirm";
 import { useAdminQuery } from "../../utils/adminApi";
-import { TbChartLine, TbSpeakerphone, TbShieldLock, TbUsersGroup, TbGavel, TbBuildingBank, TbAdjustments } from "react-icons/tb";
+import { TbChartLine, TbSpeakerphone,
+  TbMail, TbShieldLock, TbUsersGroup, TbGavel, TbBuildingBank, TbAdjustments } from "react-icons/tb";
 
 const NAV = [
   {
@@ -57,8 +58,8 @@ const NAV = [
     section: "Finance",
     items: [
       { to: "/dashboard/escrow", label: "Payments & escrow", icon: TbBuildingBank, perm: "finance" },
-      { to: "/dashboard/earnings", label: "Earnings", icon: AiOutlineSafetyCertificate },
-      { to: "/dashboard/withdraw", label: "Withdrawals", icon: PiHandWithdraw },
+      { to: "/dashboard/earnings", label: "Earnings", icon: AiOutlineSafetyCertificate, perm: "finance" },
+      { to: "/dashboard/withdraw", label: "Withdrawals", icon: PiHandWithdraw, perm: "finance" },
     ],
   },
   {
@@ -68,6 +69,7 @@ const NAV = [
       { to: "/dashboard/reports", label: "Reports", icon: TbReportAnalytics },
       { to: "/dashboard/analytics", label: "Analytics", icon: TbChartLine, perm: "analytics" },
       { to: "/dashboard/broadcast", label: "Announcements", icon: TbSpeakerphone, perm: "broadcast" },
+      { to: "/dashboard/newsletter", label: "Newsletter", icon: TbMail, perm: "broadcast" },
     ],
   },
   {

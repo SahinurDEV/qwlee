@@ -29,6 +29,8 @@ const RULES = [
   ["W", /^\/(admin\/)?support(\/|$)/, "support"],
   ["W", /^\/admin\/broadcast(\/|$)/, "broadcast"],
   ["GET", /^\/admin\/(escrow|payments|earnings)(\/|$)/, "finance"],
+  ["GET", /^\/withdrawal(\/|$)/, "finance"],
+  ["GET", /^\/admin\/newsletter(\/|$)/, "broadcast"],
   ["GET", /^\/admin\/analytics(\/|$)/, "analytics"],
 ];
 

@@ -377,17 +377,17 @@ export default function GigWizard({ mode = "create", gig = null }) {
           {step === 0 && (
             <>
               <Field label="Gig title" hint="As your gig storefront, your title is what buyers see first. Start with “I will…”." err={show(0, "title")} right={<span className={`text-xs ${data.title.length > 80 ? "text-rose-600" : "text-gray-400"}`}>{data.title.length}/80</span>}>
-                <textarea rows={2} value={data.title} onBlur={() => touch("title")} onChange={(e) => set({ title: e.target.value })} placeholder="I will design a modern, responsive landing page for your SaaS" className={inputCls(show(0, "title"))} />
+                <textarea aria-label="Gig title" rows={2} value={data.title} onBlur={() => touch("title")} onChange={(e) => set({ title: e.target.value })} placeholder="I will design a modern, responsive landing page for your SaaS" className={inputCls(show(0, "title"))} />
               </Field>
               <div className="grid gap-4 md:grid-cols-2">
                 <Field label="Category" err={show(0, "categoryId")}>
-                  <select value={data.categoryId} onBlur={() => touch("categoryId")} onChange={(e) => set({ categoryId: e.target.value, subCategoryId: "" })} className={inputCls(show(0, "categoryId"))}>
+                  <select aria-label="Category" value={data.categoryId} onBlur={() => touch("categoryId")} onChange={(e) => set({ categoryId: e.target.value, subCategoryId: "" })} className={inputCls(show(0, "categoryId"))}>
                     <option value="">Select a category</option>
                     {categories.map((c) => <option key={idOf(c)} value={idOf(c)}>{c.name}</option>)}
                   </select>
                 </Field>
                 <Field label="Subcategory" hint={!data.categoryId ? "Pick a category first." : undefined}>
-                  <select disabled={!subcategories.length} value={data.subCategoryId} onChange={(e) => set({ subCategoryId: e.target.value })} className={inputCls(false) + " disabled:bg-gray-50"}>
+                  <select aria-label="Subcategory" disabled={!subcategories.length} value={data.subCategoryId} onChange={(e) => set({ subCategoryId: e.target.value })} className={inputCls(false) + " disabled:bg-gray-50"}>
                     <option value="">{subcategories.length ? "Select a subcategory" : "None"}</option>
                     {subcategories.map((c) => <option key={idOf(c)} value={idOf(c)}>{c.name}</option>)}
                   </select>
@@ -704,6 +704,7 @@ function TagInput({ tags, onChange, err }) {
           }}
           onBlur={add}
           placeholder={tags.length >= 5 ? "Maximum reached" : "e.g. landing page"}
+          aria-label="Add a tag"
           className="min-w-[140px] flex-1 border-0 text-sm outline-none"
         />
       </div>
