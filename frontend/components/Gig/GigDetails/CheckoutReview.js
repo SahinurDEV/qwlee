@@ -1,6 +1,15 @@
 "use client";
 // Order review step shown before payment: the server-priced line items,
 // delivery estimate and terms. Nothing is charged until "Confirm and pay".
+import useCurrency from "@/hooks/useCurrency";
+
+// The charge is always in USD; show the converted amount alongside.
+function UsdNote({ usd }) {
+  const { isUsd, format, code } = useCurrency();
+  if (isUsd) return null;
+  return <div className="text-xs font-normal text-gray-500">≈{format(usd, { cents: true })} ({code}). You are charged in USD.</div>;
+}
+
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { IoClose, IoShieldCheckmarkOutline, IoTimeOutline } from "react-icons/io5";
@@ -90,7 +99,7 @@ export default function CheckoutReview({ open, onClose, onConfirm, onApplyCoupon
                 <tfoot>
                   <tr>
                     <td className="pt-3 font-semibold text-gray-900">Total</td>
-                    <td className="pt-3 text-right text-xl font-bold text-gray-900">${Number(quote?.charge ?? quote?.total ?? 0).toLocaleString()}</td>
+                    <td className="pt-3 text-right text-xl font-bold text-gray-900">${Number(quote?.charge ?? quote?.total ?? 0).toLocaleString()}<UsdNote usd={quote?.charge ?? quote?.total ?? 0} /></td>
                   </tr>
                 </tfoot>
               </table>

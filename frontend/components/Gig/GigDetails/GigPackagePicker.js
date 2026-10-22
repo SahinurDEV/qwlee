@@ -8,6 +8,7 @@
 // Buyers see the live Continue button. Sellers (in selling mode or with
 // role=freelancer) see a hint that ordering is buyer-only.
 
+import Money from "@/components/common/Money";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
@@ -133,7 +134,7 @@ export default function GigPackagePicker({ gig }) {
       <div className="p-5 md:p-6">
         <div className="flex items-baseline justify-between">
           <div className="text-2xl md:text-3xl font-bold text-gray-900">
-            ${price.toLocaleString()}
+            <Money usd={price} />
           </div>
           <div className="text-xs uppercase tracking-wide text-gray-400 font-semibold">
             {active?.name || ""}
@@ -189,7 +190,7 @@ export default function GigPackagePicker({ gig }) {
                           <span className="text-xs text-gray-500"> (+{e.deliveryDays} day{Number(e.deliveryDays) > 1 ? "s" : ""})</span>
                         )}
                       </span>
-                      <span className="font-medium text-gray-900">+${Number(e.price || 0).toLocaleString()}</span>
+                      <Money usd={e.price || 0} prefix="+" className="font-medium text-gray-900" />
                     </label>
                   </li>
                 );

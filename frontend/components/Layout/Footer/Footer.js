@@ -5,6 +5,7 @@
 // don't actually have those, and inventing them is worse than not
 // showing them. Drop real values in if/when you have them.
 
+import CurrencySelect from "@/components/common/CurrencySelect";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -155,6 +156,7 @@ export default function Footer() {
       <div className="border-t border-gray-800">
         <div className="container mx-auto px-4 py-5 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-gray-500">
           <p>© {new Date().getFullYear()} Qwlee. All rights reserved.</p>
+          <CurrencySelect />
 
           <div className="flex items-center gap-4">
             <a
