@@ -7,6 +7,7 @@ import { MdError } from "react-icons/md";
 import { SocketProvider } from "@/components/Context/SocketProvider";
 import { I18nProvider } from "@/components/Context/I18nProvider";
 import { LANG_COOKIE, normaliseLang } from "@/lib/i18n";
+import MaintenancePage from "@/components/common/MaintenancePage";
 import { cookies } from "next/headers";
 
 const BASE_METADATA = {
@@ -87,6 +88,16 @@ export async function generateMetadata() {
 
 export default async function RootLayout({ children }) {
   const lang = normaliseLang((await cookies()).get(LANG_COOKIE)?.value);
+  const site = await siteSettings();
+  if (site?.maintenance?.enabled) {
+    return (
+      <html lang={lang}>
+        <body>
+          <MaintenancePage siteName={site.branding?.siteName} message={site.maintenance.message} until={site.maintenance.until} />
+        </body>
+      </html>
+    );
+  }
   return (
     <html lang={lang}>
       <body>
