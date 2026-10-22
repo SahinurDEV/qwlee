@@ -56,11 +56,15 @@ const requestFields = async (body, { partial } = {}) => {
 
 const createRequest = async (buyer, body) => {
   const fields = await requestFields(body);
-  return BuyerRequest.create({
+  const risk = require("./risk.service");
+  const screened = await risk.screenAll([fields.title, fields.description], { contact: true });
+  const created = await BuyerRequest.create({
     ...fields,
     buyerId: buyer.id,
     expiresAt: new Date(Date.now() + REQUEST_TTL_DAYS * 86400000),
   });
+  risk.record("request", created._id, buyer.id, screened.reasons, fields.title);
+  return created;
 };
 
 const POPULATE = [
@@ -119,6 +123,7 @@ const getRequest = async (requestId, viewer) => {
 };
 
 const updateRequest = async (requestId, buyer, body) => {
+  let screened = null;
   const r = await getRequestDoc(requestId);
   if (idOf(r.buyerId) !== String(buyer.id)) throw new ApiError(httpStatus.FORBIDDEN, "Not your request");
   if (body.status !== undefined) {
@@ -133,9 +138,12 @@ const updateRequest = async (requestId, buyer, body) => {
   if (Object.keys(patch).length) {
     if (r.status !== "open") throw new ApiError(httpStatus.BAD_REQUEST, "Only open requests can be edited");
     if (patch.subCategoryId !== undefined && patch.categoriesId === undefined) patch.categoriesId = r.categoriesId;
-    Object.assign(r, await requestFields(patch, { partial: true }));
+    const clean = await requestFields(patch, { partial: true });
+    screened = await require("./risk.service").screenAll([clean.title, clean.description], { contact: true });
+    Object.assign(r, clean);
   }
   await r.save();
+  if (screened) require("./risk.service").record("request", r._id, buyer.id, screened.reasons, r.title);
   return r;
 };
 
@@ -152,6 +160,7 @@ const createOffer = async (requestId, seller, body) => {
   if (!(deliveryDays >= 1 && deliveryDays <= 90)) throw new ApiError(httpStatus.BAD_REQUEST, "Delivery must be 1-90 days");
   if (!(revisions >= 0 && revisions <= 20)) throw new ApiError(httpStatus.BAD_REQUEST, "Revisions must be 0-20");
   if (message.length < 10) throw new ApiError(httpStatus.BAD_REQUEST, "Message must be at least 10 characters");
+  const screened = await require("./risk.service").screen(message, { contact: true });
   let gigId = null;
   if (body.gigId) {
     const gig = mongoose.isValidObjectId(body.gigId) ? await Gig.findById(body.gigId) : null;
@@ -168,6 +177,7 @@ const createOffer = async (requestId, seller, body) => {
     ? await Object.assign(prior, fields).save()
     : await RequestOffer.create({ requestId: r._id, sellerId: seller.id, ...fields });
   await BuyerRequest.updateOne({ _id: r._id }, { $inc: { offersCount: prior ? 0 : 1 } });
+  require("./risk.service").record("offer", offer._id, seller.id, screened.reasons, message);
   notify(r.buyerId, `New offer on your request "${r.title}"`, String(r._id), "buyer");
   return offer;
 };

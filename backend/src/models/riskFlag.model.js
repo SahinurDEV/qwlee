@@ -1,0 +1,24 @@
+const mongoose = require("mongoose");
+const { toJSON, paginate } = require("./plugins");
+
+// Something the risk rules want a moderator to look at (risk.service).
+const riskFlagSchema = new mongoose.Schema(
+  {
+    kind: { type: String, enum: ["message", "gig", "request", "offer", "order"], required: true },
+    targetId: { type: String, required: true },
+    userId: { type: mongoose.SchemaTypes.ObjectId, ref: "User", default: null },
+    reasons: [{ type: String }], // e.g. "keyword:whatsapp", "contact:email", "new-account-large-order"
+    excerpt: { type: String, default: "" },
+    score: { type: Number, default: 1 },
+    status: { type: String, enum: ["open", "dismissed", "actioned"], default: "open" },
+    note: { type: String, default: "" },
+    reviewedBy: { type: mongoose.SchemaTypes.ObjectId, ref: "User", default: null },
+    reviewedAt: { type: Date, default: null },
+  },
+  { timestamps: true }
+);
+riskFlagSchema.index({ status: 1, createdAt: -1 });
+riskFlagSchema.index({ kind: 1, targetId: 1 });
+riskFlagSchema.plugin(toJSON);
+riskFlagSchema.plugin(paginate);
+module.exports = mongoose.model("RiskFlag", riskFlagSchema);

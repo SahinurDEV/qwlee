@@ -50,6 +50,10 @@ const addMessage = catchAsync(async (req, res) => {
     parsedGigReference = null;
   }
 
+  // Keyword filter: blocked words refuse the message, others flag it.
+  const risk = require("../services/risk.service");
+  const screened = await risk.screenAll([message, parsedOfferDetails?.description, parsedOfferDetails?.title], { contact: true });
+
   // Check for existing chat or create a new one
   let chatInfo = await chatService.getChatByParticipants([sender, receiver]);
 
@@ -96,6 +100,7 @@ const addMessage = catchAsync(async (req, res) => {
   const messageSent = await messageService.addMessage(newMessage);
 
   if (messageSent) {
+    risk.record("message", messageSent._id || messageSent.id, sender, screened.reasons, message || parsedOfferDetails?.description);
     // Build a chat snapshot from each side's perspective. `getChat(viewer, chatId)`
     // returns the participant list as { the OTHER party, you } — so the
     // sender and receiver need different copies for their sidebars.
