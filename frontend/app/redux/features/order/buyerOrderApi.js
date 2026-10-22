@@ -69,6 +69,10 @@ const buyerOrderApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["Orders", "OrderMessages"],
     }),
+    releaseMilestone: builder.mutation({
+      query: ({ orderId, index }) => ({ url: `/orders/${orderId}/milestones/${index}/release`, method: "POST" }),
+      invalidatesTags: ["Orders"],
+    }),
     tipOrder: builder.mutation({
       query: ({ orderId, amount }) => ({ url: `/orders/${orderId}/tip`, method: "POST", body: { amount } }),
       invalidatesTags: ["Orders"],
@@ -95,6 +99,7 @@ const buyerOrderApi = baseApi.injectEndpoints({
 export const {
   useCreateBuyerOrderMutation,
   useTipOrderMutation,
+  useReleaseMilestoneMutation,
   useGetBuyerAllOrderQuery,
   useGetBuyerOrderDetailsQuery,
   useUpdateBuyerOrderStatusMutation,

@@ -31,6 +31,11 @@ const addMessage = catchAsync(async (req, res) => {
     console.error("Error parsing offerDetails:", error.message);
     parsedOfferDetails = {};
   }
+  if (offerDetails && parsedOfferDetails?.milestones != null) {
+    const clean = require("../services/milestones.service").normalise(parsedOfferDetails.milestones, parsedOfferDetails.price);
+    if (clean.length) parsedOfferDetails.milestones = clean;
+    else delete parsedOfferDetails.milestones;
+  }
 
   try {
     if (gigReference) {

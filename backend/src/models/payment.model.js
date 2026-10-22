@@ -90,6 +90,10 @@ const ordersSchema = mongoose.Schema(
       heldAt: { type: Date },
       releasedAt: { type: Date },
       refundedAt: { type: Date },
+      // Milestone releases made before completion (see milestones.service).
+      releasedGross: { type: Number, default: 0 },
+      releasedFee: { type: Number, default: 0 },
+      releasedNet: { type: Number, default: 0 },
       // Money actually returned to the buyer (see refunds.service).
       refund: {
         provider: String, // stripe | demo

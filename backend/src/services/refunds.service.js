@@ -10,13 +10,13 @@
 const { Payment } = require("../models");
 const logger = require("../config/logger");
 
-async function stripeRefund(order, sessionId = order.sessionId, key = `qwlee-refund-${order._id}`) {
+async function stripeRefund(order, sessionId = order.sessionId, key = `qwlee-refund-${order._id}`, amount = null) {
   const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
   const session = await stripe.checkout.sessions.retrieve(sessionId);
   const pi = typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id;
   if (!pi) throw new Error("Checkout session has no payment intent");
   const refund = await stripe.refunds.create(
-    { payment_intent: pi, reason: "requested_by_customer", metadata: { orderId: String(order._id) } },
+    { payment_intent: pi, reason: "requested_by_customer", metadata: { orderId: String(order._id) }, ...(amount != null ? { amount: Math.round(amount * 100) } : {}) },
     { idempotencyKey: key }
   );
   return { provider: "stripe", id: refund.id, status: refund.status === "failed" ? "failed" : refund.status === "succeeded" ? "succeeded" : "pending", amount: refund.amount / 100 };
@@ -24,16 +24,28 @@ async function stripeRefund(order, sessionId = order.sessionId, key = `qwlee-ref
 
 /** Issue (or re-try) the money-back for an order. Safe to call repeatedly. */
 async function issueRefund(orderOrId) {
-  const order = orderOrId?._id ? orderOrId : await Payment.findById(orderOrId);
+  // Always reload: an ObjectId also has an `_id`, so a caller passing the
+  // id must not be mistaken for an order document (that recorded $0
+  // refunds and no session for Stripe).
+  const order = await Payment.findById(orderOrId?._id ?? orderOrId);
   if (!order) return null;
   const prev = order.escrow?.refund;
   if (prev && (prev.status === "succeeded" || prev.status === "pending")) return prev;
   const isStripe = (order.escrow?.provider || order.provider) === "stripe" && !!process.env.STRIPE_SECRET_KEY && !String(order.sessionId || "").startsWith("demo");
+  // Milestones already released to the seller are not refunded.
+  const paid = Number(order.escrow?.amount ?? order.price ?? 0);
+  const released = Number(order.escrow?.releasedGross || 0);
+  const refundable = Math.max(0, Math.round((paid - released) * 100) / 100);
+  if (released > 0 && refundable === 0) {
+    const none = { provider: "none", id: "", status: "succeeded", amount: 0, at: new Date() };
+    await Payment.updateOne({ _id: order._id }, { $set: { "escrow.refund": none } });
+    return none;
+  }
   let result;
   try {
     result = isStripe
-      ? await stripeRefund(order)
-      : { provider: "demo", id: `demo_re_${order._id}`, status: "succeeded", amount: Number(order.escrow?.amount ?? order.price ?? 0) };
+      ? await stripeRefund(order, order.sessionId, `qwlee-refund-${order._id}`, released > 0 ? refundable : null)
+      : { provider: "demo", id: `demo_re_${order._id}`, status: "succeeded", amount: refundable };
   } catch (e) {
     logger.error(`Refund failed for order ${order._id}: ${e.message}`);
     result = { provider: isStripe ? "stripe" : "demo", id: prev?.id || "", status: "failed", error: String(e.message).slice(0, 300) };
