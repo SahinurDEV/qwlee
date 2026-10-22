@@ -138,6 +138,19 @@ export const Navbar = () => {
         </div>
       ),
     },
+    {
+      key: "req",
+      label: (
+        <div
+          onClick={() => {
+            router.push(user?.role === "freelancer" ? "/requests" : "/requests/mine");
+          }}
+          className="px-4 py-2 transition-colors duration-200 hover:text-primary text-[15px] cursor-pointer font-medium"
+        >
+          {user?.role === "freelancer" ? "Buyer requests" : "My requests"}
+        </div>
+      ),
+    },
     user &&
       user?.role === "freelancer" && {
         key: "5",

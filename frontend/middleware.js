@@ -28,6 +28,8 @@ const PROTECTED_PREFIXES = [
   "/notifications",
   "/support",
   "/gig/add",
+  "/requests/new",
+  "/requests/mine",
   "/gig/edit",
   "/change-password",
 ];
@@ -107,6 +109,8 @@ export const config = {
     "/notifications/:path*",
     "/support/:path*",
     "/gig/add/:path*",
+    "/requests/new/:path*",
+    "/requests/mine/:path*",
     "/gig/edit/:path*",
     "/change-password/:path*",
     "/sign-in/:path*",
