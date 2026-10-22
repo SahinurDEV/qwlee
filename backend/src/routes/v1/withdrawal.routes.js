@@ -10,6 +10,21 @@ router
 // Which payout methods are live (real provider) or demo.
 router.get("/methods", auth("common"), (req, res) =>
   res.json({ code: 200, message: "OK", data: { attributes: { bank: "manual", ...require("../../services/payouts.service").status() } } }));
+// Finance: batch approve, bank CSV export, bank statement reconciliation.
+const batch = require("../../services/payoutBatch.service");
+const catchAsync = require("../../utils/catchAsync");
+router.post("/batch/approve", auth("admin"), catchAsync(async (req, res) =>
+  res.json({ code: 200, message: "Batch processed", data: { attributes: await batch.approveBatch(req.body?.ids) } })));
+router.get("/export/bank.csv", auth("admin"), catchAsync(async (req, res) => {
+  const { csv, count, total } = await batch.bankCsv({ status: req.query.status || "Pending" });
+  res.set("Content-Type", "text/csv; charset=utf-8");
+  res.set("Content-Disposition", `attachment; filename="bank-payouts-${new Date().toISOString().slice(0, 10)}.csv"`);
+  res.set("X-Row-Count", String(count));
+  res.set("X-Total-Usd", total.toFixed(2));
+  res.send(csv);
+}));
+router.post("/reconcile", auth("admin"), catchAsync(async (req, res) =>
+  res.json({ code: 200, message: "Reconciled", data: { attributes: await batch.reconcile(req.body?.csv, { dryRun: !!req.body?.dryRun }) } })));
 router
   .route("/single")
   .get(auth("admin"), withdrawalController.getSingleWithdrawal);
