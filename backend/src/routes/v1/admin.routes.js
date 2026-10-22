@@ -180,6 +180,12 @@ router.delete("/offers/:offerId", A, ac.removeOffer);
 router.get("/reviews", A, ac.listReviews);
 router.delete("/reviews/:reviewId", A, ac.deleteReview);
 router.get("/settings/site", A, ac.getSite);
+// Run subscription billing now (super admin). `asOf` bills as if it were that time.
+router.post("/jobs/subscriptions", A, require("../../utils/catchAsync")(async (req, res) => {
+  const asOf = req.body?.asOf ? new Date(req.body.asOf) : new Date();
+  if (Number.isNaN(asOf.getTime())) return res.status(400).json({ code: 400, message: "Invalid asOf" });
+  res.json({ code: 200, message: "OK", data: { attributes: await require("../../services/subscription.service").billDue(asOf) } });
+}));
 router.patch("/settings/site", A, ac.updateSite);
 // Orphaned local uploads: GET = dry run, POST = delete.
 router.get("/settings/storage/orphans", A, ac.storageOrphans);
