@@ -27,6 +27,11 @@ async function seedOrders({ buyers, sellers, gigs }) {
   const orderDocs = [];
   const paymentDocs = [];
 
+  // The demo buyer always gets the first few orders so the demo account
+  // (and the tests that sign in with it) never starts with an empty list.
+  const demoBuyer = buyers.find((b) => b.email === "buyer@example.com");
+  let demoOrders = 0;
+
   for (let i = 0; i < STATUS_DISTRIBUTION.length; i++) {
     const status = STATUS_DISTRIBUTION[i];
     const gig = pick(gigs);
@@ -34,7 +39,8 @@ async function seedOrders({ buyers, sellers, gigs }) {
       (s) => s._id.toString() === gig.userId.toString()
     );
     if (!seller) continue;
-    const buyer = pick(buyers);
+    const buyer = demoBuyer && demoOrders < 3 ? demoBuyer : pick(buyers);
+    if (buyer === demoBuyer) demoOrders++;
     const pkg = pick(gig.package);
     const price = Number(pkg.price);
     const deliveryDays = Number(pkg.deliveryDate) || 7;
