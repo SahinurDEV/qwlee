@@ -40,7 +40,7 @@ transformResponse: (res) => res?.data?.attributes
 
 ## Endpoint surface (categories)
 
-The full inventory lives in `README.md`'s **Backend → Endpoints** table. The categories below are stable entry points:
+The full inventory lives in `FEATURES.md`'s **Backend → Endpoints** table. The categories below are stable entry points:
 
 | Prefix | Notes |
 |---|---|

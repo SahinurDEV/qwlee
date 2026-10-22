@@ -13,6 +13,6 @@ This folder is the entry point for anyone joining the project. Read the files in
 | [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) | Common errors and how to fix them |
 
 Also useful:
-- `../README.md` — full feature inventory (what's shipped)
+- `FEATURES.md` — full feature inventory (what's shipped)
 - `../CLAUDE.md` — guide for Claude Code sessions
 - `../new-PRD-marketplace.md` — long-form product spec (what we're building toward)
