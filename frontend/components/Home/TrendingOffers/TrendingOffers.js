@@ -74,9 +74,9 @@ const TrendingOffers = () => {
     <div className="py-10 bg-white">
     <div>
       <div className="text-center">
-      <h1 className="text-[20px] md:text-[35px] font-bold text-center">
+      <h2 className="text-[20px] md:text-[35px] font-bold text-center">
       Trending offers
-      </h1>
+      </h2>
       <p>Best deal offer</p>
       </div>
       <div className=" mt-10 ">

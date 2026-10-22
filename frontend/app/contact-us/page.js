@@ -3,9 +3,7 @@ import Breadcrumb from "@/components/Layout/Breadcrumb";
 import PrimaryLayout from "@/components/Layout/PrimaryLayout";
 
 export const metadata = {
-  title: "Contact Us | Qwlee",
-  description:
-    "Company Number: (781) 316-0189, and Company Email: e-mail such as info@qwlee.com",
+  title: "Contact Us",
 };
 
 function ContactUs() {

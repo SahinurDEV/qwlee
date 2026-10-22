@@ -1,3 +1,5 @@
+export const metadata = { title: "Inbox", robots: { index: false } };
+
 import Blank from "@/components/Inbox/Message/Blank";
 import React from "react";
 

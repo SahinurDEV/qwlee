@@ -191,6 +191,22 @@ function MonthlyStrip({ withdrawals }) {
 
 export default function Earnings() {
   const user = useUser();
+  if (user === undefined) return <main className="bg-gray-50 min-h-screen" aria-busy="true" />;
+  if (user.role !== "freelancer") {
+    return (
+      <main className="bg-gray-50 min-h-[60vh] flex items-center justify-center px-4">
+        <div className="max-w-md text-center">
+          <h1 className="text-2xl font-bold text-gray-900">Earnings are for sellers</h1>
+          <p className="mt-3 text-gray-600">Earnings and withdrawals appear here once you sell services on Qwlee.</p>
+          <a href="/dashboard" className="mt-6 inline-block rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700">Go to dashboard</a>
+        </div>
+      </main>
+    );
+  }
+  return <SellerEarnings user={user} />;
+}
+
+function SellerEarnings({ user }) {
   const { data: userData } = useGetUserQuery(user?.id, { skip: !user?.id });
   const userTransformData = userData?.data?.attributes?.user;
   const availableBalance = Number(userTransformData?.balance) || 0;

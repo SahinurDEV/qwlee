@@ -10,6 +10,7 @@ import BuyerDashboard from "./BuyerDashboard/BuyerDashboard";
 
 export default function Dashboard() {
   const user = useUser();
-  const { isSelling } = useViewMode(user);
+  const { isSelling, ready } = useViewMode(user);
+  if (!ready) return <div className="min-h-[60vh]" aria-busy="true" />;
   return isSelling ? <FreelancerDashboard /> : <BuyerDashboard />;
 }
