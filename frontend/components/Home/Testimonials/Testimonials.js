@@ -19,7 +19,7 @@ const Testimonials = () => {
           <Image
             width={350}
             height={34}
-            src={"https://i.ibb.co/yNd0sFf/Line.png"}
+            src={"/images/home/Line.png"}
             alt="Line"
           />
         </div>
@@ -65,7 +65,7 @@ const TestimonialsCard = ({ data }) => {
       </p>
 
       <Image
-        src={"https://i.ibb.co/ZGXHRRV/c2fa6fd84904fe8cb5a86dbf788b93fd.png"}
+        src={"/images/home/testimonial.png"}
         width={300}
         height={300}
         alt="test"

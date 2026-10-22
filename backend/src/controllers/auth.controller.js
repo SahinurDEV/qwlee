@@ -98,27 +98,23 @@ const register = catchAsync(async (req, res) => {
 
 const login = catchAsync(async (req, res) => {
   const { email, password } = req.body;
-  const isUser = await userService.getUserByEmail(email);
-  // here we check if the user is in the database or not
-  if (isUser?.isDeleted === true) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "This Account is Deleted");
+  // Verify the password first and fail with one generic message, so the
+  // endpoint can't be used to discover which emails are registered.
+  // Account-state errors are only revealed to someone who knows the password.
+  const isUser = await authService.loginUserWithEmailAndPassword(email, password);
+  if (isUser.isDeleted === true) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, "Incorrect email or password");
   }
-  if (isUser?.isEmailVerified === false) {
+  if (isUser.isEmailVerified === false) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Email not verified");
   }
-  if (!isUser) {
-    throw new ApiError(httpStatus.NOT_FOUND, "No users found with this email");
-  }
-  // Banned users get a special 403 with the admin-supplied reason so
-  // the marketplace login screen can surface it inline. Check before
-  // we validate the password — no point burning an attempt either way.
-  if (isUser?.isBan === true) {
+  if (isUser.isBan === true) {
     const reason =
       isUser.banReason ||
       "Your account has been suspended by an administrator.";
     throw new ApiError(httpStatus.FORBIDDEN, `BANNED:${reason}`);
   }
-  const user = await authService.loginUserWithEmailAndPassword(email, password);
+  const user = isUser;
 
   setTimeout(async () => {
     try {
