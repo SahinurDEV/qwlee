@@ -3,6 +3,7 @@
 // the Switch to Selling / Switch to Buying toggle, so mobile users get
 // the same mode-driven navigation.
 
+import { useI18n } from "@/components/Context/I18nProvider";
 import { useState } from "react";
 import { Drawer, Dropdown, Space } from "antd";
 import Link from "next/link";
@@ -22,6 +23,7 @@ import QwleeLogo from "@/components/common/QwleeLogo";
 import Avatar from "@/components/common/Avatar";
 
 export default function MobileDrawer({ open, onClose }) {
+  const { t } = useI18n();
   const user = useUser();
   const router = useRouter();
   const pathname = usePathname();
@@ -193,7 +195,7 @@ export default function MobileDrawer({ open, onClose }) {
             onClick={() => go("/sign-in")}
             className="w-full text-left px-3 py-2 rounded-md text-sm text-gray-800 hover:bg-gray-50"
           >
-            Sign in
+            {t("signIn")}
           </button>
           <button
             type="button"
@@ -207,7 +209,7 @@ export default function MobileDrawer({ open, onClose }) {
 
       <div className="mt-5 pt-4 border-t border-gray-100">
         <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 px-1 mb-1">
-          Explore
+          {t("explore")}
         </div>
         <button
           type="button"
@@ -231,7 +233,7 @@ export default function MobileDrawer({ open, onClose }) {
             <div onClick={(e) => e.preventDefault()} className="cursor-pointer">
               <Space>
                 <div className="flex justify-between items-center gap-4 w-full text-sm text-gray-800">
-                  <span>Categories</span>
+                  <span>{t("categories")}</span>
                   {dropdownOpen ? <IoIosArrowDown /> : <MdArrowForwardIos />}
                 </div>
               </Space>

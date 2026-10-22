@@ -3,6 +3,7 @@
 // /v1/categories with their icons. Click-outside closes; clicking a
 // category routes to /gig?categories=NAME so the gig list filters.
 
+import { useI18n } from "@/components/Context/I18nProvider";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { IoChevronDown, IoChevronUp, IoAppsOutline } from "react-icons/io5";
@@ -10,6 +11,7 @@ import { base } from "@/lib/constant";
 import CategoryIcon from "@/components/common/CategoryIcon";
 
 export default function CategoriesMenu() {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [categories, setCategories] = useState([]);
   const rootRef = useRef(null);
@@ -59,7 +61,7 @@ export default function CategoriesMenu() {
         className="inline-flex items-center gap-1 px-3 py-2 rounded text-gray-700 hover:text-emerald-700 hover:bg-emerald-50 transition text-sm"
       >
         <IoAppsOutline className="w-4 h-4" />
-        Categories
+        {t("categories")}
         {open ? (
           <IoChevronUp className="w-4 h-4" />
         ) : (
