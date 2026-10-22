@@ -61,6 +61,7 @@ All Docker config lives in the root `.env` (see [.env.example](.env.example)).
 | `REQUEST_TTL_DAYS` | no | Days a buyer request stays open for offers (default 14) |
 | `ORDER_HOUSEKEEPING_MS` | no | Interval of the auto-complete / late-marking job (default 600000) |
 | `CANCEL_RESPONSE_HOURS` | no | Hours the other party has to answer a mutual cancellation request before it is auto-accepted (default 48) |
+| `PROMO_DAY_PRICE` | no | Price per day, in dollars, for promoting a gig (default 5) |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI` | optional | Google sign-in (see below) |
 | `UPLOAD_DIR`, `PRIVATE_UPLOAD_DIR` | no | Local upload folder (default `backend/uploads`) and the non-public folder for ID documents (default `<UPLOAD_DIR>/.private`) |
 | `SECOND_APPROVAL_OVER` | no | Initial value of the admin setting: refunds/payouts above this amount need a second admin (0 = off) |
@@ -127,6 +128,10 @@ Coupons are managed under Coupons in the admin panel (finance role). The platfor
 3. If the gig has requirement questions, the buyer answers them; the delivery clock starts then.
 4. Seller delivers; buyer accepts or requests a revision (limited by the package).
 5. On acceptance, or `AUTO_COMPLETE_DAYS` after delivery, escrow is released to the seller minus the platform fee. Cancellations and dispute refunds return escrow to the buyer. A seller can cancel at any time and a buyer can cancel a late order; otherwise the buyer sends a cancellation request that the seller accepts or declines (auto-accepted after `CANCEL_RESPONSE_HOURS`).
+
+### Promoted gigs
+
+Sellers can promote an active gig from the Promote link in their gig table, or at `/promotions`. Each day costs `PROMO_DAY_PRICE` and is paid from the seller's balance up front. Buying again for the same gig extends the promotion. On page 1 of a marketplace search, up to two promoted gigs that match the search are shown in a "Sponsored" row above the results, with the slot rotating among them. Sponsored impressions and clicks are counted for each promotion. If a seller stops a promotion early, whole unused days go back to their balance. The demo seller (`seller@example.com`) is seeded with a $250 balance.
 
 Categories have one level of subcategories (`GET /v1/categories` lists top-level; `?parentId=<id>` lists one parent's subcategories; `?level=all` lists both). Admins manage them on the Categories page. The marketplace can be filtered by subcategory (`/gig?subCategory=<id>`) and delivery time (`delivery=<days>`).
 

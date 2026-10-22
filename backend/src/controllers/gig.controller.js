@@ -114,10 +114,18 @@ const getGigs = catchAsync(async (req, res) => {
   // gig detail page or see their own gigs on their profile.
   const isLookup = !!filter.slug;
   const excludeUserId = !isLookup ? req.user?.id : undefined;
-  const result = await gigService.queryGigs(filter, options, {
-    excludeUserId,
-    viewer: req.user ? { id: String(req.user.id), role: req.user.role } : null,
-  });
+  const viewer = req.user ? { id: String(req.user.id), role: req.user.role } : null;
+  const searchFilter = { ...filter };
+  const result = await gigService.queryGigs(filter, options, { excludeUserId, viewer });
+  // Sponsored gigs: up to two promoted gigs matching the same search, on
+  // the first page of a marketplace search only.
+  if (!isLookup && !searchFilter.userId && Number(options.page || 1) === 1) {
+    const promo = require("../services/promotion.service");
+    const pool = await gigService.queryGigs(searchFilter, { limit: 20 }, { excludeUserId, viewer: null, promotedOnly: true });
+    const picked = (pool.results || []).map((g) => (g.toJSON ? g.toJSON() : g)).sort(() => Math.random() - 0.5).slice(0, promo.SLOTS);
+    result.promoted = picked;
+    if (picked.length) promo.track(picked.map((g) => g.id || g._id), "impressions").catch(() => {});
+  }
   res.status(httpStatus.OK).json(
     response({
       message: 'All Gigs',
