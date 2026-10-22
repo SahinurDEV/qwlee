@@ -14,7 +14,7 @@ router.get("/private/:name", (req, res) => {
   res.set("X-Content-Type-Options", "nosniff");
   res.set("Cross-Origin-Resource-Policy", "cross-origin");
   res.set("Referrer-Policy", "no-referrer");
-  res.sendFile(p);
+  res.sendFile(p, { dotfiles: "allow" });
 });
 
 module.exports = router;

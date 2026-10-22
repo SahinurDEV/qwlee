@@ -27,7 +27,7 @@ test("ID documents are private and only reachable through signed, expiring links
   const me = (list.data?.attributes ?? list.data).results.find((u) => u.email === "buyer@example.com");
   const url = me.verification.frontUrl;
   assert.match(url, /\/v1\/files\/private\/[a-f0-9]{32}\.png\?exp=\d+&sig=[a-f0-9]{64}$/);
-  const local = url.replace(/^https?:\/\/[^/]+/, API);
+  const local = url.replace(/^.*?(?=\/v1\/files\/)/, API);
   const ok = await fetch(local);
   assert.equal(ok.status, 200);
   assert.equal(ok.headers.get("cache-control"), "private, no-store");
