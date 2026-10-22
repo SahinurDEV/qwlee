@@ -71,7 +71,8 @@ app.use(
         return cb(null, config.env !== "production");
       }
       if (corsOrigins.includes(origin)) return cb(null, true);
-      return cb(new Error(`CORS: origin ${origin} not allowed`));
+      // 403, not 500: a disallowed origin is the caller's problem.
+      return cb(new ApiError(httpStatus.FORBIDDEN, `CORS: origin ${origin} not allowed`));
     },
     credentials: true,
   })
@@ -93,7 +94,9 @@ app.use((err, req, res, next) => {
     console.error("Bad JSON:", err.message);
     return res.status(400).send({ message: "Invalid JSON" });
   }
-  next();
+  // Pass other errors on (e.g. a refused CORS origin). Calling next()
+  // without the error used to run the route with no parsed body (500).
+  next(err);
 });
 
 // NOTE: previously `app.use(express.static("public"))` served local
