@@ -25,5 +25,12 @@ router.post('/refresh-tokens', validate(authValidation.refreshTokens), authContr
 router.post('/delete-me',auth('user'),validate(authValidation.deleteMe),authController.deleteMe);
 
 
+// A banned user appeals with the token from their refused sign-in.
+router.post("/appeal", require("../../utils/catchAsync")(async (req, res) => {
+  const { appealToken, message } = req.body || {};
+  const a = await require("../../services/moderation.service").createAppeal(appealToken, message);
+  res.status(201).json({ code: 201, message: "Appeal sent. We'll email you when it has been reviewed.", data: { attributes: a } });
+}));
+
 module.exports = router;
 

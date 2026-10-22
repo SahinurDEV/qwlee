@@ -58,6 +58,7 @@ import Team from "../dashboard/control/Team";
 import Security from "../dashboard/control/Security";
 import Approvals from "../dashboard/control/Approvals";
 import RiskFlags from "../dashboard/control/RiskFlags";
+import Appeals from "../dashboard/control/Appeals";
 import Newsletter from "../dashboard/control/Newsletter";
 import Coupons from "../dashboard/control/Coupons";
 import HelpArticles from "../dashboard/control/HelpArticles";
@@ -153,6 +154,7 @@ export const router = createBrowserRouter([
       { path: "security", element: <Security /> },
       { path: "approvals", element: <Approvals /> },
       { path: "risk-flags", element: <RiskFlags /> },
+      { path: "appeals", element: <Appeals /> },
       { path: "newsletter", element: <Newsletter /> },
       { path: "coupons", element: <Coupons /> },
       { path: "help", element: <HelpArticles /> },
