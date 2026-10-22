@@ -82,6 +82,9 @@ const gigSchema = mongoose.Schema(
     // aren't stored here — they're derived live from the Payment
     // collection so the count stays correct even if an order is
     // refunded / un-cancelled.
+    // Cached from reviews / completed orders (services/gigStats.service.js).
+    rating: { avg: { type: Number, default: 0, index: true }, count: { type: Number, default: 0 } },
+    ordersCompleted: { type: Number, default: 0, index: true },
     stats: {
       impressions: { type: Number, default: 0 },
       clicks: { type: Number, default: 0 },

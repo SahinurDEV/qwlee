@@ -122,6 +122,15 @@ const queryGigs = async (filter, options, { excludeUserId, viewer } = {}) => {
   }
 
   // Loop through remaining gig-level fields
+  // Gig-level quality filters.
+  const gigNum = (v, lo, hi) => (v === undefined || v === "" || !Number.isFinite(Number(v)) ? null : Math.min(hi, Math.max(lo, Number(v))));
+  const minGigRating = gigNum(filter.minGigRating, 0, 5);
+  if (minGigRating) query["rating.avg"] = { $gte: minGigRating };
+  const minReviews = gigNum(filter.minReviews, 0, 100000);
+  if (minReviews) query["rating.count"] = { $gte: minReviews };
+  if (filter.hasVideo === "true" || filter.hasVideo === true) query.video = { $nin: ["", null] };
+  for (const k of ["minGigRating", "minReviews", "hasVideo"]) delete filter[k];
+
   const seller = ["language", "country", "online", "verifiedOnly", "minRating", "level"];
   for (const key of Object.keys(filter)) {
     if (seller.includes(key)) continue;
