@@ -5,7 +5,9 @@ import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianG
 import PageHeader from "../../common/PageHeader";
 import Card from "../../common/Card";
 import Kpi from "../../common/Kpi";
-import { useAdminQuery } from "../../utils/adminApi";
+import toast from "react-hot-toast";
+import Button from "../../common/Button";
+import { adminFetch, useAdminQuery } from "../../utils/adminApi";
 import { formatMoney, formatNumber } from "../../utils/format";
 import { ErrorNote, Tabs } from "./ui";
 
@@ -53,6 +55,63 @@ export default function Analytics() {
           </div>
         </div>
       ) : null}
+      <Growth days={days} />
+    </div>
+  );
+}
+
+// Funnels (signups in the selected window), monthly signup cohorts and
+// the weekly KPI email.
+function Growth({ days }) {
+  const { data: f } = useAdminQuery(`/admin/kpi/funnel?days=${days}`);
+  const { data: c } = useAdminQuery("/admin/kpi/cohorts?months=6");
+  const { data: w } = useAdminQuery("/admin/kpi/weekly");
+  const [sending, setSending] = useState(false);
+  const send = async () => {
+    setSending(true);
+    try { const r = await adminFetch("/admin/jobs/kpi-email", { method: "POST" }); toast.success(`Report sent to ${r.recipients} super admin(s)`); }
+    catch (e) { toast.error(e.message); } finally { setSending(false); }
+  };
+  const Funnel = ({ title, steps }) => (
+    <Card title={title}>
+      <div className="space-y-2" data-testid={`funnel-${title}`}>
+        {(steps || []).map((s) => (
+          <div key={s.label}>
+            <div className="flex justify-between text-sm"><span>{s.label}</span><span><b>{formatNumber(s.count)}</b> <span className="text-ink-400">· {s.ofFirst}%</span></span></div>
+            <div className="h-2 rounded bg-ink-100"><div className="h-2 rounded bg-emerald-600" style={{ width: `${s.ofFirst}%` }} /></div>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+  const heat = (v) => `rgba(5,150,105,${Math.min(1, v / 60) * 0.85 + 0.05})`;
+  return (
+    <div className="space-y-4 mt-6">
+      <div className="grid md:grid-cols-2 gap-4">
+        <Funnel title="Buyer funnel" steps={f?.buyer} />
+        <Funnel title="Seller funnel" steps={f?.seller} />
+      </div>
+      <Card title="Buyer cohorts" subtitle="Share of each month's new buyers who placed an order in month 0, 1, 2… after signing up">
+        <div className="overflow-x-auto">
+          <table className="text-xs" data-testid="cohorts">
+            <thead><tr><th className="text-left pr-3">Signed up</th><th className="pr-3">Users</th>{(c?.rows || []).map((_, i) => <th key={i} className="px-2">M{i}</th>)}</tr></thead>
+            <tbody>{(c?.rows || []).map((r) => (
+              <tr key={r.month}><td className="pr-3 py-1">{r.month}</td><td className="pr-3 text-center">{r.size}</td>
+                {r.retention.map((v, i) => <td key={i} className="px-2 py-1 text-center" style={{ background: heat(v), color: v > 35 ? "#fff" : "#111" }}>{v}%</td>)}
+              </tr>))}</tbody>
+          </table>
+        </div>
+      </Card>
+      <Card title="Weekly KPI report" subtitle="Emailed to super admins every Monday (UTC). Last 7 days vs the 7 before." actions={<Button size="sm" loading={sending} onClick={send}>Send now</Button>}>
+        {w ? (
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-3 text-sm" data-testid="weekly">
+            {Object.entries({ signups: "Sign-ups", orders: "Orders", gmv: "GMV", completed: "Completed", fees: "Fees", disputes: "Disputes" }).map(([k, l]) => (
+              <div key={k}><div className="text-ink-500 text-xs">{l}</div><div className="font-semibold">{["gmv", "fees"].includes(k) ? formatMoney(w.current[k]) : formatNumber(w.current[k])}</div>
+                <div className="text-xs text-ink-400">{w.change[k] === null ? "—" : `${w.change[k] > 0 ? "+" : ""}${w.change[k]}%`}</div></div>
+            ))}
+          </div>
+        ) : null}
+      </Card>
     </div>
   );
 }

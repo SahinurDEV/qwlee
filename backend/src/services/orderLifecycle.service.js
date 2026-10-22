@@ -400,7 +400,8 @@ const runHousekeeping = async () => {
   const subscriptions = await require("./subscription.service").billDue();
   const announcements = await require("./announcements.service").sendDue();
   const bansLifted = await require("./moderation.service").liftExpiredBans();
-  return { autoCompleted: due.length, markedLate: late.modifiedCount || 0, autoCancelled, subscriptions, bansLifted, announcements };
+  const kpiEmail = await require("./kpi.service").maybeSendWeekly().catch(() => ({ sent: false }));
+  return { kpiEmail, autoCompleted: due.length, markedLate: late.modifiedCount || 0, autoCancelled, subscriptions, bansLifted, announcements };
 };
 
 let timer = null;
