@@ -7,7 +7,7 @@ import { Toaster } from "sonner";
 import { MdError } from "react-icons/md";
 import { SocketProvider } from "@/components/Context/SocketProvider";
 
-export const metadata = {
+const BASE_METADATA = {
   title: {
     default: "Qwlee — Modern Freelance Marketplace",
     template: "%s · Qwlee",
@@ -37,6 +37,51 @@ export const metadata = {
       "Hire vetted freelance experts on Qwlee. Web, design, video, AI, and more.",
   },
 };
+
+// Admin SEO settings (Settings > SEO) override the defaults. The server
+// reads them from the API (INTERNAL_API_URL inside Docker), cached 60s;
+// if the API is unreachable the defaults above are used.
+async function siteSettings() {
+  const bases = [process.env.INTERNAL_API_URL, process.env.NEXT_PUBLIC_BACKEND_API_URL].filter(Boolean);
+  for (const b of bases) {
+    try {
+      const r = await fetch(`${b.replace(/\/+$/, "")}/v1/info/site`, {
+        next: { revalidate: 60 },
+        signal: AbortSignal.timeout(2000),
+        headers: { "ngrok-skip-browser-warning": "1" },
+      });
+      if (r.ok) return (await r.json())?.data?.attributes || null;
+    } catch {}
+  }
+  return null;
+}
+
+export async function generateMetadata() {
+  const s = await siteSettings();
+  const name = s?.branding?.siteName || "Qwlee";
+  const title = s?.seo?.title;
+  const description = s?.seo?.description;
+  const image = s?.seo?.ogImage;
+  return {
+    ...BASE_METADATA,
+    applicationName: name,
+    title: { default: title || BASE_METADATA.title.default, template: `%s · ${name}` },
+    description: description || BASE_METADATA.description,
+    openGraph: {
+      ...BASE_METADATA.openGraph,
+      siteName: name,
+      ...(title ? { title } : {}),
+      ...(description ? { description } : {}),
+      ...(image ? { images: [image] } : {}),
+    },
+    twitter: {
+      ...BASE_METADATA.twitter,
+      ...(title ? { title } : {}),
+      ...(description ? { description } : {}),
+      ...(image ? { images: [image] } : {}),
+    },
+  };
+}
 
 export default function RootLayout({ children }) {
   return (

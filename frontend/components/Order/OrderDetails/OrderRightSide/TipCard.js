@@ -5,14 +5,17 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { IoHeartOutline } from "react-icons/io5";
 import { useTipOrderMutation } from "@/app/redux/features/order/buyerOrderApi";
+import useSiteConfig, { featureOn } from "@/hooks/useSiteConfig";
 
 export default function TipCard({ order, orderId }) {
   const [amount, setAmount] = useState("");
   const [tipOrder, { isLoading }] = useTipOrderMutation();
+  const site = useSiteConfig();
   const tips = order?.tips || [];
   const doneAt = new Date(order?.completedAt || order?.updatedAt || 0).getTime();
   const open = order?.escrow?.status === "released" && Date.now() - doneAt < 30 * 86400000;
   if (!open && !tips.length) return null;
+  if (!featureOn(site, "tips") && !tips.length) return null;
   const price = Number(order?.price || 0);
   const max = price < 25 ? 25 : price;
   const presets = [5, 10, 20].filter((v) => v <= max);

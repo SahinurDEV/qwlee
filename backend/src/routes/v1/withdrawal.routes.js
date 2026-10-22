@@ -12,12 +12,15 @@ router
   .get(auth("admin"), withdrawalController.getSingleWithdrawal);
 router
   .route("/")
-  .get(withdrawalController.getWithdrawals)
+  // Admin-only: this lists every user's payout bank details (was public).
+  .get(auth("admin"), withdrawalController.getWithdrawals)
   .post(auth("freelancer"), withdrawalController.createWithdrawal);
 
 router
   .route("/:withdrawalId")
-  .patch(auth("common"), withdrawalController.withdrawalCancel)
-  .post(auth("common"), withdrawalController.withdrawalApprove);
+  // Admin-only: approving/declining payouts. (Was "common", which let
+  // any signed-in user approve or repeatedly decline-and-refund.)
+  .patch(auth("admin"), withdrawalController.withdrawalCancel)
+  .post(auth("admin"), withdrawalController.withdrawalApprove);
 
 module.exports = router;

@@ -5,3 +5,6 @@ const url =
   import.meta.env.VITE_API_BASE_URL || 'http://localhost:7171';
 
 export default url;
+
+// Public marketplace URL (for "open on site" links).
+export const frontendUrl = (import.meta.env.VITE_FRONTEND_URL || "http://localhost:8000").replace(/\/+$/, "");

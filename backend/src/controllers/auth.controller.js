@@ -18,7 +18,9 @@ const { isReserved } = require("../utils/reservedUsernames");
 
 const { deriveUniqueUsername } = require("../utils/deriveUsername");
 
+const siteSettings = require("../services/siteSettings.service");
 const register = catchAsync(async (req, res) => {
+  await siteSettings.assertFeature("signups", "Sign-up");
   // Pick the final username. Client-provided wins (after format + reserved
   // + uniqueness checks); otherwise we derive a unique one from the email.
   if (req.body.username) {
@@ -142,11 +144,12 @@ const googleAuth = require("../services/googleAuth.service");
 
 const googleConfig = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).json(
-    response({ message: "Google sign-in", status: "OK", statusCode: httpStatus.OK, data: { enabled: googleAuth.isEnabled() } })
+    response({ message: "Google sign-in", status: "OK", statusCode: httpStatus.OK, data: { enabled: googleAuth.isEnabled() && (await siteSettings.feature("googleLogin")) } })
   );
 });
 
 const googleStart = catchAsync(async (req, res) => {
+  await siteSettings.assertFeature("googleLogin", "Google sign-in");
   const { url, nonce } = googleAuth.startAuth({ from: req.query.from });
   res.cookie(googleAuth.STATE_COOKIE, nonce, {
     httpOnly: true,

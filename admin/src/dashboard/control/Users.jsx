@@ -1,0 +1,165 @@
+// /dashboard/users — search every account and manage it: edit profile,
+// verify email, ban/unban, password reset, sign out everywhere, change
+// role (super admins), and a read-only "view as user".
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { Modal } from "antd";
+import toast from "react-hot-toast";
+import { IoSearch, IoEyeOutline, IoCreateOutline } from "react-icons/io5";
+import PageHeader from "../../common/PageHeader";
+import Card from "../../common/Card";
+import Button from "../../common/Button";
+import StatusPill from "../../common/StatusPill";
+import { adminFetch, qs, useAdminQuery } from "../../utils/adminApi";
+import { formatDate, formatMoney } from "../../utils/format";
+import { act, ErrorNote, Field, input, Pager, select, Tabs, Td, Th, Empty } from "./ui";
+
+const ROLES = [
+  { v: "", label: "All" },
+  { v: "buyer", label: "Buyers" },
+  { v: "freelancer", label: "Sellers" },
+  { v: "admin", label: "Admins" },
+];
+
+export default function Users() {
+  const [search, setSearch] = useState("");
+  const [term, setTerm] = useState("");
+  const [role, setRole] = useState("");
+  const [status, setStatus] = useState("");
+  const [page, setPage] = useState(1);
+  const [editing, setEditing] = useState(null);
+  const { data, loading, error, reload } = useAdminQuery(`/admin/users${qs({ search: term, role, status, page, limit: 15 })}`);
+  const me = useAdminQuery("/admin/me");
+  const isSuper = me.data?.adminRole === "super";
+
+  return (
+    <div>
+      <PageHeader title="Users" subtitle="Find any account and manage it. Every action is permission-checked and recorded in the audit log." />
+      <Card>
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-4">
+          <Tabs tabs={ROLES} value={role} onChange={(v) => { setRole(v); setPage(1); }} />
+          <div className="flex gap-2">
+            <select className={select + " w-40"} value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }}>
+              <option value="">Any status</option>
+              <option value="banned">Banned</option>
+              <option value="unverified">Email unverified</option>
+            </select>
+            <form onSubmit={(e) => { e.preventDefault(); setTerm(search); setPage(1); }} className="relative">
+              <IoSearch className="absolute left-3 top-2.5 text-ink-400" />
+              <input className={input + " pl-9 w-64"} placeholder="Name, email or username" value={search} onChange={(e) => setSearch(e.target.value)} />
+            </form>
+          </div>
+        </div>
+        <ErrorNote error={error} />
+        {loading && !data ? <Empty>Loading…</Empty> : null}
+        {data?.results?.length === 0 ? <Empty>No users match.</Empty> : null}
+        {data?.results?.length ? (
+          <div className="overflow-x-auto">
+            <table className="w-full" data-testid="users-table">
+              <thead className="border-b border-ink-100">
+                <tr><Th>User</Th><Th>Role</Th><Th>Status</Th><Th>Balance</Th><Th>Joined</Th><Th className="text-right">Actions</Th></tr>
+              </thead>
+              <tbody className="divide-y divide-ink-100">
+                {data.results.map((u) => (
+                  <tr key={u.id}>
+                    <Td>
+                      <div className="font-medium text-ink-900">{u.fullName || u.username}</div>
+                      <div className="text-xs text-ink-500">{u.email}</div>
+                    </Td>
+                    <Td>
+                      <span className="capitalize">{u.role === "freelancer" ? "seller" : u.role}</span>
+                      {u.role === "admin" ? <span className="ml-1 text-xs text-ink-500">({u.adminRole || "super"})</span> : null}
+                    </Td>
+                    <Td>
+                      <div className="flex flex-wrap gap-1">
+                        {u.isBan ? <StatusPill status="error" label="Banned" /> : <StatusPill status="ok" label="Active" />}
+                        {u.isEmailVerified ? null : <StatusPill status="warning" label="Unverified" />}
+                      </div>
+                    </Td>
+                    <Td>{formatMoney(u.balance || 0, { maxFractionDigits: 2 })}</Td>
+                    <Td>{formatDate(u.createdAt)}</Td>
+                    <Td className="text-right">
+                      <div className="flex flex-wrap justify-end gap-1">
+                        <Button as={Link} to={`/dashboard/users/${u.id}/view`} size="sm" variant="secondary" iconLeft={IoEyeOutline}>View as</Button>
+                        <Button size="sm" variant="secondary" iconLeft={IoCreateOutline} onClick={() => setEditing(u)}>Manage</Button>
+                      </div>
+                    </Td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : null}
+        <Pager data={data} page={page} setPage={setPage} />
+      </Card>
+      {editing ? <ManageUser user={editing} isSuper={isSuper} onClose={() => setEditing(null)} onChanged={() => { reload(); }} /> : null}
+    </div>
+  );
+}
+
+function ManageUser({ user, isSuper, onClose, onChanged }) {
+  const [form, setForm] = useState({ fullName: user.fullName || "", username: user.username || "", email: user.email || "", isEmailVerified: !!user.isEmailVerified });
+  const [role, setRole] = useState(user.role);
+  const [adminRole, setAdminRole] = useState(user.adminRole || "super");
+  const [saving, setSaving] = useState(false);
+  const save = async () => {
+    setSaving(true);
+    try {
+      await adminFetch(`/admin/users/${user.id}`, { method: "PATCH", body: form });
+      toast.success("Profile saved");
+      onChanged();
+    } catch (e) {
+      toast.error(e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+  const done = () => { onChanged(); onClose(); };
+  return (
+    <Modal open onCancel={onClose} footer={null} title={`Manage ${user.fullName || user.email}`} width={640} centered>
+      <div className="space-y-5" data-testid="manage-user">
+        <section className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Field label="Full name"><input className={input} value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} /></Field>
+          <Field label="Username"><input className={input} value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} /></Field>
+          <Field label="Email"><input className={input} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></Field>
+          <label className="flex items-center gap-2 text-sm mt-6">
+            <input type="checkbox" checked={form.isEmailVerified} onChange={(e) => setForm({ ...form, isEmailVerified: e.target.checked })} /> Email verified
+          </label>
+          <div className="sm:col-span-2"><Button loading={saving} onClick={save}>Save profile</Button></div>
+        </section>
+        <section className="border-t border-ink-100 pt-4">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-500 mb-2">Account actions</h3>
+          <div className="flex flex-wrap gap-2">
+            {user.isBan ? (
+              <Button size="sm" variant="secondary" onClick={() => act({ title: "Unban this user?", path: `/admin/users/${user.id}/unban`, method: "PATCH", done, success: "User unbanned" })}>Unban</Button>
+            ) : (
+              <Button size="sm" variant="danger" onClick={() => act({ title: "Ban this user", description: "They will be signed out and blocked. The reason is emailed to them.", askReason: "Reason shown to the user", path: `/admin/users/${user.id}/ban`, method: "PATCH", done, success: "User banned" })}>Ban</Button>
+            )}
+            <Button size="sm" variant="secondary" onClick={() => act({ title: "Send a password reset email?", description: "They receive a one-time code to choose a new password.", path: `/admin/users/${user.id}/reset-password`, done, success: "Reset email sent" })}>Send password reset</Button>
+            <Button size="sm" variant="secondary" onClick={() => act({ title: "Sign this user out everywhere?", description: "All their current sessions end immediately.", path: `/admin/users/${user.id}/logout-all`, done, success: "Signed out everywhere" })}>Sign out everywhere</Button>
+          </div>
+        </section>
+        <section className="border-t border-ink-100 pt-4">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-500 mb-2">Role {isSuper ? "" : "(super admins only)"}</h3>
+          <div className="flex flex-wrap items-end gap-2">
+            <Field label="Account type">
+              <select disabled={!isSuper} className={select + " w-40"} value={role} onChange={(e) => setRole(e.target.value)}>
+                <option value="buyer">Buyer</option>
+                <option value="freelancer">Seller</option>
+                <option value="admin">Admin</option>
+              </select>
+            </Field>
+            {role === "admin" ? (
+              <Field label="Admin role">
+                <select disabled={!isSuper} className={select + " w-40"} value={adminRole} onChange={(e) => setAdminRole(e.target.value)}>
+                  {["super", "moderator", "support", "finance"].map((r) => <option key={r} value={r}>{r}</option>)}
+                </select>
+              </Field>
+            ) : null}
+            <Button size="md" variant="secondary" disabled={!isSuper} onClick={() => act({ title: "Change role?", description: "The user is signed out and gets the new access on next sign-in.", path: `/admin/users/${user.id}/role`, method: "PATCH", body: { role, ...(role === "admin" ? { adminRole } : {}) }, done, success: "Role updated" })}>Apply role</Button>
+          </div>
+        </section>
+      </div>
+    </Modal>
+  );
+}

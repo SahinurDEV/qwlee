@@ -14,7 +14,11 @@ const jwtVerify = async (payload, done) => {
       throw new Error("Invalid token type");
     }
     const user = await User.findById(payload.sub);
-    if (!user) {
+    if (!user || user.isBan) {
+      return done(null, false);
+    }
+    // "Sign out everywhere" (admin action) invalidates older tokens.
+    if (user.tokensValidAfter && payload.iat * 1000 <= new Date(user.tokensValidAfter).getTime()) {
       return done(null, false);
     }
     done(null, user);

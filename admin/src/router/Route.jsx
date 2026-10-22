@@ -46,6 +46,15 @@ import Conversations from "../dashboard/menu/Conversations";
 import SearchLogs from "../dashboard/menu/SearchLogs";
 import SellerLevels from "../dashboard/menu/SellerLevels";
 import Disputes from "../dashboard/menu/Disputes";
+import Users from "../dashboard/control/Users";
+import UserView from "../dashboard/control/UserView";
+import Escrow from "../dashboard/control/Escrow";
+import Moderation from "../dashboard/control/Moderation";
+import SiteSettings from "../dashboard/control/SiteSettings";
+import Broadcast from "../dashboard/control/Broadcast";
+import Analytics from "../dashboard/control/Analytics";
+import AuditLog from "../dashboard/control/AuditLog";
+import Team from "../dashboard/control/Team";
 
 export const router = createBrowserRouter([
   {
@@ -126,6 +135,15 @@ export const router = createBrowserRouter([
       { path: "searches", element: <SearchLogs /> },
       { path: "seller-levels", element: <SellerLevels /> },
       { path: "disputes", element: <Disputes /> },
+      { path: "users", element: <Users /> },
+      { path: "users/:userId/view", element: <UserView /> },
+      { path: "escrow", element: <Escrow /> },
+      { path: "moderation", element: <Moderation /> },
+      { path: "site-settings", element: <SiteSettings /> },
+      { path: "broadcast", element: <Broadcast /> },
+      { path: "analytics", element: <Analytics /> },
+      { path: "audit", element: <AuditLog /> },
+      { path: "team", element: <Team /> },
     ],
   },
 ]);

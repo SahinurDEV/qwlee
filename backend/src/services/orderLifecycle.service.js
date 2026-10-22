@@ -25,6 +25,14 @@ const { isAway } = require("../utils/availability");
 
 const AUTO_COMPLETE_DAYS = Number(process.env.AUTO_COMPLETE_DAYS) || 3;
 const OPEN = ["active", "late"];
+// Admin setting (Settings > Marketplace) with the env value as default.
+const autoCompleteDays = async () => {
+  try {
+    return (await require("./siteSettings.service").get()).marketplace.autoCompleteDays || AUTO_COMPLETE_DAYS;
+  } catch {
+    return AUTO_COMPLETE_DAYS;
+  }
+};
 const round2 = (n) => Math.round(Number(n) * 100) / 100;
 
 // "3 revisions" / "Unlimited revisions" in a package's feature list.
@@ -309,7 +317,7 @@ const recordDelivery = async (orderId, userId) => {
     state: "submitted",
     count: (order.delivery?.count || 0) + 1,
     lastDeliveredAt: now,
-    autoCompleteAt: new Date(now.getTime() + AUTO_COMPLETE_DAYS * 86400000),
+    autoCompleteAt: new Date(now.getTime() + (await autoCompleteDays()) * 86400000),
   };
   await order.save();
   return order;

@@ -74,6 +74,7 @@ async function sendEmail(to, subject, html) {
       logger.warn(`Email to ${to} skipped: SMTP is not configured`);
       return false;
     }
+    ({ subject, html } = await applyBranding(subject, html));
     const { transport, from } = await getTransport();
     await transport.sendMail({ from, to, subject, html });
     return true;
@@ -81,6 +82,27 @@ async function sendEmail(to, subject, html) {
     logger.warn(`Email to ${to} failed: ${err.message}`);
     return false;
   }
+}
+
+// Admin branding (Settings > Branding / Email): site name, logo and an
+// optional footer line are applied to every outgoing email.
+async function applyBranding(subject, html) {
+  try {
+    const site = await require("./siteSettings.service").get();
+    const name = site.branding.siteName;
+    if (name && name !== "Qwlee") {
+      subject = subject.replace(/Qwlee/g, name);
+      html = html.replace(/Qwlee/g, escapeHtml(name));
+    }
+    if (site.branding.logoUrl && /^https?:\/\//.test(site.branding.logoUrl)) html = html.split(LOGO_URL).join(escapeHtml(site.branding.logoUrl));
+    if (site.email.footerText) {
+      const note = `<p style="margin:16px auto 0;max-width:560px;font-size:12px;color:#94a3b8;text-align:center;font-family:Arial,sans-serif;">${escapeHtml(site.email.footerText)}</p>`;
+      html = html.includes("</body>") ? html.replace("</body>", `${note}</body>`) : html + note;
+    }
+  } catch (e) {
+    logger.warn(`email branding skipped: ${e.message}`);
+  }
+  return { subject, html };
 }
 
 // ---------------------------------------------------------------------------
@@ -629,6 +651,24 @@ async function sendAccountBanned(to, { recipientName, reason }) {
   );
 }
 
+// Admin broadcast. Returns true when handed to SMTP.
+async function sendAnnouncement(to, { recipientName, title, message, link }) {
+  const url = link ? (link.startsWith("/") ? `${FRONTEND_URL}${link}` : link) : `${FRONTEND_URL}/notifications`;
+  return sendEmail(
+    to,
+    title,
+    emailShell({
+      preheader: title,
+      heroEyebrow: "Announcement",
+      heroTitle: escapeHtml(title),
+      intro: `Hi ${escapeHtml(recipientName || "there")},`,
+      bodyHtml: `<p style="margin:0;font-size:15px;line-height:1.6;color:#334155;white-space:pre-line;">${escapeHtml(message)}</p>`,
+      cta: { label: "Open Qwlee", url },
+      accent: "violet",
+    })
+  );
+}
+
 async function sendVerificationApproved(to, { recipientName }) {
   await sendEmail(
     to,
@@ -665,6 +705,7 @@ module.exports = {
   // Auth
   sendEmailVerification,
   sendResetPasswordEmail,
+  sendAnnouncement,
   sendVerificationEmail,
   // Orders
   sendOrderConfirmedBuyer,

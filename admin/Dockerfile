@@ -5,6 +5,8 @@ RUN npm ci
 # VITE_* values are inlined into the bundle at build time.
 ARG VITE_API_BASE_URL=http://localhost:7171
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+ARG VITE_FRONTEND_URL=http://localhost:8000
+ENV VITE_FRONTEND_URL=$VITE_FRONTEND_URL
 COPY . .
 RUN npm run build
 
