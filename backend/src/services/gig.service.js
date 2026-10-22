@@ -382,6 +382,9 @@ const updateGigById = async (gigId, data, images, actor) => {
   // Append the new images to the existing images array
   if (images && images.length > 0) {
     gig.images = gig.images ? gig.images : [];
+    if (gig.images.length + images.length > 6) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "A gig can have at most 6 images");
+    }
     gig.images.push(...images); // Add multiple images to the existing array
   }
 
