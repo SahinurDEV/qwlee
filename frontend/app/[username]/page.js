@@ -29,9 +29,9 @@ export async function generateMetadata({ params }) {
   const { username } = await params;
   const user = await fetchProfile(username);
   if (!user) {
-    return { title: `@${username} not found · Qwlee` };
+    return { title: `@${username} not found` };
   }
-  // Layout exports `template: "%s · Qwlee"` — don't repeat the brand here.
+  // Layout exports `template: "%s"` — don't repeat the brand here.
   const title = `${user.fullName} (@${user.username})`;
   const description =
     user.intro ||

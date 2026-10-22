@@ -36,11 +36,14 @@ function readStored() {
 export default function useViewMode(user) {
   // SSR-safe: start with the role-derived default. After mount, hydrate
   // from localStorage so a user who toggled previously keeps their choice.
-  const [mode, setMode] = useState(() => defaultFromRole(user?.role));
+  // `null` until we know who is signed in, so pages don't fire seller (or
+  // buyer) API calls for the wrong account during the first render.
+  const [mode, setMode] = useState(null);
 
   useEffect(() => {
+    if (!user?.role) return;
     const stored = readStored();
-    setMode(stored || defaultFromRole(user?.role));
+    setMode(stored || defaultFromRole(user.role));
   }, [user?.role]);
 
   useEffect(() => {
@@ -65,7 +68,7 @@ export default function useViewMode(user) {
     setViewMode(mode === SELLING ? BUYING : SELLING);
   }, [mode, setViewMode]);
 
-  return { mode, isSelling: mode === SELLING, isBuying: mode === BUYING, setViewMode, toggleViewMode };
+  return { mode, ready: mode !== null, isSelling: mode === SELLING, isBuying: mode === BUYING, setViewMode, toggleViewMode };
 }
 
 export function clearViewMode() {

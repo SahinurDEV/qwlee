@@ -15,7 +15,7 @@ const Testimonials = () => {
     <div className="my-10 ">
       <div className="container">
         <div className="flex flex-col mx-auto items-center">
-          <h1 className="text-center text-3xl font-bold">Testimonials</h1>
+          <h2 className="text-center text-3xl font-bold">Testimonials</h2>
           <Image
             width={350}
             height={34}
@@ -71,7 +71,7 @@ const TestimonialsCard = ({ data }) => {
         alt="test"
         className="w-[100px] h-[100px] mt-5 rounded-full ring-primary ring-2"
       />
-      <h1 className="text-[22px] py-5 font-bold text-primary">Ed Bagley</h1>
+      <h2 className="text-[22px] py-5 font-bold text-primary">Ed Bagley</h2>
       <p className="text-center">
         Director of Product Marketing, O.C. Tanner Company
       </p>

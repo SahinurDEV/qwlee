@@ -4,7 +4,7 @@ import Link from "next/link";
 import cancelImage from '@/assest/payment/cancel.gif'
 
 export const metadata = {
-  title: "Cancel Payment | Qwlee",
+  title: "Cancel Payment",
   description: "Cancel Payment",
 }
 const page = () => {

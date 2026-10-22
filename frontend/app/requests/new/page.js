@@ -1,7 +1,7 @@
 import PrimaryLayout from "@/components/Layout/PrimaryLayout";
 import NewRequest from "@/components/Requests/NewRequest";
 
-export const metadata = { title: "Post a request | Qwlee" };
+export const metadata = { title: "Post a request" };
 
 export default function Page() {
   

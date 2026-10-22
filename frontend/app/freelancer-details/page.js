@@ -3,9 +3,7 @@ import PrimaryLayout from '@/components/Layout/PrimaryLayout';
 import React from 'react';
 
 export const metadata = {
-    title: "Freelancer Details | Qwlee",
-    description:
-        "Company Number: (781) 316-0189, and Company Email: e-mail such as info@qwlee.com",
+    title: "Freelancer Details",
 }
 const Page = ({searchParams}) => {
     return (

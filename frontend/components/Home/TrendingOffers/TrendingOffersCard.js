@@ -17,7 +17,7 @@ const TrendingOffersCard = ({ data }) => {
         </div>
       </div>
       <div className="items-center flex flex-col">
-        <h1 className="text-[26px] font-bold text-primary">{data.name}</h1>
+        <h2 className="text-[26px] font-bold text-primary">{data.name}</h2>
         <p className="text-[19px] font-bold text-primary">{data.description}</p>
 
         <button className="flex gap-2 mt-5 justify-center items-center mx-auto cursor-pointer ring-1 ring-primary  text-primary py-1 px-5 rounded text-center hover:bg-primary hover:text-white transition duration-300">

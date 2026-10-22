@@ -7,13 +7,14 @@
 // gets reported to /v1/activity/track for the admin "monitor user"
 // feature. Tracker is a no-op while signed out.
 
+import { Suspense } from "react";
 import TopNav from "./TopNav";
 import CategoryBar from "./CategoryBar";
 import Footer from "./Footer/Footer";
 import useActivityTracker from "@/hooks/useActivityTracker";
 import AnnouncementBar from "@/components/common/AnnouncementBar";
 
-const PrimaryLayout = ({ children, isFooterAdd }) => {
+function Chrome({ children, isFooterAdd }) {
   useActivityTracker();
   return (
     <>
@@ -24,6 +25,15 @@ const PrimaryLayout = ({ children, isFooterAdd }) => {
       {!isFooterAdd && <Footer />}
     </>
   );
-};
+}
+
+// The Suspense boundary lives here (not in the root layout) so a server
+// page can still call notFound() before streaming starts and the
+// response carries a real 404 status.
+const PrimaryLayout = (props) => (
+  <Suspense fallback={null}>
+    <Chrome {...props} />
+  </Suspense>
+);
 
 export default PrimaryLayout;

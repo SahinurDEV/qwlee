@@ -3,9 +3,7 @@ import PrimaryLayout from "@/components/Layout/PrimaryLayout";
 import TermsCondition from "@/components/Others/TermsCondition";
 
 export const metadata = {
-  title: "Terms of Service | Qwlee",
-  description:
-    "Company Number: (781) 316-0189, and Company Email: e-mail such as info@qwlee.com",
+  title: "Terms of Service",
 };
 const page = () => {
   return (

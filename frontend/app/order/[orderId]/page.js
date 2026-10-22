@@ -5,7 +5,7 @@ import PrimaryLayout from "@/components/Layout/PrimaryLayout";
 import OrderDetails from "@/components/Order/OrderDetails/OrderDetails";
 
 export const metadata = {
-  title: "Order | Qwlee",
+  title: "Order",
 };
 
 export default async function OrderPage({ params }) {

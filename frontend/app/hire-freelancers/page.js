@@ -5,7 +5,7 @@
 import HireFreelancersClient from "./HireFreelancersClient";
 
 export const metadata = {
-  title: "Hire Freelancers | Qwlee",
+  title: "Hire Freelancers",
   description:
     "Browse Qwlee's vetted freelancers — developers, designers, video editors, marketers and more.",
 };

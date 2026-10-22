@@ -7,7 +7,7 @@ import PrimaryLayout from "@/components/Layout/PrimaryLayout";
 import Profile from "@/components/Profile/Profile";
 
 export const metadata = {
-  title: "Profile | Qwlee",
+  title: "Profile",
 };
 
 export default function ProfilePage() {
