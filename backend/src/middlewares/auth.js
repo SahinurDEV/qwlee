@@ -47,6 +47,7 @@ const verifyCallback =
         if (sec.requireAdmin2fa && !user.twoFactorEnabled && !twoFaFree) {
           return reject(new ApiError(httpStatus.FORBIDDEN, "TWO_FACTOR_SETUP_REQUIRED: turn on two-factor sign-in to use the admin panel"));
         }
+        await require("../services/adminRoles.service").ensureFresh();
         if (!perms.can(user, r.perm)) {
           require("./adminAudit").recordAdminAction(req, res, { ...r, perm: `${r.perm} (denied)` });
           return reject(new ApiError(httpStatus.FORBIDDEN, `Your admin role (${perms.roleOf(user)}) cannot do this`));
