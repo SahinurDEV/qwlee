@@ -38,7 +38,10 @@ const createGig = async (data) => {
       "This title already exists, try another one"
     );
   }
+  const risk = require("./risk.service");
+  const screened = await risk.screenAll([data.title, data.description]);
   const gig = await Gig.create(data);
+  risk.record("gig", gig._id, gig.userId, screened.reasons, gig.title);
   return gig;
 };
 
@@ -392,6 +395,8 @@ const updateGigById = async (gigId, data, images, actor) => {
     if (!allowed) throw new ApiError(httpStatus.FORBIDDEN, "You cannot set that gig status");
     patch.gigStatus = next;
   }
+  const risk = require("./risk.service");
+  const screened = await risk.screenAll([patch.title, patch.description]);
   Object.assign(gig, patch);
 
   // Append the new images to the existing images array
@@ -405,6 +410,7 @@ const updateGigById = async (gigId, data, images, actor) => {
 
   // Save the updated gig
   await gig.save();
+  risk.record("gig", gig._id, gig.userId, screened.reasons, gig.title);
   return gig;
 };
 

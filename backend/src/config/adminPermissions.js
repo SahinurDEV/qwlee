@@ -28,6 +28,7 @@ const RULES = [
   ["W", /^\/withdrawal(\/|$)/, "finance"],
   ["W", /^\/dispute(s)?(\/|$)/, "disputes"],
   ["W", /^\/admin\/(requests|offers|reviews)(\/|$)/, "moderation"],
+  ["*", /^\/admin\/risk-flags(\/|$)/, "moderation"],
   ["W", /^\/verification(\/|$)/, "moderation"],
   ["W", /^\/(categories|blog|banner|info)(\/|$)/, "content"],
   ["W", /^\/admin\/help(\/|$)/, "content"],

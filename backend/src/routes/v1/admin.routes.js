@@ -201,5 +201,12 @@ router.post("/2fa/enable", A, ac.twoFaEnable);
 router.post("/2fa/disable", A, ac.twoFaDisable);
 router.post("/team/:id/reset-2fa", A, ac.twoFaReset);
 router.get("/newsletter", A, ac.listSubscribers);
+// Risk flags (keyword filters, off-platform contact, order rules).
+const riskSvc = require("../../services/risk.service");
+router.get("/risk-flags", A, catchAsync2(async (req, res) => helpOk(res, await riskSvc.list(req.query))));
+router.patch("/risk-flags/:id", A, catchAsync2(async (req, res) => {
+  if (!require("mongoose").isValidObjectId(req.params.id)) return res.status(400).json({ code: 400, message: "Invalid id" });
+  helpOk(res, await riskSvc.review(req.params.id, req.body || {}, req.user), "Flag updated");
+}));
 
 module.exports = router;
