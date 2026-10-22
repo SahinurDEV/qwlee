@@ -1,3 +1,4 @@
+const { generateOtp } = require("../utils/otp");
 const httpStatus = require("http-status");
 const catchAsync = require("../utils/catchAsync");
 const response = require("../config/response");
@@ -191,7 +192,7 @@ const forgotPassword = catchAsync(async (req, res) => {
   // }
   // Generate OTC (One-Time Code)
   const oneTimeCode =
-    Math.floor(Math.random() * (999999 - 100000 + 1)) + 100000;
+    generateOtp();
 
   // Store the OTC and its expiration time in the database
   user.oneTimeCode = oneTimeCode;
@@ -199,7 +200,13 @@ const forgotPassword = catchAsync(async (req, res) => {
   await user.save();
 
   //console.log("oneTimeCode", user);
-  await emailService.sendResetPasswordEmail(req.body.email, oneTimeCode);
+  const sent = await emailService.sendResetPasswordEmail(req.body.email, oneTimeCode);
+  if (!sent) {
+    throw new ApiError(
+      httpStatus.SERVICE_UNAVAILABLE,
+      "We could not send the reset email right now. Please try again later."
+    );
+  }
   res.status(httpStatus.OK).json(
     response({
       message: "Email Sent",

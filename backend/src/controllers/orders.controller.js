@@ -1,4 +1,5 @@
 const httpStatus = require("http-status");
+const logger = require("../config/logger");
 const pick = require("../utils/pick");
 const ApiError = require("../utils/ApiError");
 const catchAsync = require("../utils/catchAsync");
@@ -51,7 +52,6 @@ const orderCreate = catchAsync(async (req, res) => {
 });
 
 const orderPlaced = async (req, res) => {
-  console.log(req.rawBody);
   const sig = req.headers["stripe-signature"];
   try {
     let event;
@@ -61,13 +61,10 @@ const orderPlaced = async (req, res) => {
     }
 
     event = stripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret);
-    console.log("Webhook verified.");
 
     const data = event.data.object;
     const eventType = event.type;
 
-    console.log(`Received event type: ${eventType}`);
-    console.log(`Event data: ${JSON.stringify(data)}`);
 
     switch (eventType) {
       case "checkout.session.completed":
@@ -118,7 +115,6 @@ const orderPlaced = async (req, res) => {
         // Retrieve the client details using the clientId
         const clientId = session.metadata.clientId;
 
-        console.log("Outside Client id:", clientId);
         let clientName = "Unknown Client";
         if (clientId) {
           const client = await User.findById(clientId).select("username"); // Assuming the User model has a "name" field
@@ -129,7 +125,6 @@ const orderPlaced = async (req, res) => {
 
         // Send notification to the freelancer when the order is completed
         const freelancerId = session.metadata.freelancerId;
-        console.log("Inside Freelancer id:", freelancerId);
         if (freelancerId) {
           const notificationData = {
             receiverId: freelancerId,
@@ -139,7 +134,6 @@ const orderPlaced = async (req, res) => {
             viewStatus: false,
           };
 
-          console.log(notificationData);
           // Send the notification using addCustomNotification
           await notificationService.addCustomNotification(
             "order-created",
@@ -173,12 +167,11 @@ const orderPlaced = async (req, res) => {
         break;
       default:
         // Handle other webhook events or errors as needed
-        console.log(`Unhandled event type: ${eventType}`);
     }
 
     res.send().end();
   } catch (err) {
-    console.error(`Webhook Error: ${err.message}`);
+    logger.warn(`Stripe webhook error: ${err.message}`);
     res.status(400).send(`Webhook Error: ${err.message}`);
   }
 };
@@ -230,7 +223,6 @@ const getOrderById = catchAsync(async (req, res) => {
   );
 });
 const getMyOrders = catchAsync(async (req, res) => {
-  console.log(req.user.id);
   const filter = pick(req.query, ["name", "status", "gender"]);
   const options = pick(req.query, ["sortBy", "limit", "page"]);
   const result = await ordersService.getMyOrders(filter, options, req.user.id);

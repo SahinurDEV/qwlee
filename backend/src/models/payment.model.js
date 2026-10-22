@@ -69,6 +69,16 @@ const ordersSchema = mongoose.Schema(
     },
     // Cancellation audit trail. Populated when an admin (or buyer) cancels
     // the order so we can answer "who cancelled this and why" months later.
+    // Settlement snapshot written when the seller is credited, so later
+    // refunds reverse exactly what was paid even if the fee changes.
+    platformFeePercent: { type: Number, default: null },
+    platformFee: { type: Number, default: null },
+    sellerEarning: { type: Number, default: null },
+    // Settlement snapshot written when the seller is credited, so later
+    // refunds reverse exactly what was paid even if the fee changes.
+    platformFeePercent: { type: Number, default: null },
+    platformFee: { type: Number, default: null },
+    sellerEarning: { type: Number, default: null },
     cancellationReason: { type: String, default: "" },
     cancelledBy: { type: mongoose.SchemaTypes.ObjectId, ref: "User", default: null },
     cancelledAt: { type: Date, default: null },
