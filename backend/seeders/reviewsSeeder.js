@@ -38,6 +38,8 @@ async function seedReviews({ orders, buyers, sellers }) {
       gigId: order.gigId,
       review,
       rating,
+      // Deterministic breakdown (no extra random draws).
+      subRatings: { communication: rating, service: Math.max(1, rating - (String(order._id).charCodeAt(23) % 2)), recommend: rating },
       createdAt: order.deliveryDate,
       updatedAt: order.deliveryDate,
     });
