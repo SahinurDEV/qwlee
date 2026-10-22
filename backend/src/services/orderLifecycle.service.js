@@ -132,6 +132,7 @@ const priceCheckout = async ({ buyerId, gigId, packageName, extraIds = [], messa
         requirements: null,
         revisionsLeft: Number.isFinite(revisions) ? revisions : 1,
         deliveryDays,
+        ...(offer.milestones?.length ? { milestones: require("./milestones.service").forOrder(offer.milestones) } : {}),
       },
     };
   }
@@ -230,8 +231,18 @@ const loadParty = async (orderId, userId) => {
 const completeOrder = async (order, { reason = "accepted", fromStatuses = OPEN } = {}) => {
   const feePercent = await appConfigService.getPlatformFeePercent();
   const gross = Number(order.escrow?.amount ?? order.price ?? order.items?.[0]?.price ?? 0) + Number(order.escrow?.platformFunded || 0);
-  const fee = round2((gross * feePercent) / 100);
-  const net = round2(gross - fee);
+  // Milestones already released were paid out (and charged their fee) then.
+  const done = { gross: Number(order.escrow?.releasedGross || 0), fee: Number(order.escrow?.releasedFee || 0), net: Number(order.escrow?.releasedNet || 0) };
+  const rest = Math.max(0, round2(gross - done.gross));
+  const fee = round2((rest * feePercent) / 100);
+  const net = round2(rest - fee);
+  const milestoneSet = {};
+  (order.data?.milestones || []).forEach((m, i) => {
+    if (m.status === "pending") {
+      milestoneSet[`data.milestones.${i}.status`] = "released";
+      milestoneSet[`data.milestones.${i}.releasedAt`] = new Date();
+    }
+  });
   const swapped = await Payment.findOneAndUpdate(
     { _id: order._id, status: { $in: fromStatuses }, "escrow.status": { $nin: ["released", "refunded"] } },
     {
@@ -243,8 +254,9 @@ const completeOrder = async (order, { reason = "accepted", fromStatuses = OPEN }
         "escrow.status": "released",
         "escrow.releasedAt": new Date(),
         platformFeePercent: feePercent,
-        platformFee: fee,
-        sellerEarning: net,
+        platformFee: round2(fee + done.fee),
+        sellerEarning: round2(net + done.net),
+        ...milestoneSet,
       },
     },
     { new: true }

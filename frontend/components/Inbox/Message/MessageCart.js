@@ -219,6 +219,19 @@ const MessageCart = ({ message }) => {
               </h1>
             </div>
           </div>
+          {offerDetails?.milestones?.length > 0 && (
+            <div className="p-4 border-b">
+              <h1 className="text-base font-medium">Paid in {offerDetails.milestones.length} milestones</h1>
+              <ol className="mt-2 space-y-1 text-sm">
+                {offerDetails.milestones.map((m, i) => (
+                  <li key={i} className="flex justify-between gap-3">
+                    <span className="truncate">{i + 1}. {m.title} <span className="text-gray-500">({m.days} days)</span></span>
+                    <span className="font-semibold tabular-nums">${m.amount}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
           <div className="flex justify-end p-4">
             {isFreelancer ? (
               isAccepted ? (
