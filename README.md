@@ -137,6 +137,10 @@ Categories have one level of subcategories (`GET /v1/categories` lists top-level
 
 Gigs support extras, FAQ, requirement questions and an optional YouTube/Vimeo/MP4 video.
 
+### Milestone payments
+
+A custom offer sent in chat can be split into 2 to 6 milestones. Each milestone has a title, an amount (at least $5) and a number of days, and the milestone amounts must add up to the offer price. The buyer pays the full price into escrow at checkout. On the order page, the buyer releases each milestone as the work arrives, and the seller is paid that share minus the platform fee. Releasing the last milestone, accepting the delivery, or auto-completion releases whatever is still held. Cancelling refunds only the part that hasn't been released (`POST /v1/orders/:id/milestones/:index/release`).
+
 ### Buyer requests
 
 Buyers post a request (`/requests/new`) with a budget and deadline. Sellers browse open requests (`/requests`) and send one offer each (price, days, revisions, message). The buyer sees every offer and can decline it or hire. Hiring goes through the same server-priced escrow checkout (`POST /v1/orders/checkout {requestOfferId}`). It accepts that offer, declines the others and marks the request hired. Requests expire after `REQUEST_TTL_DAYS` (default 14).

@@ -49,6 +49,11 @@ router.post("/quote", auth("withOutAdmin"), ordersController.orderQuote);
 router.post("/:orderId/requirements", auth("withOutAdmin"), ordersController.submitRequirements);
 router.post("/:orderId/revision", auth("withOutAdmin"), ordersController.requestRevision);
 router.post("/:orderId/accept", auth("withOutAdmin"), ordersController.acceptDelivery);
+// Milestone payments: the buyer releases one milestone's share of escrow.
+router.post("/:orderId/milestones/:index/release", auth("withOutAdmin"), require("../../utils/catchAsync")(async (req, res) => {
+  const order = await require("../../services/milestones.service").release(req.params.orderId, req.user.id, req.params.index);
+  res.json({ code: 200, message: "Milestone released", data: { attributes: { milestones: order.data?.milestones || [], status: order.status } } });
+}));
 router.post("/:orderId/tip", auth("withOutAdmin"), ordersController.orderTip);
 
 router

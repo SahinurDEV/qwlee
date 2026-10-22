@@ -138,6 +138,7 @@ test("cancelling an open order refunds the escrow", async (t) => {
   const order = (await call("GET", `/orders/${id}`, { token: buyer.token })).data;
   assert.equal(order.status, "cancelled");
   assert.equal(order.escrow.status, "refunded");
+  assert.equal(order.escrow.refund.amount, order.escrow.amount, "the full payment is refunded");
 });
 
 test("sellers can only edit their own gigs, and cannot bypass moderation", async () => {

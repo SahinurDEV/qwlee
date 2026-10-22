@@ -29,6 +29,11 @@ const offerSchema = new mongoose.Schema({
   revisionDays: { type: String, required: false },
   deliveryTime: { type: Date, required: false },
   price: { type: Number, required: false },
+  // Optional payment plan (see milestones.service).
+  milestones: {
+    type: [{ _id: false, title: String, amount: Number, days: Number }],
+    default: undefined,
+  },
   isExpirationTime: { type: Boolean, required: false },
   expiration: { type: String, require: false },
   status: {
