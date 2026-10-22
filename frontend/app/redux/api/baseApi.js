@@ -17,6 +17,7 @@ export const baseApi = createApi({
     },
   }),
   tagTypes: [
+    "Subscriptions",
     "Promotions",
     "SingeUser",
     "Portfolio",

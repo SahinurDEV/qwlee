@@ -412,6 +412,7 @@ const acceptDelivery = catchAsync(async (req, res) => {
 });
 
 module.exports = {
+  notifyNewOrder,
   orderTip,
   orderQuote,
   submitRequirements,
