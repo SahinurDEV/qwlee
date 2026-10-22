@@ -32,6 +32,7 @@ const MARKETPLACE_BASE = [
 
 const COMPANY = [
   { label: "About us", href: "/about-us" },
+  { label: "Help centre", href: "/help" },
   { label: "Contact us", href: "/contact-us" },
   { label: "Blog", href: "/blogs" },
 ];
