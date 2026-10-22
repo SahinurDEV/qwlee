@@ -3,17 +3,17 @@ const { BuyerRequest, RequestOffer } = require("../src/models");
 // Buyer requests (job posts) with a few seller offers each, so the
 // "Buyer requests" board and the buyer's offer inbox have data.
 const REQUESTS = [
-  { cat: "Web Development", title: "Need a landing page for my SaaS product launch", budget: 400, days: 7,
+  { cat: "Web Development", sub: "Landing Pages", title: "Need a landing page for my SaaS product launch", budget: 400, days: 7,
     description: "Looking for a fast, responsive landing page built with Next.js or similar. Copy and logo are ready. Needs a pricing table and a signup form." },
-  { cat: "Graphic Design", title: "Logo and brand colours for a coffee shop", budget: 150, days: 5,
+  { cat: "Graphic Design", sub: "Logo Design", title: "Logo and brand colours for a coffee shop", budget: 150, days: 5,
     description: "We are opening a small specialty coffee shop. Want a modern minimal logo, a colour palette and a simple style sheet." },
-  { cat: "Mobile Development", title: "Fix crashes in our React Native app", budget: 300, days: 4,
+  { cat: "Mobile Development", sub: "Cross-Platform Apps", title: "Fix crashes in our React Native app", budget: 300, days: 4,
     description: "Our app crashes on Android 14 when opening the camera screen. Need someone experienced to find and fix the issue." },
-  { cat: "Digital Marketing", title: "SEO audit for an online furniture store", budget: 250, days: 6,
+  { cat: "Digital Marketing", sub: "SEO", title: "SEO audit for an online furniture store", budget: 250, days: 6,
     description: "Want a full technical and on-page SEO audit with a prioritised list of fixes for our Shopify store." },
-  { cat: "Video Editing", title: "Edit 5 short-form videos for Instagram Reels", budget: 120, days: 3,
+  { cat: "Video Editing", sub: "Short-Form Video", title: "Edit 5 short-form videos for Instagram Reels", budget: 120, days: 3,
     description: "Raw footage is ready. Need captions, cuts, music and a consistent style across all five videos." },
-  { cat: "Writing & Translation", title: "Translate product descriptions English to Spanish", budget: 90, days: 3,
+  { cat: "Writing & Translation", sub: "Translation", title: "Translate product descriptions English to Spanish", budget: 90, days: 3,
     description: "About 40 short product descriptions for an e-commerce site need natural Spanish translation." },
 ];
 
@@ -22,7 +22,9 @@ async function seedRequests({ buyers, sellers, categories, subcategories = [] })
   const now = Date.now();
   const docs = REQUESTS.map((r, i) => {
     const cat = catByName[r.cat];
-    const sub = subcategories.find((s) => String(s.parentId) === String(cat?._id));
+    const sub =
+      subcategories.find((s) => String(s.parentId) === String(cat?._id) && s.name === r.sub) ||
+      subcategories.find((s) => String(s.parentId) === String(cat?._id));
     return {
       buyerId: buyers[i % buyers.length]._id,
       title: r.title,

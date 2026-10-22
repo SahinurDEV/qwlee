@@ -6,6 +6,7 @@ import { registerUser } from "@/actions/registerUser";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import Button from "../CustomCreate/Button";
+import GoogleSignInButton from "../common/GoogleSignInButton";
 import AuthCard from "../common/AuthCard";
 import { base } from "@/lib/constant";
 import useIpLocation, { flagEmoji } from "@/hooks/useIpLocation";
@@ -172,6 +173,7 @@ function SignUp() {
         </p>
       }
     >
+      <GoogleSignInButton label="Sign up with Google" />
       <Form onFinish={handleSubmit} autoComplete="on" layout="vertical">
         <div className="flex gap-3 flex-col md:flex-row">
           <Form.Item

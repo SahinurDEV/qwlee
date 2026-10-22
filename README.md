@@ -74,6 +74,16 @@ Out of the box all email goes to the bundled Mailpit inbox at http://localhost:8
 2. Install the [Stripe CLI](https://stripe.com/docs/stripe-cli) and forward webhooks: `stripe listen --forward-to localhost:7171/v1/orders/webhook`. Put the printed `whsec_...` value in `STRIPE_WEBHOOK_SECRET`.
 3. `docker compose up -d --build backend`, then pay with card `4242 4242 4242 4242`, any future date and any CVC.
 
+## Google sign-in (optional)
+
+The "Continue with Google" button on sign-in and sign-up only appears when the backend has `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`.
+
+1. In Google Cloud Console, create an OAuth client ID of type *Web application*.
+2. Add the authorised redirect URI `<PUBLIC_API_URL>/v1/auth/google/callback`, for example `http://localhost:7171/v1/auth/google/callback`. To use a different URI, set `GOOGLE_REDIRECT_URI`.
+3. Put both values in `.env` and run `docker compose up -d`.
+
+New Google users become buyers with a verified email. If an account with the same email already exists, it is linked. If that account had never verified its email, its password is removed so that only the real owner can get in. Tokens never appear in URLs: the callback hands the frontend a two-minute, single-use code, which it exchanges at `POST /v1/auth/google/exchange`.
+
 ## Order lifecycle
 
 1. Buyer checks out a gig package (+ optional extras) or a custom offer. Prices are always computed on the server (`POST /v1/orders/quote` previews them).
