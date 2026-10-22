@@ -28,7 +28,7 @@ const getChats = async (filter, options, receiver) => {
     })
       .populate({
         path: "participants",
-        select: "fullName image email role online",
+        select: "fullName image role online lastSeen",
         match: { _id: { $ne: receiver } },
       })
       .skip(skip)
@@ -79,7 +79,7 @@ const getChatById = async (id) => {
   try {
     return await Chat.findById(id).populate({
       path: "participants",
-      select: "fullName image email role online",
+      select: "fullName image role online lastSeen",
     });
   } catch (err) {
     throw new ApiError(httpStatus.BAD_REQUEST, err.message);
@@ -90,7 +90,7 @@ const getChat = async (userId, chatId) => {
   try {
     const chat = await Chat.findById(chatId).populate({
       path: "participants",
-      select: "fullName image email role online",
+      select: "fullName image role online lastSeen",
       match: { _id: { $ne: userId } },
     });
     return chat;

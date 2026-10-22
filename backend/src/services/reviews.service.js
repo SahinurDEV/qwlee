@@ -13,6 +13,13 @@ const emailService = require("./email.service");
 // with the request body.
 const createReview = async (payload, userId) => {
   const { orderId, rating, review } = payload || {};
+  const subRatings = {};
+  for (const k of ["communication", "service", "recommend"]) {
+    const v = payload?.subRatings?.[k];
+    if (v === undefined || v === null || v === "") continue;
+    if (!Number.isInteger(Number(v)) || v < 1 || v > 5) throw new ApiError(httpStatus.BAD_REQUEST, `${k} rating must be 1-5`);
+    subRatings[k] = Number(v);
+  }
   if (!orderId) {
     throw new ApiError(httpStatus.BAD_REQUEST, "orderId is required");
   }
@@ -47,6 +54,7 @@ const createReview = async (payload, userId) => {
     orderId,
     rating: Number(rating),
     review: String(review).trim(),
+    ...(Object.keys(subRatings).length ? { subRatings } : {}),
   });
 
   // Email the seller that they got a review.
@@ -72,18 +80,61 @@ const createReview = async (payload, userId) => {
   return newReview;
 };
 
+const { PUBLIC_USER_SELECT, toPublicUser } = require("../utils/publicUser");
+// Reviews are public; populated people only carry public profile fields.
+const publicReview = (r) => {
+  const o = typeof r?.toObject === "function" ? r.toObject() : { ...r };
+  o.id = String(o._id || o.id);
+  if (o.userId && typeof o.userId === "object") o.userId = toPublicUser(o.userId);
+  if (o.freelancerId && typeof o.freelancerId === "object") o.freelancerId = toPublicUser(o.freelancerId);
+  return o;
+};
+const POPULATE = [
+  { path: "gigId", select: "title slug images price" },
+  { path: "userId", select: PUBLIC_USER_SELECT },
+  { path: "freelancerId", select: PUBLIC_USER_SELECT },
+];
+
 const getReviews = async (filter, options, userId) => {
   if (userId) {
     filter.userId = userId;
   }
-
-  options.populate = [
-    { path: "gigId" },
-    { path: "userId" },
-    { path: "freelancerId" },
-  ];
+  options.populate = POPULATE;
   const reviews = await Reviews.paginate(filter, options);
+  reviews.results = reviews.results.map(publicReview);
   return reviews;
+};
+
+/** Average, star histogram and sub-rating averages for a gig or seller. */
+const getSummary = async ({ gigId, freelancerId }) => {
+  const mongoose = require("mongoose");
+  const match = {};
+  if (gigId && mongoose.isValidObjectId(gigId)) match.gigId = new mongoose.Types.ObjectId(gigId);
+  else if (freelancerId && mongoose.isValidObjectId(freelancerId)) match.freelancerId = new mongoose.Types.ObjectId(freelancerId);
+  else throw new ApiError(httpStatus.BAD_REQUEST, "gigId or freelancerId is required");
+  const [agg] = await Reviews.aggregate([
+    { $match: match },
+    {
+      $group: {
+        _id: null,
+        count: { $sum: 1 },
+        average: { $avg: "$rating" },
+        communication: { $avg: "$subRatings.communication" },
+        service: { $avg: "$subRatings.service" },
+        recommend: { $avg: "$subRatings.recommend" },
+        stars: { $push: { $round: ["$rating", 0] } },
+      },
+    },
+  ]);
+  const r1 = (v) => (v == null ? null : Math.round(v * 10) / 10);
+  const histogram = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+  (agg?.stars || []).forEach((n) => { if (histogram[n] !== undefined) histogram[n]++; });
+  return {
+    count: agg?.count || 0,
+    average: r1(agg?.average),
+    histogram,
+    breakdown: { communication: r1(agg?.communication), service: r1(agg?.service), recommend: r1(agg?.recommend) },
+  };
 };
 
 // Buyer-side lookup: was this order already reviewed? Returns the
@@ -91,11 +142,8 @@ const getReviews = async (filter, options, userId) => {
 // CTA (Leave / Edit / show their existing review).
 const getReviewByOrder = async (orderId, userId) => {
   if (!orderId) return null;
-  return Reviews.findOne({ orderId, userId }).populate([
-    { path: "userId" },
-    { path: "freelancerId" },
-    { path: "gigId" },
-  ]);
+  const r = await Reviews.findOne({ orderId, userId }).populate(POPULATE);
+  return r ? publicReview(r) : null;
 };
 
 // Seller's one-shot reply to a review. Only the freelancer the review
@@ -151,6 +199,7 @@ const replyToReview = async (reviewId, freelancerId, message) => {
 };
 
 module.exports = {
+  getSummary,
   createReview,
   getReviews,
   getReviewByOrder,

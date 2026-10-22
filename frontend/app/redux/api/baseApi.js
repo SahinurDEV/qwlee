@@ -24,6 +24,7 @@ export const baseApi = createApi({
     "Gigs",
     "ReactLove",
     "GigReviews",
+    "QuickReplies",
     "Chat",
     "Messages",
     "Withdraw",

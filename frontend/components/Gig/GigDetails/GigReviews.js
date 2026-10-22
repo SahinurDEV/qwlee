@@ -7,6 +7,13 @@
 import { IoStar } from "react-icons/io5";
 import { useGetAllReviewApiQuery } from "@/app/redux/features/getAllReviewApi";
 import GigReviewCard from "./GigReviewCard";
+import { baseApi } from "@/app/redux/api/baseApi";
+
+const summaryApi = baseApi.injectEndpoints({
+  endpoints: (b) => ({
+    getReviewSummary: b.query({ query: (gigId) => `/reviews/summary?gigId=${gigId}`, transformResponse: (r) => r?.data?.attributes, providesTags: ["GigReviews"] }),
+  }),
+});
 
 export default function GigReviews({ id, sellerRating = 0, sellerReviewTotal = 0 }) {
   const { data, isFetching } = useGetAllReviewApiQuery({
@@ -14,6 +21,9 @@ export default function GigReviews({ id, sellerRating = 0, sellerReviewTotal = 0
     gigId: id,
   });
   const reviews = data?.data?.attributes?.results || [];
+  const { data: summary } = summaryApi.useGetReviewSummaryQuery(id, { skip: !id });
+  const breakdown = [["communication", "Seller communication"], ["service", "Service as described"], ["recommend", "Would recommend"]]
+    .filter(([k]) => summary?.breakdown?.[k] != null);
   const total = reviews.length || sellerReviewTotal || 0;
 
   // Compute distribution from actual reviews. Falls back to the seller
@@ -62,6 +72,17 @@ export default function GigReviews({ id, sellerRating = 0, sellerReviewTotal = 0
           ))}
         </div>
       </div>
+
+      {breakdown.length ? (
+        <dl className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {breakdown.map(([k, label]) => (
+            <div key={k} className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2 text-sm">
+              <dt className="text-gray-600">{label}</dt>
+              <dd className="flex items-center gap-1 font-semibold text-gray-900">{summary.breakdown[k].toFixed(1)}<IoStar className="text-amber-500" aria-hidden /></dd>
+            </div>
+          ))}
+        </dl>
+      ) : null}
 
       <div className="mt-6 border-t border-gray-100 pt-5 space-y-4">
         {isFetching && reviews.length === 0 && (
