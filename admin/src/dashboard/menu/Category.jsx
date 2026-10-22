@@ -8,7 +8,7 @@
 
 import { useMemo, useState } from "react";
 import { Modal as RModal } from "react-responsive-modal";
-import { Form, Input, Pagination } from "antd";
+import { Form, Input, Pagination, Select } from "antd";
 import toast from "react-hot-toast";
 
 import { confirmModal } from "../../common/confirm";
@@ -43,7 +43,15 @@ export default function CategoryPage() {
   const [updateCategory, { isLoading: updating }] = useUpdateCategoryMutation();
   const [deleteCategory] = useDeleteCategoriesMutation();
 
-  const results = data?.results || data?.data?.attributes?.results || [];
+  const all = data?.results || data?.data?.attributes?.results || [];
+  const rowId = (c) => c?.id || c?._id;
+  // Top-level categories are tiles; subcategories are listed on their parent.
+  const results = all.filter((c) => !c.parentId);
+  const subsByParent = useMemo(() => {
+    const m = {};
+    for (const c of all) if (c.parentId) (m[String(c.parentId)] ||= []).push(c);
+    return m;
+  }, [all]);
   const totalResults =
     data?.totalResults ||
     data?.data?.attributes?.totalResults ||
@@ -52,8 +60,12 @@ export default function CategoryPage() {
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return results;
-    return results.filter((c) => (c.name || "").toLowerCase().includes(q));
-  }, [results, search]);
+    return results.filter(
+      (c) =>
+        (c.name || "").toLowerCase().includes(q) ||
+        (subsByParent[String(rowId(c))] || []).some((s) => s.name.toLowerCase().includes(q))
+    );
+  }, [results, search, subsByParent]);
 
   const [editing, setEditing] = useState(null);
   const [iconKey, setIconKey] = useState(DEFAULT_ICON_KEY);
@@ -68,14 +80,15 @@ export default function CategoryPage() {
     );
   }, [iconSearch]);
 
-  function openCreate() {
+  function openCreate(parent) {
     form.resetFields();
+    if (parent) form.setFieldsValue({ parentId: rowId(parent) });
     setIconKey(DEFAULT_ICON_KEY);
     setIconSearch("");
     setEditing({});
   }
   function openEdit(row) {
-    form.setFieldsValue({ name: row.name });
+    form.setFieldsValue({ name: row.name, parentId: row.parentId || undefined });
     setIconKey(row.icon || DEFAULT_ICON_KEY);
     setIconSearch("");
     setEditing(row);
@@ -87,16 +100,17 @@ export default function CategoryPage() {
     form.resetFields();
   }
 
-  async function handleSubmit({ name }) {
+  async function handleSubmit({ name, parentId }) {
     // The categories routes use multer middleware which is happy
     // without a file attached. Same FormData shape for create + update
     // so we don't need to branch on content-type.
     const formData = new FormData();
     formData.append("name", name);
     formData.append("icon", iconKey);
+    formData.append("parentId", parentId || "");
     let res;
-    if (editing && editing._id) {
-      res = await updateCategory({ id: editing._id, formData });
+    if (editing && rowId(editing)) {
+      res = await updateCategory({ id: rowId(editing), formData });
     } else {
       res = await addCategory(formData);
     }
@@ -104,7 +118,7 @@ export default function CategoryPage() {
       toast.error(res.error?.data?.message || "Save failed");
       return;
     }
-    toast.success(editing?._id ? "Category updated" : "Category added");
+    toast.success(rowId(editing) ? "Category updated" : "Category added");
     close();
   }
 
@@ -116,8 +130,8 @@ export default function CategoryPage() {
       danger: true,
     });
     if (!ok) return;
-    const res = await deleteCategory(row._id);
-    if (res?.error) toast.error("Delete failed");
+    const res = await deleteCategory(rowId(row));
+    if (res?.error) toast.error(res.error?.data?.message || "Delete failed");
     else toast.success("Category deleted");
   }
 
@@ -139,7 +153,7 @@ export default function CategoryPage() {
                 className="px-2 py-2 bg-transparent outline-none text-sm flex-1"
               />
             </div>
-            <Button iconLeft={TbPlus} onClick={openCreate}>
+            <Button iconLeft={TbPlus} onClick={() => openCreate()}>
               Add category
             </Button>
           </>
@@ -162,7 +176,7 @@ export default function CategoryPage() {
             <p className="text-sm text-ink-500 mt-1">
               Add your first one to start populating the marketplace taxonomy.
             </p>
-            <Button className="mt-4" iconLeft={TbPlus} onClick={openCreate}>
+            <Button className="mt-4" iconLeft={TbPlus} onClick={() => openCreate()}>
               Add category
             </Button>
           </div>
@@ -173,7 +187,7 @@ export default function CategoryPage() {
             const Icon = iconForKey(c.icon);
             return (
               <div
-                key={c._id || c.id}
+                key={rowId(c)}
                 className="group relative bg-white border border-ink-200 rounded-2xl shadow-card p-4 flex flex-col items-center text-center hover:border-primary-200 transition"
               >
                 <div className="w-16 h-16 rounded-2xl bg-primary-50 flex items-center justify-center mb-3">
@@ -181,6 +195,26 @@ export default function CategoryPage() {
                 </div>
                 <div className="text-sm font-medium text-ink-900 truncate w-full">
                   {c.name}
+                </div>
+                <div className="mt-2 mb-3 flex flex-wrap justify-center gap-1">
+                  {(subsByParent[String(rowId(c))] || []).map((s) => (
+                    <button
+                      key={rowId(s)}
+                      type="button"
+                      onClick={() => openEdit(s)}
+                      title="Edit subcategory"
+                      className="text-[11px] px-2 py-0.5 rounded-full bg-ink-50 border border-ink-200 text-ink-700 hover:border-primary-300"
+                    >
+                      {s.name}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => openCreate(c)}
+                    className="text-[11px] px-2 py-0.5 rounded-full border border-dashed border-ink-300 text-ink-500 hover:text-primary-700"
+                  >
+                    + sub
+                  </button>
                 </div>
                 <div className="absolute inset-x-2 -bottom-2 flex justify-center gap-1 opacity-0 group-hover:opacity-100 transition">
                   <Button
@@ -206,11 +240,11 @@ export default function CategoryPage() {
         </div>
       )}
 
-      {totalResults > 50 && (
+      {totalResults > 300 && (
         <div className="mt-6 flex justify-center">
           <Pagination
             current={page}
-            pageSize={50}
+            pageSize={300}
             total={totalResults}
             onChange={setPage}
             showSizeChanger={false}
@@ -226,7 +260,7 @@ export default function CategoryPage() {
       >
         <div className="w-[560px] max-w-[92vw] p-6">
           <h3 className="text-lg font-semibold text-ink-900">
-            {editing?._id ? "Edit category" : "Add category"}
+            {rowId(editing) ? "Edit category" : "Add category"}
           </h3>
           <p className="text-sm text-ink-500 mt-1 mb-4">
             Pick the icon that represents this category — it shows up on
@@ -239,6 +273,16 @@ export default function CategoryPage() {
               rules={[{ required: true, message: "Required" }]}
             >
               <Input placeholder="e.g. Graphic Design" size="large" />
+            </Form.Item>
+            <Form.Item name="parentId" label="Parent category (leave empty for a top-level category)">
+              <Select
+                allowClear
+                size="large"
+                placeholder="None — top-level"
+                options={results
+                  .filter((c) => rowId(c) !== rowId(editing))
+                  .map((c) => ({ value: rowId(c), label: c.name }))}
+              />
             </Form.Item>
 
             <div className="mb-3 flex items-center gap-3 px-3 py-2 rounded-xl border border-ink-200 bg-ink-50/60">
@@ -298,7 +342,7 @@ export default function CategoryPage() {
                 Cancel
               </Button>
               <Button type="submit" loading={adding || updating}>
-                {editing?._id ? "Save changes" : "Create category"}
+                {rowId(editing) ? "Save changes" : "Create category"}
               </Button>
             </div>
           </Form>

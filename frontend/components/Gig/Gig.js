@@ -39,6 +39,7 @@ function GigContent() {
   const title = params.get("title") || "";
   const sortBy = params.get("sortBy") || undefined;
   const delivery = params.get("delivery") || undefined;
+  const subCategory = params.get("subCategory") || undefined;
   const language = params.get("language") || undefined;
   const country = params.get("country") || undefined;
   const onlineOnly = params.get("online") === "true";
@@ -87,6 +88,7 @@ function GigContent() {
 
   const { data, isFetching, isError, error } = useGetAllGigQuery({
     categories: categoryIds,
+    subCategory,
     minPrice,
     maxPrice,
     search: title || undefined,

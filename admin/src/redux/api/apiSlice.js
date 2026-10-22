@@ -151,7 +151,7 @@ getRecentUser:builder.query({
       // category in one view (no useless pagination when the list is
       // tiny). transformResponse strips the envelope so consumers can
       // read .results / .totalResults directly.
-      query: (page = 1) => `/categories?page=${page}&limit=50`,
+      query: (page = 1) => `/categories?page=${page}&limit=300&level=all`,
       providesTags: ["categories"],
       transformResponse: (res) =>
         res?.data?.attributes || res?.results || res || {},

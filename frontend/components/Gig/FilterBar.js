@@ -61,6 +61,17 @@ export default function FilterBar() {
   const minPrice = params.get("minPrice") || "";
   const maxPrice = params.get("maxPrice") || "";
   const delivery = params.get("delivery") || "";
+  const subCategory = params.get("subCategory") || "";
+  // Subcategories are offered once exactly one category is selected.
+  const parentCategory =
+    selectedCategories.length === 1
+      ? allCategories.find((c) => c.name === selectedCategories[0])
+      : null;
+  const { data: subData } = useGetAllCategoryQuery(
+    { parentId: parentCategory?.id || parentCategory?._id, limit: 100 },
+    { skip: !parentCategory }
+  );
+  const subCategories = parentCategory ? subData?.results || [] : [];
   const language = params.get("language") || "";
   const country = params.get("country") || "";
   const onlineOnly = params.get("online") === "true";
@@ -104,6 +115,7 @@ export default function FilterBar() {
             onClear={() =>
               applyParams((n) => {
                 n.delete("categories");
+                n.delete("subCategory");
                 close();
               })
             }
@@ -123,7 +135,10 @@ export default function FilterBar() {
                         const next = checked
                           ? selectedCategories.filter((x) => x !== c.name)
                           : [...selectedCategories, c.name];
-                        applyParams((n) => setOrDelete(n, "categories", next.join(",")));
+                        applyParams((n) => {
+                          setOrDelete(n, "categories", next.join(","));
+                          n.delete("subCategory");
+                        });
                       }}
                       className="w-full flex items-center justify-between gap-2 px-2 py-1.5 text-sm text-left rounded hover:bg-gray-50"
                     >
@@ -139,6 +154,44 @@ export default function FilterBar() {
           </PopoverShell>
         )}
       </Pill>
+
+      {/* Subcategory (only when one category is selected) */}
+      {subCategories.length > 0 && (
+        <Pill label="Subcategory" active={!!subCategory}>
+          {({ close }) => (
+            <PopoverShell
+              title={`${parentCategory.name} subcategories`}
+              onClear={() =>
+                applyParams((n) => {
+                  n.delete("subCategory");
+                  close();
+                })
+              }
+              onApply={close}
+            >
+              <div className="max-h-72 overflow-y-auto -mx-2 px-2">
+                {subCategories.map((c) => {
+                  const id = c.id || c._id;
+                  const checked = subCategory === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() =>
+                        applyParams((n) => setOrDelete(n, "subCategory", checked ? "" : id))
+                      }
+                      className="w-full flex items-center justify-between gap-2 px-2 py-1.5 text-sm text-left rounded hover:bg-gray-50"
+                    >
+                      <span className="text-gray-800">{c.name}</span>
+                      {checked && <IoCheckmarkOutline className="text-emerald-600 w-4 h-4" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </PopoverShell>
+          )}
+        </Pill>
+      )}
 
       {/* Seller details */}
       <Pill
