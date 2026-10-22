@@ -47,6 +47,8 @@ import useViewMode from "@/hooks/useViewMode";
 import playMessageSound, { isMuted, setMuted } from "@/utils/playMessageSound";
 
 import MessageCart from "@/components/Inbox/Message/MessageCart";
+import QuickReplies from "@/components/Inbox/Message/QuickReplies";
+import { useMarkThreadReadMutation } from "@/app/redux/features/quickRepliesApi";
 import MessageCartSkeleton from "@/components/Inbox/Message/MessageCartSkeleton";
 import EmojiPicker from "@/components/Inbox/Message/EmojiPicker";
 import Avatar from "@/components/common/Avatar";
@@ -92,6 +94,7 @@ export default function Message() {
     refetch,
   } = useGetMessagesQuery({ chatId, page });
   const [addMessage, { isLoading: sending }] = useAddMessageMutation();
+  const [markThreadRead] = useMarkThreadReadMutation();
   const { data: myGigsData } = useGetAllGigUserQuery(user?.id, {
     skip: !user?.id,
   });
@@ -146,6 +149,8 @@ export default function Message() {
       });
       const senderId = newMessage?.sender?._id || newMessage?.sender?.id || newMessage?.sender;
       const mine = String(senderId) === String(user?.id);
+      const sameChat = String(newMessage?.chat?._id || newMessage?.chat?.id || newMessage?.chat) === String(chatId);
+      if (!mine && sameChat) markThreadRead(chatId);
       if (!mine) {
         playMessageSound();
         // The peer just sent something — they're clearly not still typing.
@@ -153,8 +158,18 @@ export default function Message() {
       }
     };
     socket.on("new-message", handler);
-    return () => socket.off("new-message", handler);
-  }, [socket, user?.id]);
+    // Read receipts: the other side opened the thread.
+    const onRead = ({ chatId: c }) => {
+      if (String(c) !== String(chatId)) return;
+      setMessages((prev) => prev.map((m) => ((m.sender?._id || m.sender?.id || m.sender) === user?.id ? { ...m, readed: true } : m)));
+    };
+    socket.on("messages-read", onRead);
+    return () => {
+      socket.off("new-message", handler);
+      socket.off("messages-read", onRead);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [socket, user?.id, chatId]);
 
   // Live presence — server broadcasts user/connect and user/disconnect
   // when the counterparty's socket count crosses zero. Override the
@@ -404,9 +419,15 @@ export default function Message() {
       </div>
     );
   } else {
+    const senderOf = (m) => String(m?.sender?._id || m?.sender?.id || m?.sender || "");
+    let lastMine = -1;
+    messages.forEach((m, i) => { if (senderOf(m) === String(user?.id)) lastMine = i; });
     content = messages.map((m, i) => (
       <div key={m._id || m.id || i} ref={i === messages.length - 1 ? lastMessageRef : null}>
         <MessageCart message={m} />
+        {i === lastMine ? (
+          <p className="text-right text-[11px] text-gray-400 -mt-1 mb-2 pr-1" aria-live="polite">{m.readed ? "Seen" : "Sent"}</p>
+        ) : null}
       </div>
     ));
   }
@@ -579,6 +600,7 @@ export default function Message() {
                   }}
                 />
               </div>
+              <QuickReplies onPick={(text) => setComposer((prev) => (prev ? `${prev} ${text}` : text))} />
               <label
                 htmlFor="msg-attach"
                 className="p-1.5 rounded-md hover:bg-gray-100 cursor-pointer"

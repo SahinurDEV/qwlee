@@ -29,6 +29,10 @@ const router = express.Router();
 
 const defaultRoutes = [
   {
+    path: "/quick-replies",
+    route: require("./quickReplies.routes"),
+  },
+  {
     path: "/sessions",
     route: require("./sessions.routes"),
   },
