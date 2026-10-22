@@ -10,6 +10,7 @@ import Link from "next/link";
 import {
   IoNotificationsOutline,
   IoCheckmarkDoneOutline,
+  IoSettingsOutline,
   IoFilterOutline,
 } from "react-icons/io5";
 import { MdShoppingCartCheckout, MdMessage } from "react-icons/md";
@@ -122,6 +123,11 @@ export default function NotificationsPage() {
               {items.length} total
             </p>
           </div>
+          <div className="flex items-center gap-2">
+          <Link href="/notifications/settings" className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-700 px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50">
+            <IoSettingsOutline className="w-4 h-4" aria-hidden />
+            Settings
+          </Link>
           {unread > 0 && (
             <button
               type="button"
@@ -133,6 +139,7 @@ export default function NotificationsPage() {
               {markingAll ? "Marking…" : "Mark all as read"}
             </button>
           )}
+          </div>
         </div>
 
         {/* Filter pills */}

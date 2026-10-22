@@ -64,6 +64,7 @@ All Docker config lives in the root `.env` (see [.env.example](.env.example)).
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI` | optional | Google sign-in (see below) |
 | `UPLOAD_DIR`, `PRIVATE_UPLOAD_DIR` | no | Local upload folder (default `backend/uploads`) and the non-public folder for ID documents (default `<UPLOAD_DIR>/.private`) |
 | `SECOND_APPROVAL_OVER` | no | Initial value of the admin setting: refunds/payouts above this amount need a second admin (0 = off) |
+| `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `PUSH_ENDPOINT_HOSTS` | optional | Browser push notifications (see Notifications) |
 | `AUTH_RATE_LIMIT_MAX` | no | Failed `/v1/auth` requests allowed per IP per 15 minutes (default 20). The test suite runs with a higher value |
 | `GEOIP_URL` | no | IP-to-country lookup used for the buyer's country (default `https://ipapi.co/{ip}/json/`; empty disables it) |
 
@@ -92,6 +93,19 @@ New Google users become buyers with a verified email. If an account with the sam
 ## Two-factor sign-in
 
 Any user can turn on two-factor sign-in (TOTP: Google Authenticator, 1Password, Authy…) under Profile → Edit. It gives 8 single-use recovery codes. After that, password sign-in asks for a code. Google sign-in returns a short-lived challenge, which `POST /v1/auth/2fa/verify` exchanges for tokens with the code. Admins manage theirs in the admin panel (Security), where a super admin can also require 2FA for all admins.
+
+## Notifications
+
+In-app notifications are always kept. At `/notifications/settings` each user chooses, per category (orders, messages, reviews, requests, payments, news), whether they also get an email and a browser notification. Sign-in codes, password resets, payment and payout emails, and account notices are always emailed.
+
+Browser (Web Push) notifications need a VAPID key pair in `.env`:
+
+```
+docker compose exec backend npx web-push generate-vapid-keys
+# then set VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT=mailto:you@example.com
+```
+
+Without keys the "Browser notifications" switch says they aren't set up, and pushes are only logged (`[push:demo]`). For safety, the server only sends to the browser push services (Chrome/FCM, Firefox, Apple, Microsoft). Override this with `PUSH_ENDPOINT_HOSTS`. Push needs HTTPS, or `localhost`, and the site's own `/sw.js` service worker. Tunnels with an interstitial page, such as ngrok's free plan, break service worker registration because `/sw.js` comes back as HTML.
 
 ## Admin site settings
 
