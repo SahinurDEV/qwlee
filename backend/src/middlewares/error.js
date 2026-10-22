@@ -7,10 +7,20 @@ const ApiError = require('../utils/ApiError');
 const errorConverter = (err, req, res, next) => {
   let error = err;
   if (!(error instanceof ApiError)) {
-    const statusCode =
-      error.statusCode || error instanceof mongoose.Error ? httpStatus.BAD_REQUEST : httpStatus.INTERNAL_SERVER_ERROR;
-    const message = error.message || httpStatus[statusCode];
-    error = new ApiError(statusCode, message, false, err.stack);
+    // Bad ids / invalid documents are the client's fault: 400 with a
+    // clear message instead of a generic 500.
+    if (error instanceof mongoose.Error.CastError) {
+      error = new ApiError(httpStatus.BAD_REQUEST, `Invalid ${error.path === '_id' ? 'id' : error.path}`, true, err.stack);
+    } else if (error instanceof mongoose.Error.ValidationError) {
+      const first = Object.values(error.errors || {})[0];
+      error = new ApiError(httpStatus.BAD_REQUEST, first?.message || 'Invalid data', true, err.stack);
+    } else if (error.type === 'entity.parse.failed') {
+      error = new ApiError(httpStatus.BAD_REQUEST, 'Malformed JSON body', true, err.stack);
+    } else {
+      const statusCode = error.statusCode || error.status || httpStatus.INTERNAL_SERVER_ERROR;
+      const message = error.message || httpStatus[statusCode];
+      error = new ApiError(statusCode, message, statusCode < 500, err.stack);
+    }
   }
   next(error);
 };

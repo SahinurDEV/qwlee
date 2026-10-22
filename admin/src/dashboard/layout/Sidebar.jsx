@@ -26,7 +26,7 @@ import {
 import cls from "../../utils/cls";
 import { confirmModal } from "../../common/confirm";
 import { useAdminQuery } from "../../utils/adminApi";
-import { TbChartLine, TbSpeakerphone, TbShieldLock, TbUsersGroup, TbGavel, TbBuildingBank, TbAdjustments } from "react-icons/tb";
+import { TbChartLine, TbSpeakerphone, TbChecks, TbShieldLock, TbUsersGroup, TbGavel, TbBuildingBank, TbAdjustments } from "react-icons/tb";
 
 const NAV = [
   {
@@ -57,6 +57,7 @@ const NAV = [
     section: "Finance",
     items: [
       { to: "/dashboard/escrow", label: "Payments & escrow", icon: TbBuildingBank, perm: "finance" },
+      { to: "/dashboard/approvals", label: "Approvals", icon: TbChecks, perm: "finance" },
       { to: "/dashboard/earnings", label: "Earnings", icon: AiOutlineSafetyCertificate },
       { to: "/dashboard/withdraw", label: "Withdrawals", icon: PiHandWithdraw },
     ],

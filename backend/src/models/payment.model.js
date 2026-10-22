@@ -78,6 +78,15 @@ const ordersSchema = mongoose.Schema(
       heldAt: { type: Date },
       releasedAt: { type: Date },
       refundedAt: { type: Date },
+      // Money actually returned to the buyer (see refunds.service).
+      refund: {
+        provider: String, // stripe | demo
+        id: String,
+        status: { type: String, enum: ["pending", "succeeded", "failed"] },
+        amount: Number,
+        error: String,
+        at: Date,
+      },
     },
     // Buyer requirements gate (Fiverr: clock starts when submitted).
     requirementsStatus: {
