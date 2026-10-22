@@ -23,6 +23,7 @@ import StatusPill from "../../common/StatusPill";
 import cls from "../../utils/cls";
 import { formatDate, timeAgo, truncate } from "../../utils/format";
 import getImageUrl from "../../utils/getImageUrl";
+import { adminFetch, useAdminQuery } from "../../utils/adminApi";
 
 const STATUS_TABS = [
   { v: "all", label: "All" },
@@ -313,6 +314,7 @@ function ThreadView({ detail, reply, setReply, onReply, onStatus, sending, updat
         </div>
       ) : (
         <div className="border-t border-ink-100 p-3 bg-white">
+          <CannedPicker reply={reply} setReply={setReply} firstName={(t.userId?.fullName || "").split(" ")[0]} />
           <textarea
             value={reply}
             onChange={(e) => setReply(e.target.value)}
@@ -329,5 +331,42 @@ function ThreadView({ detail, reply, setReply, onReply, onStatus, sending, updat
         </div>
       )}
     </>
+  );
+}
+
+// Saved replies: pick one to insert ({name} becomes the user's first
+// name), save the current text as a new one, or delete the selected one.
+function CannedPicker({ reply, setReply, firstName }) {
+  const { data, reload } = useAdminQuery("/admin/support/canned");
+  const list = data?.results || [];
+  const [sel, setSel] = useState("");
+  const insert = (id) => {
+    setSel(id);
+    const r = list.find((x) => x._id === id);
+    if (!r) return;
+    const text = r.body.replace(/\{name\}/g, firstName || "there");
+    setReply(reply.trim() ? `${reply.trimEnd()}\n\n${text}` : text);
+  };
+  const save = async () => {
+    const title = window.prompt("Name this canned reply");
+    if (!title) return;
+    try { await adminFetch("/admin/support/canned", { method: "POST", body: { title, body: reply } }); toast.success("Canned reply saved"); reload(); }
+    catch (e) { toast.error(e.message); }
+  };
+  const remove = async () => {
+    const r = list.find((x) => x._id === sel);
+    if (!r || !window.confirm(`Delete canned reply "${r.title}"?`)) return;
+    try { await adminFetch(`/admin/support/canned/${r._id}`, { method: "DELETE" }); setSel(""); reload(); }
+    catch (e) { toast.error(e.message); }
+  };
+  return (
+    <div className="flex items-center gap-2 mb-2 text-xs">
+      <select aria-label="Canned reply" value={sel} onChange={(e) => insert(e.target.value)} className="flex-1 min-w-0 px-2 py-1.5 border border-ink-200 rounded-lg bg-white">
+        <option value="">Insert a canned reply…</option>
+        {list.map((r) => <option key={r._id} value={r._id}>{r.title}</option>)}
+      </select>
+      <button type="button" className="px-2 py-1.5 rounded-lg border border-ink-200 disabled:opacity-40" disabled={!reply.trim()} onClick={save}>Save as canned</button>
+      <button type="button" className="px-2 py-1.5 rounded-lg border border-ink-200 text-rose-700 disabled:opacity-40" disabled={!sel} onClick={remove}>Delete</button>
+    </div>
   );
 }

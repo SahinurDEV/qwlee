@@ -237,4 +237,28 @@ router.patch("/risk-flags/:id", A, catchAsync2(async (req, res) => {
   helpOk(res, await riskSvc.review(req.params.id, req.body || {}, req.user), "Flag updated");
 }));
 
+// Canned replies for the support inbox (support permission for writes).
+const CannedReply = require("../../models/cannedReply.model");
+const ApiError = require("../../utils/ApiError");
+const cannedBody = (b = {}) => {
+  const title = String(b.title || "").trim().slice(0, 80);
+  const body = String(b.body || "").trim().slice(0, 4000);
+  if (!title || !body) throw new ApiError(400, "Title and text are required");
+  return { title, body };
+};
+router.get("/support/canned", A, catchAsync2(async (req, res) => helpOk(res, { results: await CannedReply.find().sort({ title: 1 }).limit(200).lean() })));
+router.post("/support/canned", A, catchAsync2(async (req, res) => {
+  if ((await CannedReply.countDocuments()) >= 200) throw new ApiError(400, "At most 200 canned replies");
+  helpOk(res, { reply: await CannedReply.create({ ...cannedBody(req.body), createdBy: req.user._id }) }, "Saved");
+}));
+router.patch("/support/canned/:id", A, catchAsync2(async (req, res) => {
+  const r = await CannedReply.findByIdAndUpdate(req.params.id, cannedBody(req.body), { new: true, runValidators: true });
+  if (!r) throw new ApiError(404, "Not found");
+  helpOk(res, { reply: r }, "Saved");
+}));
+router.delete("/support/canned/:id", A, catchAsync2(async (req, res) => {
+  if (!(await CannedReply.findByIdAndDelete(req.params.id))) throw new ApiError(404, "Not found");
+  helpOk(res, {}, "Deleted");
+}));
+
 module.exports = router;

@@ -254,3 +254,11 @@ Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) and our [Code
 ## License
 
 [MIT](LICENSE)
+
+### Support canned replies
+
+In Admin → Support, the reply box has a canned-reply picker: insert a saved
+reply (`{name}` becomes the ticket owner's first name), save the current text
+as a new one, or delete the selected one. Any admin can read them; creating
+or deleting needs the `support` permission. API: `GET/POST
+/v1/admin/support/canned`, `PATCH/DELETE /v1/admin/support/canned/:id`.
