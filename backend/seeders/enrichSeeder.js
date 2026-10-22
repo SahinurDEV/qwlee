@@ -76,7 +76,13 @@ async function enrich() {
   //    admin "Gigs" tabs and the seller dashboard tabs all have at
   //    least one example to look at — the dataset is small (~17 gigs)
   //    so pure random doesn't reliably hit every status.
-  const gigs = await Gig.find({}).sort({ createdAt: -1 }).lean();
+  // Reviewed gigs go to the back of the queue so they stay active: the
+  // order seeder picks gigs at random, and without this every reviewed
+  // gig could end up paused or pending, leaving search with no rated gig.
+  const reviewedIds = new Set((await Reviews.distinct("gigId")).map(String));
+  const gigs = (await Gig.find({}).sort({ createdAt: -1 }).lean()).sort(
+    (a, b) => reviewedIds.has(String(a._id)) - reviewedIds.has(String(b._id))
+  );
   const STATUS_SCHEDULE = [
     { status: "pending", count: 2 },
     { status: "paused", count: 2 },
