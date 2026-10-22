@@ -731,3 +731,31 @@ module.exports = {
   sendVerificationApproved,
   sendVerificationRejected,
 };
+
+// Optional emails a user can switch off (Notification settings). Others
+// (sign-in, password, money, moderation) always go out.
+const EMAIL_CATEGORY = {
+  sendOrderConfirmedBuyer: "orders",
+  sendOrderConfirmedSeller: "orders",
+  sendOrderDeliveredBuyer: "orders",
+  sendDeliveryAcceptedSeller: "orders",
+  sendOrderCancelled: "orders",
+  sendExtensionRequestedBuyer: "orders",
+  sendExtensionResponseSeller: "orders",
+  sendReviewReceivedSeller: "reviews",
+  sendReviewReplyBuyer: "reviews",
+  sendCustomOfferReceivedBuyer: "messages",
+  sendNewMessageEmail: "messages",
+  sendAnnouncement: "marketing",
+};
+const gated = (name, fn) => async (to, ...args) => {
+  const ok = await require("./notificationPrefs.service").allows({ email: to }, "email", EMAIL_CATEGORY[name]).catch(() => true);
+  if (!ok) {
+    logger.info(`Email ${name} to ${to} skipped: turned off in the user's notification settings`);
+    return false;
+  }
+  return fn(to, ...args);
+};
+for (const name of Object.keys(EMAIL_CATEGORY)) module.exports[name] = gated(name, module.exports[name]);
+module.exports.EMAIL_CATEGORY = EMAIL_CATEGORY;
+

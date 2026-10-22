@@ -41,6 +41,10 @@ const defaultRoutes = [
     route: require("./quickReplies.routes"),
   },
   {
+    path: "/notification-settings",
+    route: require("./notificationSettings.routes"),
+  },
+  {
     path: "/sessions",
     route: require("./sessions.routes"),
   },

@@ -198,6 +198,8 @@ const userSchema = mongoose.Schema(
     // verified tick mark shows up everywhere user.isVerified is true.
     isVerified: { type: Boolean, default: false },
     // Referral programme.
+    // Per-channel opt-outs, see services/notificationPrefs.service.js.
+    notificationPrefs: { type: mongoose.Schema.Types.Mixed, default: undefined, private: true },
     referralCode: { type: String, default: undefined, index: { unique: true, sparse: true }, private: true },
     referredBy: { type: mongoose.SchemaTypes.ObjectId, ref: "User", default: null, private: true },
     referralRewarded: { type: Boolean, default: false, private: true },
