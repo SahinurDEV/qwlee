@@ -24,8 +24,6 @@ const hosts = new Set([
   "lh3.googleusercontent.com",
   // Placeholder images currently referenced in source; migrate these to
   // Cloudinary or self-hosted assets and remove these entries.
-  "i.ibb.co",
-  "i.ibb.co.com",
   // Seed data uses picsum.photos for deterministic placeholder images.
   "picsum.photos",
   "fastly.picsum.photos",
