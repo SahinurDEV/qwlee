@@ -42,16 +42,36 @@ function validate(file) {
   }
 }
 
+// Detect the real image type from magic bytes (never trust the client).
+function sniff(buf) {
+  if (buf.length > 3 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return "jpg";
+  if (buf.length > 8 && buf.slice(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) return "png";
+  if (buf.length > 6 && (buf.slice(0, 6).toString("ascii") === "GIF87a" || buf.slice(0, 6).toString("ascii") === "GIF89a")) return "gif";
+  if (buf.length > 12 && buf.slice(0, 4).toString("ascii") === "RIFF" && buf.slice(8, 12).toString("ascii") === "WEBP") return "webp";
+  return null;
+}
+
+const UPLOAD_DIR = process.env.UPLOAD_DIR || require("path").join(__dirname, "../../uploads");
+
+// Fallback when no ImgBB key is configured: store on local disk (a
+// Docker volume) and serve from <PUBLIC_API_URL>/uploads/<file>.
+async function storeLocally(file) {
+  const ext = sniff(file.buffer);
+  if (!ext) throw new ApiError(httpStatus.BAD_REQUEST, "File is not a valid JPG, PNG, GIF or WebP image");
+  const fs = require("fs/promises");
+  const name = `${require("crypto").randomBytes(16).toString("hex")}.${ext}`;
+  await fs.mkdir(UPLOAD_DIR, { recursive: true });
+  await fs.writeFile(require("path").join(UPLOAD_DIR, name), file.buffer, { flag: "wx" });
+  const base = (process.env.PUBLIC_API_URL || "http://localhost:7171").replace(/\/+$/, "");
+  const url = `${base}/uploads/${name}`;
+  return { url, displayUrl: url, thumbUrl: url, deleteUrl: null, raw: { local: true } };
+}
+
 async function uploadOne(file) {
   validate(file);
 
   const apiKey = config.imgbb.apiKey;
-  if (!apiKey) {
-    throw new ApiError(
-      httpStatus.SERVICE_UNAVAILABLE,
-      "Image upload not configured (IMGBB_API_KEY missing)"
-    );
-  }
+  if (!apiKey) return storeLocally(file);
 
   // ImgBB takes either base64 body or multipart form. Base64 is simpler
   // for in-memory buffers and dodges the multipart bookkeeping.
@@ -97,4 +117,4 @@ async function uploadMany(files) {
   return out;
 }
 
-module.exports = { uploadOne, uploadMany, ALLOWED_MIME, MAX_BYTES };
+module.exports = { uploadOne, uploadMany, ALLOWED_MIME, MAX_BYTES, UPLOAD_DIR, sniff };

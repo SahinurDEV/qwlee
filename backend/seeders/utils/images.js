@@ -41,10 +41,19 @@ const pick = (kind, seed, offset = 0) => {
   return `${BASE}/seed/${kind}/${file}`;
 };
 
+// Seed gigs have purpose-made gallery images (scripts/gen-gig-images.js)
+// named <slug(title)>-<n>.jpg; anything else falls back to the pool.
+const { slugify } = require("./slug");
+const gigImage = (title, n = 0) => {
+  const file = `${slugify(title)}-${n}.jpg`;
+  if (fs.existsSync(path.join(SEED_DIR, "gig", file))) return `${BASE}/seed/gig/${file}`;
+  return pick("gig", title, n);
+};
+
 module.exports = {
   avatar: (seed) => pick("avatar", seed),
   cover: (seed) => pick("cover", seed),
-  gig: (seed, n = 0) => pick("gig", seed, n),
+  gig: gigImage,
   portfolio: (seed, n = 0) => pick("portfolio", seed, n),
   banner: (seed) => pick("banner", seed),
   blog: (seed) => pick("blog", seed),

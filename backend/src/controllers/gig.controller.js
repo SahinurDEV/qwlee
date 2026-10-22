@@ -11,11 +11,9 @@ const createGig = catchAsync(async (req, res) => {
   const { title, package, categoriesId, description, price } = req.body;
 
   // Parse JSON fields with error handling
-  let parsedPackage;
-  try {
-    parsedPackage = JSON.parse(package);
-  } catch (error) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid JSON in package field");
+  const parsedPackage = gigService.validatePackages(package);
+  if (!title || String(title).trim().length < 15) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Title must be at least 15 characters");
   }
 
   // Treat description as a string
@@ -43,14 +41,13 @@ const createGig = catchAsync(async (req, res) => {
     categoriesId,
     subCategoryId: req.body.subCategoryId || null,
     description: parsedDescription,
-    price,
+    price: Math.min(...parsedPackage.map((p) => p.price)),
     images: imagesArray,
     userId: req.user.id,
   };
 
-  if (title) {
-    gigData.slug = title.toLowerCase().split(" ").join("-");
-  }
+  gigData.title = String(title).trim().slice(0, 120);
+  gigData.slug = `${gigService.slugify(title)}-${Date.now().toString(36)}`;
 
   const gig = await gigService.createGig(gigData);
   res.status(httpStatus.CREATED).json(
