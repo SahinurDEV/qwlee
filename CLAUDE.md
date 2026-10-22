@@ -4,7 +4,7 @@ Project guide loaded automatically by Claude Code at session start. Read this fi
 
 ## What this repo is
 
-**Qwlee** — a three-app freelance services marketplace (Fiverr-style). Originally branded `cnnctr`. The PRD for the full vision lives at `new-PRD-marketplace.md`. The implemented surface area is documented in `README.md`.
+**Qwlee** — a three-app freelance services marketplace (Fiverr-style). Originally branded `cnnctr`. The PRD for the full vision lives at `new-PRD-marketplace.md`. The implemented surface area is documented in `docs/FEATURES.md`.
 
 | App | Stack | Port | Folder |
 |---|---|---|---|
@@ -84,7 +84,7 @@ Demo logins (after `npm run seed` in `backend/`):
 │   │   └── utils/           cls, format, getImageUrl
 │   └── .env / .env.example
 ├── docs/                    Developer docs (read these for deep dives)
-├── README.md                Feature inventory
+├── README.md                Overview + Docker quick start
 └── new-PRD-marketplace.md   The product spec we're building toward
 ```
 
@@ -166,5 +166,5 @@ See `*/​.env.example`. Critical ones:
 - `docs/FRONTEND.md` — Next.js 16 + Redux patterns
 - `docs/ADMIN.md` — Vite + react-router patterns
 - `docs/API.md` — REST surface + swagger
-- `README.md` — exhaustive feature inventory (what's already shipped)
+- `docs/FEATURES.md` — exhaustive feature inventory (what's already shipped)
 - `new-PRD-marketplace.md` — long-form product spec (what we're building toward)

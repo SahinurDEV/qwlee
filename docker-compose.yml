@@ -1,0 +1,67 @@
+# Qwlee full stack: MongoDB + API/socket + marketplace web + admin.
+#   cp .env.example .env   # then edit JWT_SECRET at minimum
+#   docker compose up --build
+# Seed demo data (optional):  docker compose run --rm backend npm run seed
+
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    # Not published to the host by default. Uncomment to connect a local client.
+    # ports: ["27017:27017"]
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      PORT: 7171
+      MONGODB_URL: mongodb://mongo:27017/qwlee
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:8000}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8000,http://localhost:4000}
+    ports:
+      - "${BACKEND_PORT:-7171}:7171"
+      - "${SOCKET_PORT:-8181}:8181"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_BACKEND_API_URL: ${PUBLIC_API_URL:-http://localhost:7171}
+        NEXT_PUBLIC_SOCKET_URL: ${PUBLIC_SOCKET_URL:-http://localhost:8181}
+        NEXT_PUBLIC_SITE_NAME: ${SITE_NAME:-Qwlee}
+        NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+    ports:
+      - "${FRONTEND_PORT:-8000}:8000"
+
+  admin:
+    build:
+      context: ./admin
+      args:
+        VITE_API_BASE_URL: ${PUBLIC_API_URL:-http://localhost:7171}
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${ADMIN_PORT:-4000}:80"
+
+volumes:
+  mongo-data:

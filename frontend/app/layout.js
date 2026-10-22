@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import "./globals.css";
 import { Providers } from "./redux/provider";
 import { Toaster } from "sonner";
@@ -41,7 +42,9 @@ export default function RootLayout({ children }) {
       <body>
         <Providers>
           <SocketProvider>
-            {children}
+            {/* Suspense boundary lets client components that call
+                useSearchParams() build for production (next build). */}
+            <Suspense fallback={null}>{children}</Suspense>
             <Toaster
             richColors  
               position="top-center"
