@@ -397,7 +397,8 @@ const runHousekeeping = async () => {
     { $set: { status: "late" } }
   );
   const autoCancelled = await require("./cancellation.service").autoAcceptExpired();
-  return { autoCompleted: due.length, markedLate: late.modifiedCount || 0, autoCancelled };
+  const subscriptions = await require("./subscription.service").billDue();
+  return { autoCompleted: due.length, markedLate: late.modifiedCount || 0, autoCancelled, subscriptions };
 };
 
 let timer = null;

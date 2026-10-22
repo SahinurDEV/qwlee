@@ -22,6 +22,7 @@ import CheckoutReview from "./CheckoutReview";
 import normaliseFeatures from "@/utils/normaliseFeatures";
 import ContactSellerModal from "./ContactSellerModal";
 import { isAway } from "@/components/common/AwayBanner";
+import { useSubscribeMutation } from "@/app/redux/features/subscriptionsApi";
 
 export default function GigPackagePicker({ gig }) {
   const dispatch = useDispatch();
@@ -29,6 +30,7 @@ export default function GigPackagePicker({ gig }) {
   const user = useUser();
   const [createOrder, { isLoading: ordering }] = useCreateBuyerOrderMutation();
   const [getQuote, { isLoading: quoting }] = useGetOrderQuoteMutation();
+  const [subscribe, { isLoading: subscribing }] = useSubscribeMutation();
   const [review, setReview] = useState(null); // { quote, error } while the review is open
   const [coupon, setCoupon] = useState("");
 
@@ -210,6 +212,35 @@ export default function GigPackagePicker({ gig }) {
             ? "Buyers only"
             : `Continue ($${price.toLocaleString()})`}
         </button>
+
+        {gig?.subscription?.enabled && !isFreelancer && !isAway(gig?.userId) && (
+          <div className="mt-3 rounded-xl border border-emerald-100 bg-emerald-50/50 p-3">
+            <div className="text-sm font-medium text-gray-900">Subscribe monthly</div>
+            <p className="text-xs text-gray-600 mt-0.5">
+              Get the {active?.name} package every month
+              {gig.subscription.discountPercent ? ` and save ${gig.subscription.discountPercent}%` : ""}: $
+              {(Math.round(basePrice * (1 - (gig.subscription.discountPercent || 0) / 100) * 100) / 100).toLocaleString()} a month. Pause or cancel any time.
+            </p>
+            <button
+              type="button"
+              disabled={subscribing}
+              onClick={async () => {
+                if (!user) {
+                  router.push(`/sign-in?from=${encodeURIComponent(`/gig/${gig?.slug || gig?._id}`)}`);
+                  return;
+                }
+                if (!window.confirm(`Subscribe to ${active?.name} monthly? The first month is charged now.`)) return;
+                const r = await subscribe({ gigId: gig?._id || gig?.id, packageName: active?.name });
+                if (r.error) return toast.error(r.error?.data?.message || "Could not subscribe");
+                toast.success("Subscribed. Your first order is open.");
+                router.push(`/order/${r.data?.data?.attributes?.orderId}`);
+              }}
+              className="mt-2 w-full rounded-lg border border-emerald-600 px-3 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
+            >
+              {subscribing ? "Subscribing…" : "Subscribe monthly"}
+            </button>
+          </div>
+        )}
 
         {isFreelancer && (
           <p className="mt-2 text-xs text-gray-500 text-center">
