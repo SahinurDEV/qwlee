@@ -7,6 +7,7 @@
 // - Wishlist heart overlay (any signed-in user can save)
 // - Hover lift to match the rest of the Qwlee card system
 
+import Money from "@/components/common/Money";
 import Link from "next/link";
 import { IoStar } from "react-icons/io5";
 import { FaHeart, FaRegHeart } from "react-icons/fa";
@@ -140,7 +141,7 @@ export default function GigCard({ item, sponsored = false }) {
 
           <div className="mt-auto pt-3 border-t border-gray-100 flex items-center justify-between text-sm">
             <span className="text-gray-500 text-xs">Starting at</span>
-            <span className="text-gray-900 font-semibold">${item.price}</span>
+            <Money usd={item.price} className="text-gray-900 font-semibold" />
           </div>
         </div>
       </Link>

@@ -62,6 +62,8 @@ All Docker config lives in the root `.env` (see [.env.example](.env.example)).
 | `ORDER_HOUSEKEEPING_MS` | no | Interval of the auto-complete / late-marking job (default 600000) |
 | `CANCEL_RESPONSE_HOURS` | no | Hours the other party has to answer a mutual cancellation request before it is auto-accepted (default 48) |
 | `PROMO_DAY_PRICE` | no | Price per day, in dollars, for promoting a gig (default 5) |
+| `FX_RATES_URL` | no | USD exchange-rate JSON with a `rates` object (for example `https://open.er-api.com/v6/latest/USD`), refreshed every 12 hours. Without it, a built-in approximate table is used |
+| `CURRENCIES` | no | Display currencies offered, comma-separated, from USD, EUR, GBP, BDT, INR, AUD, CAD, JPY (default: all) |
 | `PAYPAL_CLIENT_ID` / `PAYPAL_CLIENT_SECRET` | no | Send PayPal withdrawals with the PayPal Payouts API. Without them PayPal payouts run in demo mode |
 | `PAYPAL_ENV` | no | `sandbox` (default) or `live` |
 | `PAYONEER_API_TOKEN` / `PAYONEER_PROGRAM_ID` | no | Send Payoneer withdrawals with the Payoneer Mass Payout API. Without them Payoneer payouts run in demo mode |
@@ -140,6 +142,10 @@ Sellers can promote an active gig from the Promote link in their gig table, or a
 Categories have one level of subcategories (`GET /v1/categories` lists top-level; `?parentId=<id>` lists one parent's subcategories; `?level=all` lists both). Admins manage them on the Categories page. The marketplace can be filtered by subcategory (`/gig?subCategory=<id>`) and delivery time (`delivery=<days>`).
 
 Gigs support extras, FAQ, requirement questions and an optional YouTube/Vimeo/MP4 video.
+
+### Display currency
+
+Every price is stored and charged in US dollars. Visitors can choose a display currency in the footer. The choice is saved in the browser, and prices on gig cards and gig pages are then shown converted and marked "≈", with the USD amount in the tooltip. The checkout review shows the USD charge with the converted amount underneath. Rates come from `GET /v1/info/currencies`.
 
 ### Payouts
 

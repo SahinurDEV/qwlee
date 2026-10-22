@@ -31,4 +31,11 @@ router.get("/geo", async (req, res) => {
   res.json({ code: 200, message: "OK", data: { attributes: data || { country: null, countryCode: null, city: null, region: null } } });
 });
 
+// Display currencies and USD exchange rates (prices are charged in USD).
+router.get("/currencies", async (req, res) => {
+  const data = await require("../../services/currency.service").get();
+  res.set("Cache-Control", "public, max-age=3600");
+  res.json({ code: 200, message: "OK", data: { attributes: data } });
+});
+
 module.exports = router;
