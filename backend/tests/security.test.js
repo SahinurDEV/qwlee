@@ -85,3 +85,18 @@ test("audit log exports CSV; repeated denials alert super admins", async () => {
   const all = JSON.stringify(notes.json);
   assert.match(all, /finance@example\.com was refused 5 admin actions/);
 });
+
+test("bad requests answer 4xx, not 500: empty login body, disallowed origin", async () => {
+  const base = (process.env.API_URL || "http://localhost:7171").replace(/\/+$/, "");
+  for (const init of [{}, { headers: { "content-type": "application/json" }, body: "{}" }, { headers: { "content-type": "text/plain" }, body: "x" }]) {
+    const r = await fetch(`${base}/v1/auth/login`, { method: "POST", ...init });
+    assert.equal(r.status, 400, `login ${JSON.stringify(init)}`);
+  }
+  const r = await fetch(`${base}/v1/auth/login`, {
+    method: "POST",
+    headers: { origin: "http://not-allowed.example", "content-type": "application/json" },
+    body: JSON.stringify({ email: "a@b.c", password: "x" }),
+  });
+  assert.equal(r.status, 403);
+  assert.equal(r.headers.get("access-control-allow-origin"), null);
+});
