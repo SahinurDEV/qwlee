@@ -45,7 +45,7 @@ jobs:
         with:
           node-version: 22
       - name: API tests
-        run: cd backend && API_URL=http://localhost:7171 MAILPIT_URL=http://localhost:8025 npm test
+        run: cd backend && npm ci --omit=dev --no-audit --no-fund && API_URL=http://localhost:7171 MAILPIT_URL=http://localhost:8025 npm test
       - name: Logs on failure
         if: failure()
         run: docker compose logs
