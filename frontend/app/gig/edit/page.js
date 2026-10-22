@@ -3,7 +3,7 @@ import EditGigWizard from "@/components/GigWizard/EditGigWizard";
 import PrimaryLayout from "@/components/Layout/PrimaryLayout";
 
 export const metadata = {
-  title: "Edit gig | Qwlee",
+  title: "Edit gig",
   description: "Update your Qwlee gig.",
 };
 

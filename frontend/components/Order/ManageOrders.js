@@ -45,7 +45,7 @@ const STATUS_STYLE = {
 
 export default function ManageOrders() {
   const user = useUser();
-  const { isSelling } = useViewMode(user);
+  const { isSelling, ready } = useViewMode(user);
   const mode = isSelling ? "seller" : "buyer";
 
   const [activeTab, setActiveTab] = useState("all");
@@ -54,11 +54,11 @@ export default function ManageOrders() {
   const [page, setPage] = useState(1);
 
   const queryArg = useMemo(() => ({ limit: 200 }), []);
-  const buyerQuery = useGetBuyerAllOrderQuery(queryArg, { skip: !user || isSelling });
-  const sellerQuery = useGetFreelancerAllOrderQuery(queryArg, { skip: !user || !isSelling });
+  const buyerQuery = useGetBuyerAllOrderQuery(queryArg, { skip: !ready || isSelling });
+  const sellerQuery = useGetFreelancerAllOrderQuery(queryArg, { skip: !ready || !isSelling });
   const { data, isLoading, isError } = isSelling ? sellerQuery : buyerQuery;
 
-  const { data: counts } = useGetOrderCountsQuery(mode, { skip: !user });
+  const { data: counts } = useGetOrderCountsQuery(mode, { skip: !ready });
 
   const rows = data?.results || [];
 

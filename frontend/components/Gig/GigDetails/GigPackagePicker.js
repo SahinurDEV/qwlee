@@ -17,7 +17,8 @@ import { IoCheckmarkCircle, IoTimeOutline, IoRefreshOutline } from "react-icons/
 
 import useUser from "@/hooks/useUser";
 import { setFeature } from "@/app/redux/slices/featureSlice";
-import { useCreateBuyerOrderMutation } from "@/app/redux/features/order/buyerOrderApi";
+import { useCreateBuyerOrderMutation, useGetOrderQuoteMutation } from "@/app/redux/features/order/buyerOrderApi";
+import CheckoutReview from "./CheckoutReview";
 import normaliseFeatures from "@/utils/normaliseFeatures";
 import ContactSellerModal from "./ContactSellerModal";
 import { isAway } from "@/components/common/AwayBanner";
@@ -27,6 +28,8 @@ export default function GigPackagePicker({ gig }) {
   const router = useRouter();
   const user = useUser();
   const [createOrder, { isLoading: ordering }] = useCreateBuyerOrderMutation();
+  const [getQuote, { isLoading: quoting }] = useGetOrderQuoteMutation();
+  const [review, setReview] = useState(null); // { quote, error } while the review is open
 
   const packages = Array.isArray(gig?.package) ? gig.package : [];
   const [activeIdx, setActiveIdx] = useState(0);
@@ -75,12 +78,18 @@ export default function GigPackagePicker({ gig }) {
       toast.error("Only buyers can place orders. Switch to Buying to checkout.");
       return;
     }
-    const orderData = {
-      gigId: gig?._id || gig?.id,
-      packageName: active?.name,
-      extraIds,
-    };
-    const res = await createOrder(orderData);
+    setReview({ quote: null, error: "" });
+    const q = await getQuote(orderData());
+    if (q.error) setReview({ quote: null, error: q.error?.data?.message || "Could not price this order" });
+    else setReview({ quote: q.data?.data?.attributes || q.data?.attributes || q.data, error: "" });
+  }
+
+  function orderData() {
+    return { gigId: gig?._id || gig?.id, packageName: active?.name, extraIds };
+  }
+
+  async function confirmOrder() {
+    const res = await createOrder(orderData());
     if (res.error) {
       toast.error(res.error?.data?.message || "Could not start checkout");
       return;
@@ -196,6 +205,18 @@ export default function GigPackagePicker({ gig }) {
             Switch to Buying in the top menu to place an order.
           </p>
         )}
+
+        <CheckoutReview
+          open={!!review}
+          onClose={() => setReview(null)}
+          onConfirm={confirmOrder}
+          quote={review?.quote}
+          error={review?.error}
+          loading={quoting}
+          confirming={ordering}
+          gig={gig}
+          packageName={active?.name}
+        />
 
         <ContactSellerLink gig={gig} />
       </div>

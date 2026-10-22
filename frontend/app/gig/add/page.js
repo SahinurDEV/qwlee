@@ -2,7 +2,7 @@ import GigWizard from "@/components/GigWizard/GigWizard";
 import PrimaryLayout from "@/components/Layout/PrimaryLayout";
 
 export const metadata = {
-  title: "Create a gig | Qwlee",
+  title: "Create a gig",
   description: "Create a new service listing on Qwlee.",
 };
 

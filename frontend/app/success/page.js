@@ -3,7 +3,7 @@ import Image from "next/image";
 import successImage from '@/assest/payment/success.gif'
 
 export const metadata = {
-    title: "Success Payment | Qwlee",
+    title: "Success Payment",
     description: "Success Payment",
 }
 const page = () => {

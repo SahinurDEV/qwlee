@@ -8,7 +8,7 @@ export async function generateMetadata({ params }) {
   try {
     const res = await baseAxios.get(`/blog/slug/${slug}`);
     const blog = res?.data?.data?.attributes;
-    const title = blog?.title ? `${blog.title} · Qwlee` : `Blog · Qwlee`;
+    const title = blog?.title ? `${blog.title}` : `Blog`;
     const description = blog?.description || `Read this article on Qwlee.`;
     return {
       title,
@@ -17,7 +17,7 @@ export async function generateMetadata({ params }) {
       twitter: { title, description },
     };
   } catch {
-    return { title: "Blog · Qwlee" };
+    return { title: "Blog" };
   }
 }
 

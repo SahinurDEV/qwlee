@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import "@fontsource-variable/inter";
 import "@fontsource-variable/plus-jakarta-sans";
 import "./globals.css";
@@ -89,9 +88,10 @@ export default function RootLayout({ children }) {
       <body>
         <Providers>
           <SocketProvider>
-            {/* Suspense boundary lets client components that call
-                useSearchParams() build for production (next build). */}
-            <Suspense fallback={null}>{children}</Suspense>
+            {/* No Suspense here: it would start streaming before pages
+                can call notFound(), turning every 404 into a 200.
+                PrimaryLayout carries the boundary instead. */}
+            {children}
             <Toaster
             richColors  
               position="top-center"

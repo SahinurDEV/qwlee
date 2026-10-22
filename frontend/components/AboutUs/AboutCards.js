@@ -6,7 +6,7 @@ const AboutCards = () => {
     <div className="container py-10">
       <div className="flex flex-col md:flex-row gap-5 items-center justify-between">
         <div className=" md:w-1/2">
-          <h1 className="text-3xl md:text-[50px] font-semibold">Our Story</h1>
+          <h2 className="text-3xl md:text-[50px] font-semibold">Our Story</h2>
           <p className="md:text-lg mt-8">
             There are many variations of passages of Lorem Ipsum available, but
             the majority have suffered alteration in some form, by injected
@@ -40,7 +40,7 @@ const AboutCards = () => {
           />
         </div>
         <div className=" md:w-1/2">
-          <h1 className="text-3xl md:text-[50px] font-semibold">Our Mission</h1>
+          <h2 className="text-3xl md:text-[50px] font-semibold">Our Mission</h2>
           <p className="md:text-lg mt-8">
             There are many variations of passages of Lorem Ipsum available, but
             the majority have suffered alteration in some form, by injected
@@ -56,7 +56,7 @@ const AboutCards = () => {
       </div>
       <div className="flex flex-col md:flex-row gap-5 items-center justify-between">
         <div className=" md:w-1/2">
-          <h1 className="text-3xl md:text-[50px] font-semibold">Our Goal</h1>
+          <h2 className="text-3xl md:text-[50px] font-semibold">Our Goal</h2>
           <p className="md:text-lg mt-8">
             There are many variations of passages of Lorem Ipsum available, but
             the majority have suffered alteration in some form, by injected
@@ -82,14 +82,14 @@ const AboutCards = () => {
       {/* Our values */}
       <div>
         <div>
-          <h1 className="text-3xl text-textGray text-center my-10 md:text-[50px] font-semibold">
+          <h2 className="text-3xl text-textGray text-center my-10 md:text-[50px] font-semibold">
             Our values
-          </h1>
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2">
             <div>
-              <h1 className="text-3xl  my-10 md:text-[45px] font-semibold">
+              <h2 className="text-3xl  my-10 md:text-[45px] font-semibold">
                 Big market
-              </h1>
+              </h2>
               <p className="md:text-lg mt-8">
                 There are many variations of passages of Lorem Ipsum available,
                 but the majority have suffered alteration in some form, by
@@ -102,9 +102,9 @@ const AboutCards = () => {
               </p>
             </div>
             <div>
-              <h1 className="text-3xl  my-10 md:text-[45px] font-semibold">
+              <h2 className="text-3xl  my-10 md:text-[45px] font-semibold">
                 Easy Process
-              </h1>
+              </h2>
               <p className="md:text-lg mt-8">
                 There are many variations of passages of Lorem Ipsum available,
                 but the majority have suffered alteration in some form, by
@@ -117,9 +117,9 @@ const AboutCards = () => {
               </p>
             </div>
             <div>
-              <h1 className="text-3xl  my-10 md:text-[45px] font-semibold">
+              <h2 className="text-3xl  my-10 md:text-[45px] font-semibold">
                 Flexibility
-              </h1>
+              </h2>
               <p className="md:text-lg mt-8">
                 There are many variations of passages of Lorem Ipsum available,
                 but the majority have suffered alteration in some form, by
@@ -132,9 +132,9 @@ const AboutCards = () => {
               </p>
             </div>
             <div>
-              <h1 className="text-3xl  my-10 md:text-[45px] font-semibold">
+              <h2 className="text-3xl  my-10 md:text-[45px] font-semibold">
                 Services Quality
-              </h1>
+              </h2>
               <p className="md:text-lg mt-8">
                 There are many variations of passages of Lorem Ipsum available,
                 but the majority have suffered alteration in some form, by

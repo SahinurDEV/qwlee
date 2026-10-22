@@ -2,7 +2,7 @@ import PrimaryLayout from "@/components/Layout/PrimaryLayout";
 import NotificationsPage from "@/components/Notifications/NotificationsPage";
 
 export const metadata = {
-  title: "Notifications | Qwlee",
+  title: "Notifications",
   description: "Every order, message, and payment event on your Qwlee account.",
 };
 
