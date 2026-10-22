@@ -101,6 +101,7 @@ function ManageUser({ user, isSuper, onClose, onChanged }) {
   const [form, setForm] = useState({ fullName: user.fullName || "", username: user.username || "", email: user.email || "", isEmailVerified: !!user.isEmailVerified });
   const [role, setRole] = useState(user.role);
   const [adminRole, setAdminRole] = useState(user.adminRole || "super");
+  const roleList = useAdminQuery(isSuper ? "/admin/roles" : null);
   const [saving, setSaving] = useState(false);
   const save = async () => {
     setSaving(true);
@@ -154,6 +155,7 @@ function ManageUser({ user, isSuper, onClose, onChanged }) {
               <Field label="Admin role">
                 <select disabled={!isSuper} className={select + " w-40"} value={adminRole} onChange={(e) => setAdminRole(e.target.value)}>
                   {["super", "moderator", "support", "finance"].map((r) => <option key={r} value={r}>{r}</option>)}
+                  {(roleList.data?.custom || []).map((r) => <option key={r.key} value={r.key}>{r.name} (custom)</option>)}
                 </select>
               </Field>
             ) : null}
