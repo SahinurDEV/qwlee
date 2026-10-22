@@ -25,12 +25,13 @@ const checkoutBody = (req) => ({
   extraIds: Array.isArray(req.body.extraIds) ? req.body.extraIds : [],
   messageId: req.body.messageId || undefined,
   requestOfferId: req.body.requestOfferId || undefined,
+  couponCode: req.body.couponCode ? String(req.body.couponCode).slice(0, 32) : undefined,
 });
 
 const orderQuote = catchAsync(async (req, res) => {
   const quote = await orderLifecycle.quoteCheckout(checkoutBody(req));
   res.status(httpStatus.OK).json(
-    response({ message: "Quote", status: "OK", statusCode: httpStatus.OK, data: { items: quote.items, total: quote.total, deliveryDays: quote.deliveryDays } })
+    response({ message: "Quote", status: "OK", statusCode: httpStatus.OK, data: { items: quote.items, total: quote.total, discount: quote.discount, charge: quote.charge, couponCode: quote.couponCode || null, couponDescription: quote.couponDescription || null, deliveryDays: quote.deliveryDays } })
   );
 });
 
@@ -47,7 +48,12 @@ const orderCreate = catchAsync(async (req, res) => {
     const session = await stripeClient.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
-      line_items: quote.items.map((item) => ({
+      // With a coupon, one line for the discounted total (Stripe line
+      // items can't be negative).
+      line_items: (quote.discount > 0
+        ? [{ name: `${quote.title} (coupon ${quote.couponCode}: -$${quote.discount})`, price: quote.charge, quantity: 1 }]
+        : quote.items
+      ).map((item) => ({
         price_data: {
           currency: "usd",
           product_data: { name: item.name },
@@ -63,6 +69,7 @@ const orderCreate = catchAsync(async (req, res) => {
         extraIds: (quote.extraIds || []).join(","),
         messageId: quote.messageId || "",
         requestOfferId: quote.requestOfferId || "",
+        couponCode: quote.couponCode || "",
         freelancerId: quote.freelancerId,
         clientId: String(req.user.id),
       },
@@ -188,8 +195,9 @@ const orderPlaced = async (req, res) => {
           extraIds: md.extraIds ? md.extraIds.split(",").filter(Boolean) : [],
           messageId: md.messageId || undefined,
           requestOfferId: md.requestOfferId || undefined,
+          couponCode: md.couponCode || undefined,
         });
-        if (Math.round(quote.total * 100) !== Number(session.amount_total)) {
+        if (Math.round(quote.charge * 100) !== Number(session.amount_total)) {
           throw new Error(`Amount mismatch for session ${session.id}`);
         }
         const order = await orderLifecycle.createOrderFromQuote(quote, {

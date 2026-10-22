@@ -30,6 +30,7 @@ export default function GigPackagePicker({ gig }) {
   const [createOrder, { isLoading: ordering }] = useCreateBuyerOrderMutation();
   const [getQuote, { isLoading: quoting }] = useGetOrderQuoteMutation();
   const [review, setReview] = useState(null); // { quote, error } while the review is open
+  const [coupon, setCoupon] = useState("");
 
   const packages = Array.isArray(gig?.package) ? gig.package : [];
   const [activeIdx, setActiveIdx] = useState(0);
@@ -79,13 +80,23 @@ export default function GigPackagePicker({ gig }) {
       return;
     }
     setReview({ quote: null, error: "" });
-    const q = await getQuote(orderData());
+    setCoupon("");
+    const q = await getQuote(orderData(""));
     if (q.error) setReview({ quote: null, error: q.error?.data?.message || "Could not price this order" });
     else setReview({ quote: q.data?.data?.attributes || q.data?.attributes || q.data, error: "" });
   }
 
-  function orderData() {
-    return { gigId: gig?._id || gig?.id, packageName: active?.name, extraIds };
+  function orderData(code = coupon) {
+    return { gigId: gig?._id || gig?.id, packageName: active?.name, extraIds, ...(code ? { couponCode: code } : {}) };
+  }
+
+  // Returns an error message, or "" when the coupon was applied/removed.
+  async function applyCoupon(code) {
+    const q = await getQuote(orderData(code));
+    if (q.error) return q.error?.data?.message || "Coupon not valid";
+    setCoupon(code);
+    setReview({ quote: q.data?.data?.attributes || q.data?.attributes || q.data, error: "" });
+    return "";
   }
 
   async function confirmOrder() {
@@ -210,6 +221,8 @@ export default function GigPackagePicker({ gig }) {
           open={!!review}
           onClose={() => setReview(null)}
           onConfirm={confirmOrder}
+          onApplyCoupon={applyCoupon}
+          coupon={coupon}
           quote={review?.quote}
           error={review?.error}
           loading={quoting}

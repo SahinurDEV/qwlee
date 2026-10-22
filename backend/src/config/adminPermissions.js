@@ -16,6 +16,7 @@ const RULES = [
   // Any admin manages their own two-factor.
   ["*", /^\/admin\/2fa(\/|$)/, "read"],
   ["*", /^\/admin\/(settings|team|audit)(\/|$)/, "settings"],
+  ["*", /^\/admin\/coupons(\/|$)/, "finance"],
   ["*", /^\/admin\/(chats|order-chats)(\/|$)/, "support", true],
   ["GET", /^\/admin\/users\/[^/]+\/view$/, "read", true],
   ["W", /^\/admin\/users\/[^/]+\/role$/, "settings"],

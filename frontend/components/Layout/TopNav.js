@@ -24,6 +24,7 @@ import {
   IoChevronForward,
   IoHelpCircleOutline,
   IoSettingsOutline,
+  IoGiftOutline,
   IoLogOutOutline,
   IoSparklesOutline,
   IoCashOutline,
@@ -169,6 +170,7 @@ export default function TopNav() {
 
   const sharedLinks = [
     { icon: IoMailOutline, label: "Inbox", href: "/inbox" },
+    { icon: IoGiftOutline, label: "Invite friends", href: "/referrals" },
     { icon: IoSettingsOutline, label: "Profile settings", href: "/profile" },
     { icon: IoHelpCircleOutline, label: "Help & support", href: "/support" },
   ];

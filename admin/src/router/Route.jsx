@@ -58,6 +58,7 @@ import Team from "../dashboard/control/Team";
 import Security from "../dashboard/control/Security";
 import Approvals from "../dashboard/control/Approvals";
 import Newsletter from "../dashboard/control/Newsletter";
+import Coupons from "../dashboard/control/Coupons";
 
 export const router = createBrowserRouter([
   {
@@ -150,6 +151,7 @@ export const router = createBrowserRouter([
       { path: "security", element: <Security /> },
       { path: "approvals", element: <Approvals /> },
       { path: "newsletter", element: <Newsletter /> },
+      { path: "coupons", element: <Coupons /> },
     ],
   },
 ]);
