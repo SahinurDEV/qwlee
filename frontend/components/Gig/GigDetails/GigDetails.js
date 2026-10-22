@@ -74,6 +74,17 @@ export default function GigDetails({ slug }) {
             >
               {category.name}
             </Link>
+            {result.subCategoryId?.name && (
+              <>
+                <IoChevronForward className="opacity-60" />
+                <Link
+                  href={`/gig?categories=${encodeURIComponent(category.name)}&subCategory=${result.subCategoryId.id || result.subCategoryId._id}`}
+                  className="hover:text-emerald-700"
+                >
+                  {result.subCategoryId.name}
+                </Link>
+              </>
+            )}
           </>
         )}
         <IoChevronForward className="opacity-60" />

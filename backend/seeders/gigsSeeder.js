@@ -615,7 +615,21 @@ const REQUIREMENT_QUESTIONS = [
   { question: "Share links to examples you like (optional).", required: false },
 ];
 
-async function seedGigs({ sellers, categories }) {
+// Pick the subcategory whose words best match the gig title; fall back to
+// a deterministic one so every gig has a subcategory.
+function pickSubcategory(title, subs, i) {
+  if (!subs.length) return null;
+  const words = (t) => t.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length > 2);
+  const tw = new Set(words(title));
+  let best = null, score = 0;
+  for (const s of subs) {
+    const sc = words(s.name).filter((w) => tw.has(w) || tw.has(w.replace(/s$/, ""))).length;
+    if (sc > score) { best = s; score = sc; }
+  }
+  return (best || subs[i % subs.length])._id;
+}
+
+async function seedGigs({ sellers, categories, subcategories = [] }) {
   const sellerByUsername = Object.fromEntries(sellers.map((s) => [s.username, s]));
   const categoryByName = Object.fromEntries(categories.map((c) => [c.name, c]));
 
@@ -637,7 +651,7 @@ async function seedGigs({ sellers, categories }) {
       categoriesId: category._id,
       userId: seller._id,
       package: g.packages,
-      subCategoryId: g.subcategory && categoryByName[g.subcategory] ? categoryByName[g.subcategory]._id : null,
+      subCategoryId: pickSubcategory(g.title, subcategories.filter((s) => String(s.parentId) === String(category._id)), i),
       extras: g.extras || EXTRAS.slice(0, 1 + (i % 3)),
       faq: g.faq || FAQ,
       requirementQuestions: g.requirementQuestions || REQUIREMENT_QUESTIONS,

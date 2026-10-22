@@ -15,7 +15,21 @@ const LEVEL_RULES = {
   topRated: { minRating: 4.8, minReviews: 2 },
 };
 
+// A subcategory must be a child of the gig's category. Empty clears it.
+const resolveSubCategory = async (subCategoryId, categoriesId) => {
+  if (subCategoryId === undefined) return undefined;
+  if (!subCategoryId || subCategoryId === "null") return null;
+  const { Categories } = require("../models");
+  const sub = await Categories.findById(subCategoryId).catch(() => null);
+  if (!sub || !sub.parentId || String(sub.parentId) !== String(categoriesId)) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Subcategory does not belong to the selected category");
+  }
+  return sub._id;
+};
+
 const createGig = async (data) => {
+  const sub = await resolveSubCategory(data.subCategoryId, data.categoriesId);
+  if (sub !== undefined) data.subCategoryId = sub;
   const oldGig = await Gig.findOne({ slug: data.slug });
   if (oldGig) {
     throw new ApiError(
@@ -45,6 +59,7 @@ const queryGigs = async (filter, options, { excludeUserId, viewer } = {}) => {
   options.populate = [
     { path: "userId", select: PUBLIC_USER_SELECT },
     { path: "categoriesId" },
+    { path: "subCategoryId", select: "name parentId icon" },
   ];
 
   // Seller-side filters: language / country / online / verified / level
@@ -109,6 +124,8 @@ const queryGigs = async (filter, options, { excludeUserId, viewer } = {}) => {
       query[key] = { $regex: escapeRegex(filter[key]), $options: "i" };
     } else if (key === "categories") {
       query["categoriesId"] = filter[key];
+    } else if (key === "subCategory") {
+      if (filter[key]) query["subCategoryId"] = filter[key];
     } else if (key === "delivery" && filter[key]) {
       // Any of the gig's packages can deliver within N days. Falls
       // back to "Anytime" when the param is missing or 0.
@@ -164,6 +181,7 @@ const publicGigs = async (userId) => {
     populate: [
       { path: "userId", select: PUBLIC_USER_SELECT },
       { path: "categoriesId" },
+      { path: "subCategoryId", select: "name parentId icon" },
     ],
   };
   const gigs = await Gig.paginate(filter, options);
@@ -262,6 +280,14 @@ const updateGigById = async (gigId, data, images, actor) => {
     if (data?.[key] !== undefined && !JSON_GIG_FIELDS.includes(key) && key !== "video") patch[key] = data[key];
   }
   Object.assign(patch, sanitiseGigExtrasFields(data || {}));
+  const categoryChanged = patch.categoriesId !== undefined && String(patch.categoriesId) !== String(gig.categoriesId);
+  if (patch.subCategoryId !== undefined || categoryChanged) {
+    const subId = patch.subCategoryId !== undefined ? patch.subCategoryId : gig.subCategoryId;
+    const target = patch.categoriesId || gig.categoriesId;
+    patch.subCategoryId = subId
+      ? await resolveSubCategory(subId, target).catch((e) => { if (patch.subCategoryId !== undefined) throw e; return null; })
+      : null;
+  }
   // Sellers may pause / un-pause; everything else goes through moderation.
   if (data?.gigStatus !== undefined) {
     const next = data.gigStatus;

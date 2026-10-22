@@ -21,6 +21,13 @@ const categoriesSchema = mongoose.Schema(
       required: false,
       default: "",
     },
+    // Set for subcategories; null/missing for top-level categories.
+    parentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Categories",
+      default: null,
+      index: true,
+    },
     type: {
       type: String,
       enum: ["online", "offline"],

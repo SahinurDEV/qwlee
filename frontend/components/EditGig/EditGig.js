@@ -36,6 +36,8 @@ const EditGigContent = () => {
   const [setGigUploadData] = usePostGigImageUpoadMutation();
   const [setData] = useEditGigMutation();
   const [gigExtras, setGigExtras] = useState(null);
+  const [editCategoryId, setEditCategoryId] = useState(null);
+  const [subStale, setSubStale] = useState(false);
   const {
     data: singleGig,
     isLoading: loading,
@@ -56,7 +58,8 @@ const EditGigContent = () => {
         title: singleGig?.data?.attributes?.gig?.title,
         description: singleGig?.data?.attributes?.gig?.description,
         price: singleGig?.data?.attributes?.gig?.price,
-        categoriesId: singleGig?.data?.attributes?.gig?.categoriesId,
+        categoriesId: idOf(singleGig?.data?.attributes?.gig?.categoriesId),
+        subCategoryId: idOf(singleGig?.data?.attributes?.gig?.subCategoryId) || undefined,
         package: singleGig?.data?.attributes?.gig?.package.map((pkg) => ({
           name: pkg?.name,
           price: pkg?.price,
@@ -67,6 +70,8 @@ const EditGigContent = () => {
         })),
       }
     : {};
+  const currentCategoryId =
+    editCategoryId ?? idOf(singleGig?.data?.attributes?.gig?.categoriesId);
   if (loading) {
     return <Loading height={"screen"} />;
   }
@@ -74,6 +79,7 @@ const EditGigContent = () => {
   const handleEditEvent = async (values) => {
     const result = {
       ...values,
+      subCategoryId: (!subStale && values.subCategoryId) || null,
       ...cleanGigExtras(gigExtras),
       description: content,
     };
@@ -206,6 +212,13 @@ const EditGigContent = () => {
           layout="vertical"
           initialValues={initialValues}
           onFinish={handleEditEvent}
+          onValuesChange={(changed, all) => {
+            if ("categoriesId" in changed) {
+              setEditCategoryId(changed.categoriesId);
+              setSubStale(true);
+            }
+            if ("subCategoryId" in changed) setSubStale(false);
+          }}
           autoComplete="off"
         >
           <div className="flex gap-5">
@@ -272,6 +285,7 @@ const EditGigContent = () => {
                 ))}
               </Select>
             </Form.Item>
+            <SubCategoryField categoryId={currentCategoryId} />
           </div>
           <div className="flex-1 mt-[16px]">
             <Form.Item
@@ -450,3 +464,25 @@ const EditGig = () => (
 );
 
 export default EditGig;
+
+
+function idOf(v) {
+  return v && typeof v === "object" ? v.id || v._id : v;
+}
+
+function SubCategoryField({ categoryId }) {
+  const { data } = useGetAllCategoryQuery({ parentId: categoryId, limit: 100 }, { skip: !categoryId });
+  const subs = categoryId ? data?.results || [] : [];
+  if (!subs.length) return null;
+  return (
+    <Form.Item name="subCategoryId" label={<span className=" text-[18px] ">Subcategory</span>}>
+      <Select className="bg-[#F5F5F5]" allowClear placeholder="Optional">
+        {subs.map((c) => (
+          <Select.Option key={c.id || c._id} value={c.id || c._id}>
+            {c.name}
+          </Select.Option>
+        ))}
+      </Select>
+    </Form.Item>
+  );
+}
