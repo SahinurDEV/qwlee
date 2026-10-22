@@ -1,3 +1,4 @@
+const optionalAuth = require("../../middlewares/optionalAuth");
 const express = require("express");
 const auth = require("../../middlewares/auth");
 const validate = require("../../middlewares/validate");
@@ -41,11 +42,11 @@ router.route("/by-username/:username").get(userController.getUserPublicByUsernam
 // from buyer to freelancer. Must live above /:userId to avoid clashing.
 router.route("/become-seller").post(auth("common"), userController.becomeSeller);
 
-router.route("/").get(userController.getUsers);
+router.route("/").get(optionalAuth(), userController.getUsers);
 
 router
   .route("/:userId")
-  .get(validate(userValidation.getUser), userController.getUser);
+  .get(optionalAuth(), validate(userValidation.getUser), userController.getUser);
 router.route("/stats/:userId").get(auth("common"), userController.getUserStats);
 
 module.exports = router;

@@ -127,6 +127,7 @@ const userSchema = mongoose.Schema(
     oneTimeCode: {
       type: String,
       required: false,
+      private: true, // never serialised to clients
     },
     language: {
       type: String,

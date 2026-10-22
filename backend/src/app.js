@@ -28,6 +28,21 @@ if (config.env !== "test") {
 // set security HTTP headers
 app.use(helmet());
 
+// Seed / demo images committed under backend/public/seed. Served with a
+// cross-origin resource policy so the marketplace and admin (different
+// origins) can embed them.
+app.use(
+  "/seed",
+  (req, res, next) => {
+    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+    next();
+  },
+  express.static(require("path").join(__dirname, "../public/seed"), {
+    maxAge: "7d",
+    fallthrough: false,
+  })
+);
+
 // CORS — allowlist from CORS_ORIGINS env. Wildcard with credentials is
 // invalid per spec; if no origins configured, fall back to permissive
 // in non-production only.

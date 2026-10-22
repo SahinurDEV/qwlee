@@ -214,6 +214,12 @@ const getOrderById = catchAsync(async (req, res) => {
   if (!order) {
     throw new ApiError(httpStatus.NOT_FOUND, "Order not found");
   }
+  const uid = String(req.user?.id);
+  const partyIds = [order.clientId?._id || order.clientId, order.freelancerId?._id || order.freelancerId].map(String);
+  if (!partyIds.includes(uid)) {
+    // Do not reveal whether the order exists.
+    throw new ApiError(httpStatus.NOT_FOUND, "Order not found");
+  }
   res.status(httpStatus.OK).json(
     response({
       message: "Order",

@@ -119,9 +119,49 @@ const orderModify = async (paymentId, body, userId) => {
     throw new ApiError(httpStatus.NOT_FOUND, "Order not found");
   }
 
+  // Only the buyer or the seller on this order may change it, and only
+  // through explicit, validated status transitions. Never mass-assign
+  // the request body (that previously let anyone rewrite price,
+  // freelancerId or status on any order).
+  const isBuyer = String(order.clientId) === String(userId);
+  const isSeller = String(order.freelancerId) === String(userId);
+  if (!isBuyer && !isSeller) {
+    throw new ApiError(httpStatus.FORBIDDEN, "You are not a party to this order");
+  }
+  const nextStatus = body?.status;
   const prevStatus = order.status;
-  Object.assign(order, body);
-  await order.save();
+  const OPEN = ["active", "late"];
+  if (nextStatus === "delivered") {
+    // "delivered" in this app means the buyer accepted the work.
+    if (!isBuyer) {
+      throw new ApiError(httpStatus.FORBIDDEN, "Only the buyer can accept an order");
+    }
+  } else if (nextStatus !== "cancelled") {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Unsupported status change");
+  }
+  if (!OPEN.includes(prevStatus)) {
+    throw new ApiError(
+      httpStatus.CONFLICT,
+      `Order is already ${prevStatus} and cannot be changed`
+    );
+  }
+  const update = { status: nextStatus };
+  if (nextStatus === "cancelled") {
+    update.cancellationReason = String(body.reason || "").slice(0, 1000);
+    update.cancelledBy = userId;
+    update.cancelledAt = new Date();
+    update.cancelledFromStatus = prevStatus;
+  }
+  // Atomic compare-and-set on the previous status so two concurrent
+  // "accept" requests can never credit the seller twice.
+  const swapped = await Payment.updateOne(
+    { _id: order._id, status: prevStatus },
+    { $set: update }
+  );
+  if (!swapped.modifiedCount) {
+    throw new ApiError(httpStatus.CONFLICT, "Order was changed by another request");
+  }
+  Object.assign(order, update);
 
   // Email side-effects on a state transition. Wrapped in try/catch so a
   // template / SMTP hiccup never breaks the order update itself.
@@ -168,7 +208,7 @@ const orderModify = async (paymentId, body, userId) => {
     }
   }
 
-  if (order.status === "delivered") {
+  if (order.status === "delivered" && prevStatus !== "delivered") {
     // Calculate the amount after deducting the 5% commission
     const orderAmount = order?.items[0]?.price;
     const commission = orderAmount * 0.05;
