@@ -55,4 +55,24 @@ async function reset(userId) {
   await User.updateOne({ _id: userId }, { $set: { twoFactorEnabled: false, twoFactorSecret: null, twoFactorRecovery: [], twoFactorPending: null } });
 }
 
-module.exports = { check, setup, enable, disable, reset };
+const jwt = require("jsonwebtoken");
+const config = require("../config/config");
+/** Short-lived proof that the first factor (Google) succeeded. */
+function challengeFor(user) {
+  return jwt.sign({ sub: String(user._id), typ: "2fa-challenge" }, config.jwt.secret, { expiresIn: "5m" });
+}
+async function userFromChallenge(token) {
+  let p;
+  try {
+    p = jwt.verify(String(token || ""), config.jwt.secret);
+  } catch {
+    p = null;
+  }
+  if (!p || p.typ !== "2fa-challenge") throw new ApiError(httpStatus.UNAUTHORIZED, "Sign-in expired. Start again.");
+  const user = await User.findById(p.sub);
+  if (!user || user.isDeleted) throw new ApiError(httpStatus.UNAUTHORIZED, "Account not available");
+  if (user.isBan) throw new ApiError(httpStatus.FORBIDDEN, `BANNED:${user.banReason || "Your account has been suspended by an administrator."}`);
+  return user;
+}
+
+module.exports = { check, setup, enable, disable, reset, challengeFor, userFromChallenge };
