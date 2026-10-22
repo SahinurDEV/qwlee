@@ -30,6 +30,7 @@ const RULES = [
   ["W", /^\/admin\/(requests|offers|reviews)(\/|$)/, "moderation"],
   ["W", /^\/verification(\/|$)/, "moderation"],
   ["W", /^\/(categories|blog|banner|info)(\/|$)/, "content"],
+  ["W", /^\/admin\/help(\/|$)/, "content"],
   ["W", /^\/(admin\/)?support(\/|$)/, "support"],
   ["W", /^\/admin\/broadcast(\/|$)/, "broadcast"],
   // The approvals controller checks the permission of the parked action.

@@ -26,7 +26,7 @@ import {
 import cls from "../../utils/cls";
 import { confirmModal } from "../../common/confirm";
 import { useAdminQuery } from "../../utils/adminApi";
-import { TbChartLine, TbSpeakerphone, TbChecks, TbTicket, TbLock,
+import { TbChartLine, TbSpeakerphone, TbChecks, TbTicket, TbLock, TbHelp,
   TbMail, TbShieldLock, TbUsersGroup, TbGavel, TbBuildingBank, TbAdjustments } from "react-icons/tb";
 
 const NAV = [
@@ -68,6 +68,7 @@ const NAV = [
     section: "Content",
     items: [
       { to: "/dashboard/blog", label: "Blog", icon: TbLogs },
+      { to: "/dashboard/help", label: "Help centre", icon: TbHelp, perm: "content" },
       { to: "/dashboard/reports", label: "Reports", icon: TbReportAnalytics },
       { to: "/dashboard/analytics", label: "Analytics", icon: TbChartLine, perm: "analytics" },
       { to: "/dashboard/broadcast", label: "Announcements", icon: TbSpeakerphone, perm: "broadcast" },

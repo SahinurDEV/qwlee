@@ -154,6 +154,17 @@ const coupons = require("../../controllers/coupons.controller");
 router.get("/coupons", A, coupons.list);
 router.post("/coupons", A, coupons.create);
 router.patch("/coupons/:id", A, coupons.update);
+// Help centre / FAQ articles (content role).
+const helpSvc = require("../../services/help.service");
+const catchAsync2 = require("../../utils/catchAsync");
+const helpOk = (res, attributes, message = "OK") => res.json({ code: 200, message, data: { attributes } });
+router.get("/help", A, catchAsync2(async (req, res) => helpOk(res, { results: await helpSvc.adminList(req.query) })));
+router.post("/help", A, catchAsync2(async (req, res) => helpOk(res, await helpSvc.create(req.body, req.user._id), "Article created")));
+router.patch("/help/:id", A, catchAsync2(async (req, res) => helpOk(res, await helpSvc.update(req.params.id, req.body, req.user._id), "Article saved")));
+router.delete("/help/:id", A, catchAsync2(async (req, res) => {
+  await helpSvc.remove(req.params.id);
+  helpOk(res, { deleted: true }, "Article deleted");
+}));
 const approvals = require("../../controllers/approvals.controller");
 router.get("/approvals", A, approvals.list);
 router.post("/approvals/:id/approve", A, approvals.approve);
