@@ -34,10 +34,10 @@ const buyerOrderApi = baseApi.injectEndpoints({
       providesTags: ["Orders"],
     }),
     updateBuyerOrderStatus: builder.mutation({
-      query: ({orderId, status}) => ({
+      query: ({ orderId, status, reason }) => ({
         url: `/orders?orderId=${orderId}`,
         method: "PATCH",
-        body: { status },
+        body: { status, ...(reason ? { reason } : {}) },
       }),
       invalidatesTags: ["Orders"],
     }),
@@ -73,6 +73,14 @@ const buyerOrderApi = baseApi.injectEndpoints({
       query: ({ orderId, amount }) => ({ url: `/orders/${orderId}/tip`, method: "POST", body: { amount } }),
       invalidatesTags: ["Orders"],
     }),
+    requestCancellation: builder.mutation({
+      query: ({ orderId, reason }) => ({ url: `/orders/${orderId}/cancellation`, method: "POST", body: { reason } }),
+      invalidatesTags: ["Orders"],
+    }),
+    respondCancellation: builder.mutation({
+      query: ({ orderId, action }) => ({ url: `/orders/${orderId}/cancellation`, method: "PATCH", body: { action } }),
+      invalidatesTags: ["Orders"],
+    }),
     respondOrderExtension: builder.mutation({
       query: ({ orderId, action }) => ({
         url: `/orders/${orderId}/extension`,
@@ -92,6 +100,8 @@ export const {
   useUpdateBuyerOrderStatusMutation,
   useRequestOrderExtensionMutation,
   useRespondOrderExtensionMutation,
+  useRequestCancellationMutation,
+  useRespondCancellationMutation,
   useGetOrderQuoteMutation,
   useSubmitOrderRequirementsMutation,
   useRequestOrderRevisionMutation,

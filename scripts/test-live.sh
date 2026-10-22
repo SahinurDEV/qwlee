@@ -15,6 +15,13 @@ COMPOSE=${COMPOSE:-docker compose}
 DB=${MONGO_DB:-qwlee}
 SNAP=/tmp/qwlee-pretest.archive
 
+# Fresh backend process: the in-memory login rate limiter would otherwise
+# carry failures over from a previous run (429s).
+echo "→ restarting backend"
+$COMPOSE restart backend >/dev/null
+i=0
+until curl -fsS "${API_URL:-http://localhost:7171}/v1/info/geo" >/dev/null 2>&1 || [ $i -ge 60 ]; do i=$((i+1)); sleep 1; done
+
 echo "→ snapshotting database '$DB'"
 $COMPOSE exec -T mongo mongodump --quiet --db "$DB" --archive="$SNAP"
 
