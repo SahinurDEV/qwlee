@@ -186,12 +186,24 @@ router.post("/jobs/subscriptions", A, require("../../utils/catchAsync")(async (r
   if (Number.isNaN(asOf.getTime())) return res.status(400).json({ code: 400, message: "Invalid asOf" });
   res.json({ code: 200, message: "OK", data: { attributes: await require("../../services/subscription.service").billDue(asOf) } });
 }));
+// Send scheduled announcements now (super admin). `asOf` sends as if it were that time.
+router.post("/jobs/announcements", A, require("../../utils/catchAsync")(async (req, res) => {
+  const asOf = req.body?.asOf ? new Date(req.body.asOf) : new Date();
+  if (Number.isNaN(asOf.getTime())) return res.status(400).json({ code: 400, message: "Invalid asOf" });
+  res.json({ code: 200, message: "OK", data: { attributes: { sent: await require("../../services/announcements.service").sendDue(asOf) } } });
+}));
 router.patch("/settings/site", A, ac.updateSite);
 // Orphaned local uploads: GET = dry run, POST = delete.
 router.get("/settings/storage/orphans", A, ac.storageOrphans);
 router.post("/settings/storage/orphans", A, ac.storageOrphans);
 router.post("/broadcast", A, ac.broadcast);
 router.get("/broadcast", A, ac.listBroadcasts);
+const annSvc = require("../../services/announcements.service");
+const annOk = (res, attributes, message = "OK") => res.json({ code: 200, message, data: { attributes } });
+const annId = (req, res) => require("mongoose").isValidObjectId(req.params.id) || (res.status(400).json({ code: 400, message: "Invalid id" }), false);
+router.post("/broadcast/preview", A, require("../../utils/catchAsync")(async (req, res) => annOk(res, await annSvc.preview(req.body || {}))));
+router.patch("/broadcast/:id", A, require("../../utils/catchAsync")(async (req, res) => annId(req, res) && annOk(res, await annSvc.update(req.params.id, req.body || {}), "Saved")));
+router.post("/broadcast/:id/cancel", A, require("../../utils/catchAsync")(async (req, res) => annId(req, res) && annOk(res, await annSvc.cancel(req.params.id), "Cancelled")));
 router.get("/analytics", A, ac.analytics);
 router.get("/audit", A, ac.auditLog);
 router.get("/team", A, ac.team);

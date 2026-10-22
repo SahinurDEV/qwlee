@@ -190,6 +190,13 @@ Besides the built-in admin roles (super, moderator, support and finance), a supe
 - **Bulk users:** tick rows on Users to ban, unban or sign several accounts out at once (`POST /v1/admin/bulk/users`, up to 200). Admin accounts and yourself are skipped.
 - **Bulk gigs:** tick rows on Gigs to approve, request changes, pause, deny, feature or unfeature several gigs (`POST /v1/admin/bulk/gigs`). The note is shown to each seller on their dashboard. Unlike the single-gig action, bulk changes don't email the sellers.
 
+## Announcements
+
+Admin → Announcements sends an in-app notification, optionally by email too, now or at a set time.
+- **Targeting:** narrow the audience (everyone, buyers or sellers) by location text, sign-up age, recent activity, ID verification, and whether the buyer has ever ordered. The form shows how many users match as you go (`POST /v1/admin/broadcast/preview`).
+- **Scheduling:** set "Send at" to schedule the announcement. The background job sends it when due, to whoever matches at that moment, and claims each one first so it is sent only once. Until then you can edit it (`PATCH /v1/admin/broadcast/:id`) or cancel it (`POST /v1/admin/broadcast/:id/cancel`).
+- **Manual run:** a super admin can run the job by hand with `POST /v1/admin/jobs/announcements {asOf}`.
+
 ## Keyword filters and risk flags
 
 Admin → Site settings → "Keyword filters & risk rules" holds the rules:

@@ -398,8 +398,9 @@ const runHousekeeping = async () => {
   );
   const autoCancelled = await require("./cancellation.service").autoAcceptExpired();
   const subscriptions = await require("./subscription.service").billDue();
+  const announcements = await require("./announcements.service").sendDue();
   const bansLifted = await require("./moderation.service").liftExpiredBans();
-  return { autoCompleted: due.length, markedLate: late.modifiedCount || 0, autoCancelled, subscriptions, bansLifted };
+  return { autoCompleted: due.length, markedLate: late.modifiedCount || 0, autoCancelled, subscriptions, bansLifted, announcements };
 };
 
 let timer = null;
