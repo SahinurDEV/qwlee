@@ -106,6 +106,8 @@ const getGigs = catchAsync(async (req, res) => {
     'hasVideo',
   ]);
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
+  // Cap page size so ?limit=100000 can't dump the whole catalogue.
+  if (options.limit !== undefined) options.limit = Math.min(Math.max(parseInt(options.limit, 10) || 10, 1), 100);
   // When the caller is signed in, hide their own gigs from the public
   // marketplace — a freelancer browsing in Buying mode shouldn't see
   // gigs they themselves sell (you can't buy from yourself). Skip the

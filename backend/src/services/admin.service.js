@@ -1,3 +1,4 @@
+const { escapeRegex } = require("../utils/publicUser");
 const httpStatus = require("http-status");
 const ApiError = require("../utils/ApiError");
 const Gig = require("../models/gig.model");
@@ -186,7 +187,7 @@ const queryAllGigs = async (filter = {}, options = {}) => {
   options.sortBy = options.sortBy || "createdAt:desc";
   if (!options.limit) options.limit = 50;
   const query = {};
-  if (filter.title) query.title = { $regex: filter.title, $options: "i" };
+  if (filter.title) query.title = { $regex: escapeRegex(String(filter.title).slice(0, 100)), $options: "i" };
   if (filter.categories) query.categoriesId = filter.categories;
   const result = await Gig.paginate(query, options);
   return result;
