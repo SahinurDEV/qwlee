@@ -17,7 +17,6 @@ async function api(path, method = "GET", body) {
   return j?.data?.attributes;
 }
 
-export default function Teams() {
 
 export default function Talent() {
   const user = useUser();
