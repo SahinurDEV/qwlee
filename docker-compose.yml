@@ -66,6 +66,11 @@ services:
     volumes:
       - ./scripts/backup.sh:/backup.sh:ro
       - backups:/backups
+      # Uploaded files are archived with each database backup.
+      - uploads:/uploads:ro
+      # Off-server copy: point BACKUP_OFFSITE_PATH at another disk, NFS
+      # mount or synced folder. Defaults to ./offsite-backups on the host.
+      - ${BACKUP_OFFSITE_PATH:-./offsite-backups}:/offsite
     environment:
       MONGODB_URL: mongodb://mongo:27017/qwlee
       BACKUP_KEEP: ${BACKUP_KEEP:-7}
