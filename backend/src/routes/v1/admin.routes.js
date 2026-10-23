@@ -274,4 +274,16 @@ router.get("/jobs/status", A, catchAsync2(async (req, res) => helpOk(res, await 
 router.get("/jobs/history", A, catchAsync2(async (req, res) => helpOk(res, { results: await jobsSvc.history(req.query.job, req.query.limit) })));
 router.post("/jobs/housekeeping", A, catchAsync2(async (req, res) => helpOk(res, await require("../../services/orderLifecycle.service").runHousekeeping({ trigger: "manual" }), "Housekeeping ran")));
 
+// Personal data on behalf of a user (super only; see adminPermissions).
+const privacySvc = require("../../services/privacy.service");
+router.get("/privacy/:id/export", A, catchAsync2(async (req, res) => {
+  res.set("Content-Disposition", `attachment; filename="user-${req.params.id}-data.json"`);
+  res.set("Cache-Control", "no-store");
+  res.json(await privacySvc.exportUser(req.params.id));
+}));
+router.post("/privacy/:id/erase", A, catchAsync2(async (req, res) => {
+  if (req.body?.confirm !== "ERASE") throw new ApiError(400, "Send confirm: ERASE");
+  helpOk(res, await privacySvc.eraseUser(req.params.id, { by: `admin ${req.user._id}` }), "Account erased");
+}));
+
 module.exports = router;

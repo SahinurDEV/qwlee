@@ -258,9 +258,8 @@ const deleteMe = async (password, reqUser) => {
   if (!(await user.isPasswordMatch(password))) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Incorrect password");
   }
-  user.isDeleted = true;
-  await user.save();
-  return user;
+  // Same anonymising erasure as POST /v1/users/me/delete.
+  return require("./privacy.service").eraseUser(user._id, { by: "self" });
 };
 
 module.exports = {

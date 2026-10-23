@@ -1,5 +1,6 @@
 "use client";
 import SessionsSection from "@/components/EditProfile/SessionsSection";
+import PrivacySection from "@/components/EditProfile/PrivacySection";
 import TwoFactorSection from "@/components/EditProfile/TwoFactorSection";
 // Buyer profile editor — shorter form than freelancers (no skills, no
 // hourly rate). Same sectioned card system and save UX so the
@@ -248,6 +249,7 @@ export default function BuyerEditProfile() {
       </Form>
       <TwoFactorSection />
 <SessionsSection />
+<PrivacySection />
     </main>
   );
 }

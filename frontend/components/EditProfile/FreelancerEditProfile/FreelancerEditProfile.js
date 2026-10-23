@@ -30,6 +30,7 @@ import {
 import Avatar from "@/components/common/Avatar";
 import VerificationSection from "@/components/EditProfile/VerificationSection";
 import SessionsSection from "@/components/EditProfile/SessionsSection";
+import PrivacySection from "@/components/EditProfile/PrivacySection";
 import TwoFactorSection from "@/components/EditProfile/TwoFactorSection";
 
 function normaliseSkills(rawSkills) {
@@ -351,6 +352,7 @@ export default function FreelancerEditProfile() {
         <VerificationSection user={loginUser} />
         <TwoFactorSection />
 <SessionsSection />
+<PrivacySection />
 
         <div className="sticky bottom-0 bg-white/85 backdrop-blur border border-gray-200 rounded-2xl px-5 py-3 mt-6 flex items-center justify-between">
           <button
