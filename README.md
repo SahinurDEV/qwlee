@@ -344,10 +344,14 @@ docker compose exec backup sh -c 'mongorestore --uri="$MONGODB_URL" --gzip --dro
 docker compose restart backend
 ```
 
-Archives stay on the same server, so copy them off-box too, e.g.
-`docker compose cp backup:/backups ./offsite-backups` from cron, or sync the
-volume to object storage. Uploaded images in the `uploads` volume are not
-part of the Mongo backup.
+Each run also archives the `uploads` volume (`qwlee-<time>.uploads.tar.gz`)
+and copies both files to an off-server folder: `BACKUP_OFFSITE_PATH` in
+`.env` (default `./offsite-backups` next to the compose file, outside Docker's
+volumes, so it survives a Docker reset). Point it at another disk, an NFS
+mount or a synced folder (rclone, Dropbox, S3 mount) for real disaster
+recovery. The Backups page shows whether uploads were archived and the
+off-server copy worked. Restore uploads with
+`docker compose run --rm -v ./offsite-backups:/o backend sh -c 'tar -xzf /o/<file>.uploads.tar.gz -C /app/uploads'`.
 
 ### Category fees
 

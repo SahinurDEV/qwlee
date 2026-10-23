@@ -37,4 +37,6 @@ test("backups: status needs settings, run-now is super only and produces an arch
   assert.equal(now.last.ok, true, now.last.error);
   assert.equal(now.health, "ok");
   assert.ok(now.files.some((f) => f.name === now.last.file && f.bytes > 1000));
+  assert.match(now.last.uploads || "", /^qwlee-.*\.uploads\.tar\.gz$/, "uploads archived");
+  assert.equal(typeof now.last.offsite, "boolean");
 });
