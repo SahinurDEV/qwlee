@@ -320,8 +320,12 @@ socket server refuses new non-admin connections (`connect_error`
   cancelled; sessions, tokens, push subscriptions, saved replies, favourites,
   notifications, activity, portfolio and open buyer requests are deleted.
   It is refused while the user has open orders, pending withdrawals or a
-  balance, and for admin accounts. Uploaded files (e.g. verification
-  documents in private storage) and message text are not purged.
+  balance, and for admin accounts. Text and attachments of the chat and
+  order messages they sent are replaced with "[message deleted]" (the other
+  side keeps the thread), and their locally stored files (avatar, cover,
+  portfolio, message attachments, verification documents in private
+  storage) are deleted from the uploads volume. Files on ImgBB/Cloudinary
+  can't be removed from the app and need the provider's dashboard.
 
 ### Backups
 
