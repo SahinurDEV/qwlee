@@ -16,6 +16,8 @@ const buyerRequestSchema = mongoose.Schema(
     hiredOfferId: { type: mongoose.Schema.Types.ObjectId, ref: "RequestOffer", default: null },
     orderId: { type: mongoose.Schema.Types.ObjectId, ref: "Payment", default: null },
     expiresAt: { type: Date, index: true },
+    // Sellers the buyer invited from talent search; their offers cost no credits.
+    invitedSellerIds: [{ type: mongoose.Schema.Types.ObjectId, ref: "User", index: true }],
   },
   { timestamps: true }
 );

@@ -353,6 +353,10 @@ recovery. The Backups page shows whether uploads were archived and the
 off-server copy worked. Restore uploads with
 `docker compose run --rm -v ./offsite-backups:/o backend sh -c 'tar -xzf /o/<file>.uploads.tar.gz -C /app/uploads'`.
 
+### Talent search and invite-to-request
+
+`/talent` lets anyone search sellers by name, skill or keyword (`GET /v1/talent?q=&skill=&pro=true&online=true`; only public profile fields are returned). Buyers can invite a seller to one of their open buyer requests (`POST /v1/requests/:id/invite {sellerId}`, max 20 per request); the seller is notified and sees it under `GET /v1/requests/invites/mine`. Offers on requests you were invited to cost no proposal credits. Covered by `backend/tests/talent.test.js`.
+
 ### Team accounts
 
 Buyers can create a team at `/teams` (max 5 owned teams, 50 members each) and invite colleagues by email. Invites for unregistered emails are claimed when that person signs up and opens `/teams`. Roles: owner (manages roles), admin (can invite members), member. Active members see every member's orders via `GET /v1/teams/:id/orders`. API: `GET/POST /v1/teams`, `POST /v1/teams/:id/invite|accept|decline`, `PATCH|DELETE /v1/teams/:id/members/:memberId`. Covered by `backend/tests/teams.test.js`.
