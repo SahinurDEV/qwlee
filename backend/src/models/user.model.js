@@ -89,6 +89,12 @@ const userSchema = mongoose.Schema(
       required: false,
       default: 0,
     },
+    // Proposal credits for offers on buyer requests (see credits.service).
+    proposalCredits: {
+      monthly: { type: Number, default: null },
+      bought: { type: Number, default: 0 },
+      refillAt: { type: Date, default: null },
+    },
     skills: {
       type: [],
       required: false,
