@@ -58,7 +58,7 @@ function BlogDetails({ slug }) {
               className="w-full max-h-[550px] rounded-lg absolute"
               src={imgUrl(data?.image)}
               fill
-              alt=""
+              alt={data?.title || "Blog cover image"}
             />
           </div>
         </div>
