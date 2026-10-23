@@ -34,3 +34,23 @@ test("public gig list caps ?limit at 100", async () => {
   const limit = d?.limit ?? d?.pagination?.limit;
   if (limit !== undefined) assert.ok(Number(limit) <= 100, `limit ${limit}`);
 });
+
+test("legal page HTML is sanitised on save", async () => {
+  const t = await adminToken();
+  const get = async () => (await (await fetch(`${API}/v1/info/terms`)).json()).data.attributes;
+  const before = await get();
+  const original = (Array.isArray(before) ? before[0] : before)?.content || "<p>Terms</p>";
+  const post = (content) => fetch(`${API}/v1/info/terms`, {
+    method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${t}` },
+    body: JSON.stringify({ content }),
+  });
+  try {
+    assert.ok((await post('<p>ok</p><script>alert(1)</script><img src="x" onerror="alert(2)">')).ok);
+    const after = await get();
+    const html = (Array.isArray(after) ? after[0] : after).content;
+    assert.match(html, /<p>ok<\/p>/);
+    assert.doesNotMatch(html, /<script|onerror/i);
+  } finally {
+    await post(original);
+  }
+});

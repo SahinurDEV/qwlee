@@ -7,4 +7,6 @@ const privacySchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+privacySchema.plugin(require("./plugins/sanitizeHtmlFields.plugin"), { fields: ["content"] });
+
 module.exports = mongoose.model("Privacy", privacySchema);
