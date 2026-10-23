@@ -163,7 +163,10 @@ async function computeLevelOverview(userId) {
   // there are no reviews we surface a dash on the UI.
   const successScore = stats.totalReviews > 0 ? Number((stats.rating * 2).toFixed(1)) : null;
 
+  const jobSuccess = await require("./jobSuccess.service").forSeller(oid).catch(() => null);
+
   return {
+    jobSuccess,
     user: {
       name: user.fullName || user.username || "Seller",
       username: user.username || null,
