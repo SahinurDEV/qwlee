@@ -20,6 +20,8 @@ const creditsSvc = require("../../services/credits.service");
 const catchAsyncC = require("../../utils/catchAsync");
 router.get("/credits/me", auth("withOutAdmin"), catchAsyncC(async (req, res) => res.json({ code: 200, message: "Credits", data: { attributes: await creditsSvc.summary(req.user.id) } })));
 router.post("/credits/buy", auth("withOutAdmin"), catchAsyncC(async (req, res) => res.json({ code: 200, message: "Credits bought", data: { attributes: await creditsSvc.buy(req.user.id, req.body?.packs) } })));
+router.get("/invites/mine", auth("withOutAdmin"), catchAsyncC(async (req, res) => res.json({ code: 200, message: "Invites", data: { attributes: await require("../../services/buyerRequest.service").listMyInvites(req.user) } })));
+router.post("/:requestId/invite", auth("withOutAdmin"), catchAsyncC(async (req, res) => res.status(201).json({ code: 201, message: "Seller invited", data: { attributes: await require("../../services/buyerRequest.service").inviteSeller(req.params.requestId, req.user, req.body?.sellerId) } })));
 router.get("/offers/mine", auth("withOutAdmin"), c.listMyOffers);
 router.post("/offers/:offerId/withdraw", auth("withOutAdmin"), c.withdrawOffer);
 router.post("/offers/:offerId/decline", auth("withOutAdmin"), c.declineOffer);

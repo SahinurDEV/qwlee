@@ -182,7 +182,8 @@ const createOffer = async (requestId, seller, body) => {
     throw new ApiError(httpStatus.CONFLICT, "You already sent an offer on this request");
   }
   const credits = require("./credits.service");
-  const paid = await credits.spend(seller.id);
+  const invited = (r.invitedSellerIds || []).some((x) => idOf(x) === String(seller.id));
+  const paid = invited ? { spent: 0, from: "invite" } : await credits.spend(seller.id);
   const fields = { buyerId: r.buyerId, gigId, price, deliveryDays, revisions, message, status: "pending", orderId: null, credits: { spent: paid.spent || 0, from: paid.from || "", refunded: false } };
   const offer = prior
     ? await Object.assign(prior, fields).save()
@@ -251,7 +252,30 @@ const markOfferHired = async (offerId, orderId) => {
   return o;
 };
 
+// Invite a seller (found via talent search) to send an offer.
+const MAX_INVITES = 20;
+const inviteSeller = async (requestId, buyer, sellerId) => {
+  const r = await getRequestDoc(requestId);
+  if (idOf(r.buyerId) !== String(buyer.id)) throw new ApiError(httpStatus.FORBIDDEN, "Only the request owner can invite");
+  if (r.status !== "open" || r.expiresAt <= new Date()) throw new ApiError(httpStatus.BAD_REQUEST, "This request is no longer open");
+  if (!mongoose.isValidObjectId(sellerId)) throw new ApiError(httpStatus.BAD_REQUEST, "Seller not found");
+  const { User } = require("../models");
+  const seller = await User.findById(sellerId).select("role isDeleted bannedAt");
+  if (!seller || seller.isDeleted || seller.bannedAt || seller.role !== "freelancer") throw new ApiError(httpStatus.BAD_REQUEST, "Seller not found");
+  const list = (r.invitedSellerIds || []).map(idOf);
+  if (list.includes(String(sellerId))) throw new ApiError(httpStatus.CONFLICT, "Seller already invited");
+  if (list.length >= MAX_INVITES) throw new ApiError(httpStatus.BAD_REQUEST, `You can invite up to ${MAX_INVITES} sellers`);
+  await BuyerRequest.updateOne({ _id: r._id }, { $addToSet: { invitedSellerIds: seller._id } });
+  notify(seller._id, `You were invited to send an offer on "${r.title}"`, String(r._id), "freelancer");
+  return { invited: list.length + 1 };
+};
+const listMyInvites = async (seller) =>
+  BuyerRequest.find({ invitedSellerIds: seller.id, status: "open", expiresAt: { $gt: new Date() } })
+    .sort({ createdAt: -1 }).limit(50).populate({ path: "buyerId", select: PUBLIC_USER_SELECT });
+
 module.exports = {
+  inviteSeller,
+  listMyInvites,
   createRequest,
   listOpenRequests,
   listMyRequests,
