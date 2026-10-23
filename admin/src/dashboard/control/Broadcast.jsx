@@ -87,7 +87,7 @@ export default function Broadcast() {
         <Card title="History" bodyClassName="p-0">
           <ErrorNote error={error} />
           {data?.results?.length ? (
-            <table className="w-full">
+            <div className="overflow-x-auto"><table className="w-full">
               <thead className="border-b border-ink-100"><tr><Th>Announcement</Th><Th>Audience</Th><Th>Reach</Th><Th>Status</Th><Th /></tr></thead>
               <tbody className="divide-y divide-ink-100">
                 {data.results.map((a) => {
@@ -108,7 +108,7 @@ export default function Broadcast() {
                   );
                 })}
               </tbody>
-            </table>
+            </table></div>
           ) : <Empty>No announcements yet.</Empty>}
         </Card>
       </div>

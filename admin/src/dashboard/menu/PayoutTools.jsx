@@ -120,7 +120,7 @@ export function ReconcileModal({ open, onClose, onDone }) {
             {Object.entries(preview.summary).map(([k, v]) => `${LABELS[k] || k} ${v}`).join(" · ")}
           </div>
           <div className="max-h-64 overflow-auto border border-ink-100 rounded-lg">
-            <table className="w-full text-xs">
+            <div className="overflow-x-auto"><table className="w-full text-xs">
               <thead className="bg-ink-50 text-left">
                 <tr><th className="p-2">Reference</th><th className="p-2">Amount</th><th className="p-2">Bank ref</th><th className="p-2">Result</th></tr>
               </thead>
@@ -134,7 +134,7 @@ export function ReconcileModal({ open, onClose, onDone }) {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table></div>
           </div>
         </div>
       )}

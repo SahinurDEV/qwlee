@@ -44,7 +44,7 @@ export default function AuditLog() {
         <ErrorNote error={error} />
         {data?.results?.length === 0 ? <Empty>No entries.</Empty> : null}
         {data?.results?.length ? (
-          <table className="w-full" data-testid="audit-table">
+          <div className="overflow-x-auto"><table className="w-full" data-testid="audit-table">
             <thead className="border-b border-ink-100"><tr><Th>When</Th><Th>Admin</Th><Th>Action</Th><Th>Target</Th><Th>Result</Th></tr></thead>
             <tbody className="divide-y divide-ink-100">
               {data.results.map((a) => (
@@ -52,17 +52,17 @@ export default function AuditLog() {
                   <tr className="cursor-pointer hover:bg-ink-50" onClick={() => setOpen(open === a.id ? null : a.id)}>
                     <Td className="text-xs whitespace-nowrap">{formatDate(a.createdAt, { withTime: true })}</Td>
                     <Td className="text-xs">{a.adminEmail}<div className="text-ink-500">{a.adminRole}</div></Td>
-                    <Td><code className="text-xs">{a.action}</code><div className="text-[11px] text-ink-500">{a.permission}</div></Td>
+                    <Td><code className="text-xs">{a.action}</code><div className="text-xs text-ink-500">{a.permission}</div></Td>
                     <Td className="text-xs font-mono">{a.targetId ? a.targetId.slice(-8) : "—"}</Td>
                     <Td><StatusPill status={a.ok ? "ok" : "error"} label={String(a.status)} /></Td>
                   </tr>
                   {open === a.id ? (
-                    <tr><td colSpan={5} className="bg-ink-50 px-3 py-2"><pre className="text-[11px] whitespace-pre-wrap">{JSON.stringify({ path: a.path, ip: a.ip, body: a.body }, null, 2)}</pre></td></tr>
+                    <tr><td colSpan={5} className="bg-ink-50 px-3 py-2"><pre className="text-xs whitespace-pre-wrap">{JSON.stringify({ path: a.path, ip: a.ip, body: a.body }, null, 2)}</pre></td></tr>
                   ) : null}
                 </Fragment>
               ))}
             </tbody>
-          </table>
+          </table></div>
         ) : null}
         <Pager data={data} page={page} setPage={setPage} />
       </Card>

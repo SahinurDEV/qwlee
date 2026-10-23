@@ -234,7 +234,7 @@ export default function Orders() {
               )}
             >
               {t.label}
-              <span className="ml-1 text-[10px] text-ink-400">
+              <span className="ml-1 text-xs text-ink-400">
                 {counts[t.v]}
               </span>
             </button>
@@ -435,7 +435,7 @@ function OpenTicketModal({ order, onClose }) {
               placeholder="Describe what happened and what you need from each side. Both buyer and seller will see this exact message."
               className="w-full px-3 py-2 rounded-lg border border-ink-200 text-sm outline-none focus:border-primary-400 resize-none"
             />
-            <div className="text-right text-[11px] text-ink-400 mt-1">
+            <div className="text-right text-xs text-ink-400 mt-1">
               {body.length}/4000
             </div>
           </div>
@@ -551,7 +551,7 @@ function CancelOrderModal({ order, onClose }) {
               className="w-full px-3 py-2 rounded-lg border border-ink-200 text-sm outline-none focus:border-primary-400 resize-none"
               autoFocus
             />
-            <div className="text-right text-[11px] text-ink-400 mt-1">
+            <div className="text-right text-xs text-ink-400 mt-1">
               {reason.length}/500
             </div>
           </div>

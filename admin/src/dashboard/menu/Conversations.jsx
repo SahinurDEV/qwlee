@@ -133,7 +133,7 @@ function DirectMessages({ search }) {
                         {previewOf(row.lastMessage)}
                       </div>
                     </div>
-                    <div className="text-[11px] text-ink-400 whitespace-nowrap text-right">
+                    <div className="text-xs text-ink-400 whitespace-nowrap text-right">
                       {row.lastMessage?.createdAt
                         ? timeAgo(row.lastMessage.createdAt)
                         : ""}
@@ -239,7 +239,7 @@ function OrderChats({ search }) {
                         {row.order?.freelancerId?.fullName || "—"}
                       </div>
                     </div>
-                    <div className="text-[11px] text-ink-400 whitespace-nowrap text-right">
+                    <div className="text-xs text-ink-400 whitespace-nowrap text-right">
                       {row.lastMessage?.createdAt ? timeAgo(row.lastMessage.createdAt) : ""}
                       <div>{row.messageCount} msgs</div>
                     </div>
@@ -418,7 +418,7 @@ function FilesGrid({ files, onZoom }) {
             href={url || "#"}
             target="_blank"
             rel="noreferrer"
-            className="flex items-center justify-center aspect-square rounded-md border border-ink-200 text-[10px] text-ink-500 hover:bg-ink-50"
+            className="flex items-center justify-center aspect-square rounded-md border border-ink-200 text-xs text-ink-500 hover:bg-ink-50"
           >
             <IoImageOutline className="w-4 h-4 mr-1" />
             FILE

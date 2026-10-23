@@ -203,7 +203,7 @@ export default function CategoryPage() {
                       type="button"
                       onClick={() => openEdit(s)}
                       title="Edit subcategory"
-                      className="text-[11px] px-2 py-0.5 rounded-full bg-ink-50 border border-ink-200 text-ink-700 hover:border-primary-300"
+                      className="text-xs px-2 py-0.5 rounded-full bg-ink-50 border border-ink-200 text-ink-700 hover:border-primary-300"
                     >
                       {s.name}
                     </button>
@@ -211,7 +211,7 @@ export default function CategoryPage() {
                   <button
                     type="button"
                     onClick={() => openCreate(c)}
-                    className="text-[11px] px-2 py-0.5 rounded-full border border-dashed border-ink-300 text-ink-500 hover:text-primary-700"
+                    className="text-xs px-2 py-0.5 rounded-full border border-dashed border-ink-300 text-ink-500 hover:text-primary-700"
                   >
                     + sub
                   </button>
@@ -332,7 +332,7 @@ export default function CategoryPage() {
                 </div>
               )}
             </div>
-            <div className="mt-1 text-[11px] text-ink-400">
+            <div className="mt-1 text-xs text-ink-400">
               {iconResults.length} icon{iconResults.length === 1 ? "" : "s"}{" "}
               {iconSearch ? "match" : "available"}.
             </div>

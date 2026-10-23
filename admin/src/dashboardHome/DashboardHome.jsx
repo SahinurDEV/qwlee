@@ -557,7 +557,7 @@ function HeroStat({
           {delta != null && (
             <div
               className={cls(
-                "mt-1 inline-flex items-center gap-1 text-[11px] font-semibold px-1.5 py-0.5 rounded-full",
+                "mt-1 inline-flex items-center gap-1 text-xs font-semibold px-1.5 py-0.5 rounded-full",
                 up
                   ? "bg-primary-50 text-primary-700"
                   : "bg-rose-50 text-rose-700"
@@ -654,7 +654,7 @@ function DonutChart({ data, colors }) {
         </PieChart>
       </ResponsiveContainer>
       <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none -mt-7">
-        <div className="text-[10px] uppercase tracking-wider text-ink-400">
+        <div className="text-xs uppercase tracking-wider text-ink-400">
           Total
         </div>
         <div className="text-xl font-bold text-ink-900 tabular-nums">
@@ -696,7 +696,7 @@ function Leaderboard({
             <div className="text-sm font-medium text-ink-900 truncate">
               {label ? label(it) : it.name}
             </div>
-            <div className="text-[11px] text-ink-500">
+            <div className="text-xs text-ink-500">
               {formatSecondary
                 ? formatSecondary(it[secondaryKey])
                 : formatNumber(it[secondaryKey])}{" "}
@@ -709,7 +709,7 @@ function Leaderboard({
                 ? formatMoney(it[primaryKey])
                 : formatNumber(it[primaryKey])}
             </div>
-            <div className="text-[10px] text-ink-400 uppercase tracking-wider">
+            <div className="text-xs text-ink-400 uppercase tracking-wider">
               {primaryLabel}
             </div>
           </div>

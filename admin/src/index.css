@@ -66,3 +66,7 @@ p { line-height: 1.6; }
 @media (max-width: 767px) {
   table th, table td { padding: 0.5rem 0.75rem !important; }
 }
+@media (max-width: 767px) {
+  /* Raw tables scroll inside their card instead of squeezing every column. */
+  .overflow-x-auto > table { min-width: 640px; }
+}

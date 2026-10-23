@@ -52,7 +52,7 @@ export default function EmailTemplates() {
             {list.map((t) => (
               <li key={t.key}>
                 <button type="button" onClick={() => setKey(t.key)} className={`w-full text-left px-2 py-1.5 rounded-lg ${t.key === key ? "bg-emerald-50 text-emerald-800 font-medium" : "hover:bg-ink-50"}`}>
-                  {label(t.key)} {t.override ? <span className="text-[10px] uppercase text-amber-700">{t.override.disabled ? "off" : "edited"}</span> : null}
+                  {label(t.key)} {t.override ? <span className="text-xs uppercase text-amber-700">{t.override.disabled ? "off" : "edited"}</span> : null}
                 </button>
               </li>
             ))}

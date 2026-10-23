@@ -47,7 +47,7 @@ export default function RiskFlags() {
           </select>
         </div>
         {data?.results?.length ? (
-          <table className="w-full">
+          <div className="overflow-x-auto"><table className="w-full">
             <thead className="border-b border-ink-100"><tr><Th>What</Th><Th>Why</Th><Th>Who</Th><Th>Status</Th><Th /></tr></thead>
             <tbody className="divide-y divide-ink-100">
               {data.results.map((f) => {
@@ -57,7 +57,7 @@ export default function RiskFlags() {
                     <Td>
                       <div className="font-medium capitalize">{f.kind}</div>
                       <div className="text-xs text-ink-600 max-w-md break-words">{f.excerpt}</div>
-                      <div className="text-[11px] text-ink-400 font-mono">{f.targetId}</div>
+                      <div className="text-xs text-ink-400 font-mono">{f.targetId}</div>
                       {to ? <Link to={to} className="text-xs text-primary-700 underline">Open</Link> : null}
                     </Td>
                     <Td><div className="flex flex-wrap gap-1">{f.reasons.map((r) => <span key={r} className="text-xs bg-amber-50 text-amber-800 border border-amber-200 rounded px-1.5 py-0.5">{REASON(r)}</span>)}</div></Td>
@@ -75,7 +75,7 @@ export default function RiskFlags() {
                 );
               })}
             </tbody>
-          </table>
+          </table></div>
         ) : !loading ? <Empty>No {status === "all" ? "" : status} flags.</Empty> : null}
         <div className="px-4 pb-4"><Pager data={data} page={page} setPage={setPage} /></div>
       </Card>

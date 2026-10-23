@@ -37,7 +37,7 @@ export default function Team() {
       {data ? (
         <div className="space-y-5">
           <Card title="Admins" bodyClassName="p-0">
-            <table className="w-full">
+            <div className="overflow-x-auto"><table className="w-full">
               <thead className="border-b border-ink-100"><tr><Th>Admin</Th><Th>Role</Th><Th>Status</Th><Th>Two-factor</Th><Th>Last seen</Th><Th /></tr></thead>
               <tbody className="divide-y divide-ink-100">
                 {data.admins.map((a) => (
@@ -56,35 +56,35 @@ export default function Team() {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table></div>
           </Card>
           <Card title="Recent admin sign-ins" bodyClassName="p-0">
             {data.logins?.length ? (
-              <table className="w-full">
+              <div className="overflow-x-auto"><table className="w-full">
                 <thead className="border-b border-ink-100"><tr><Th>Admin</Th><Th>IP</Th><Th>Device</Th><Th>When</Th></tr></thead>
                 <tbody className="divide-y divide-ink-100">
                   {data.logins.map((l) => (
                     <tr key={l.id}><Td>{l.admin}</Td><Td className="font-mono text-xs">{l.ip || "—"}</Td><Td className="text-xs text-ink-500 max-w-xs truncate" title={l.userAgent}>{l.userAgent || "—"}</Td><Td className="text-xs">{timeAgo(l.at)}</Td></tr>
                   ))}
                 </tbody>
-              </table>
+              </table></div>
             ) : <p className="p-4 text-sm text-ink-500">No sign-ins recorded yet.</p>}
             <p className="px-4 pb-4 text-xs text-ink-500">Something unfamiliar? Use Users → Manage → “Sign out everywhere” on that admin and reset their password.</p>
           </Card>
           <CustomRoles onChange={reload} />
           <Card title="Role permissions" bodyClassName="p-0">
             <div className="overflow-x-auto">
-              <table className="w-full" data-testid="perm-matrix">
+              <div className="overflow-x-auto"><table className="w-full" data-testid="perm-matrix">
                 <thead className="border-b border-ink-100"><tr><Th>Permission</Th>{Object.keys(roles).map((r) => <Th key={r} className="text-center capitalize">{r}</Th>)}</tr></thead>
                 <tbody className="divide-y divide-ink-100">
                   {PERMS.map(([p, label]) => (
                     <tr key={p}>
-                      <Td><div className="text-sm">{label}</div><code className="text-[11px] text-ink-500">{p}</code></Td>
+                      <Td><div className="text-sm">{label}</div><code className="text-xs text-ink-500">{p}</code></Td>
                       {Object.keys(roles).map((r) => <Td key={r} className="text-center">{has(r, p) ? <span className="text-primary-600 font-bold">✓</span> : <span className="text-ink-300">—</span>}</Td>)}
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </table></div>
             </div>
           </Card>
         </div>
@@ -126,7 +126,7 @@ function CustomRoles({ onChange }) {
             {PERMS.map(([p, label]) => (
               <label key={p} className="flex items-center gap-2 text-sm">
                 <input type="checkbox" aria-label={`Permission ${p}`} disabled={p === "read"} checked={form.permissions.has(p)} onChange={() => { const n = new Set(form.permissions); n.has(p) ? n.delete(p) : n.add(p); setForm({ ...form, permissions: n }); }} />
-                {label} <code className="text-[11px] text-ink-500">{p}</code>
+                {label} <code className="text-xs text-ink-500">{p}</code>
               </label>
             ))}
           </div>
@@ -134,12 +134,12 @@ function CustomRoles({ onChange }) {
         </div>
       ) : null}
       {data?.custom?.length ? (
-        <table className="w-full">
+        <div className="overflow-x-auto"><table className="w-full">
           <thead className="border-b border-ink-100"><tr><Th>Role</Th><Th>Permissions</Th><Th>Admins</Th><Th /></tr></thead>
           <tbody className="divide-y divide-ink-100">
             {data.custom.map((r) => (
               <tr key={r.id}>
-                <Td><div className="font-medium">{r.name}</div><code className="text-[11px] text-ink-500">{r.key}</code>{r.description ? <div className="text-xs text-ink-500">{r.description}</div> : null}</Td>
+                <Td><div className="font-medium">{r.name}</div><code className="text-xs text-ink-500">{r.key}</code>{r.description ? <div className="text-xs text-ink-500">{r.description}</div> : null}</Td>
                 <Td className="text-xs">{r.permissions.join(", ")}</Td>
                 <Td>{r.admins}</Td>
                 <Td className="text-right whitespace-nowrap">
@@ -149,7 +149,7 @@ function CustomRoles({ onChange }) {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       ) : !form ? <p className="text-sm text-ink-500">No custom roles yet. The built-in roles are super, moderator, support and finance.</p> : null}
     </Card>
   );

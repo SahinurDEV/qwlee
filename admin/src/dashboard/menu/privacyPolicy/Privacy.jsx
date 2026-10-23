@@ -38,7 +38,7 @@ const Privacy = () => {
         </p>
       </div>
       <div className=" text-right mt-16"> 
-      <button onClick={() => navigate('/dashboard/editprivacypolicy')} className=" h-[55px] w-[480px] bg-[#00BF63] rounded-[8px] text-white">Edit</button>
+      <button onClick={() => navigate('/dashboard/editprivacypolicy')} className=" h-[55px] w-full sm:w-[480px] bg-[#00BF63] rounded-[8px] text-white">Edit</button>
       </div>
     </div>
     </div>
