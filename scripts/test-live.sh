@@ -40,5 +40,19 @@ restore() {
 }
 trap restore EXIT INT TERM
 
-# Subshell: the restore trap runs compose from the repo root.
-(cd backend && API_URL=${API_URL:-http://localhost:7171} MAILPIT_URL=${MAILPIT_URL:-http://localhost:8025} npm test)
+# Tests run inside a throw-away backend container by default, so every
+# module the app uses (web-push, http-status, ...) is there without a host
+# `npm install`. TEST_ON_HOST=true runs them with the host's node instead.
+# Inside the container the API is reached by service name; with a
+# host-network override pass IN_API_URL=http://localhost:7171 and
+# IN_MAILPIT_URL=http://localhost:8025.
+if [ "${TEST_ON_HOST:-false}" = "true" ]; then
+  # Subshell: the restore trap runs compose from the repo root.
+  (cd backend && API_URL=${API_URL:-http://localhost:7171} MAILPIT_URL=${MAILPIT_URL:-http://localhost:8025} npm test)
+else
+  $COMPOSE run --rm --no-deps -T \
+    -v "$(pwd)/backend/tests:/app/tests:ro" \
+    -e API_URL="${IN_API_URL:-${API_URL:-http://backend:7171}}" \
+    -e MAILPIT_URL="${IN_MAILPIT_URL:-http://mailpit:8025}" \
+    backend npm test
+fi

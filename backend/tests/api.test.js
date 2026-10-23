@@ -5,6 +5,13 @@ const { test, before } = require("node:test");
 const assert = require("node:assert/strict");
 
 const API = (process.env.API_URL || "http://localhost:7171").replace(/\/+$/, "");
+// Seeded/uploaded images may carry the public (tunnel) host. Fetch them
+// from the API under test instead so the check works offline.
+const localUrl = (u) => {
+  const url = new URL(u, API + "/");
+  const m = url.pathname.match(/\/(seed|uploads)\/.*/);
+  return m ? `${API}${m[0]}` : url.href;
+};
 const V1 = `${API}/v1`;
 
 const call = async (method, path, { token, body } = {}) => {
@@ -114,7 +121,7 @@ test("seed images are served by the API", async () => {
   const gig = (await call("GET", "/gig?limit=1")).data.results[0];
   const url = new URL(gig.images[0], API + "/");
   assert.match(url.pathname, /\/seed\/gig\/.+\.jpg$/);
-  const res = await fetch(url);
+  const res = await fetch(localUrl(gig.images[0]));
   assert.equal(res.status, 200);
   assert.match(res.headers.get("content-type") || "", /image\/jpeg/);
 });

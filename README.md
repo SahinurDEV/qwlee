@@ -247,7 +247,7 @@ With a seeded stack running:
 scripts/test-live.sh
 ```
 
-The script snapshots the database first and restores it when the tests finish, so running the suite against a demo or live stack leaves no test orders, edits or users behind. Set `API_URL` to point it at another URL. `cd backend && npm test` runs the same tests without the snapshot (fine for a throwaway database, as in CI).
+The script snapshots the database first and restores it when the tests finish, so running the suite against a demo or live stack leaves no test orders, edits or users behind. The tests run inside a temporary backend container, so you don't need `npm install` on the host (set `TEST_ON_HOST=true` to use your own Node instead). Image checks fetch seed and upload files from the API under test, so they pass even when the public URL in `.env` is offline. Set `API_URL` to point it at another URL. `cd backend && npm test` runs the same tests without the snapshot (fine for a throwaway database, as in CI).
 
 ## Contributing
 
