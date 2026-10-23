@@ -24,6 +24,7 @@ const RULES = [
   // Personal-data export and account erasure: super admins only, audited.
   ["*", /^\/admin\/privacy(\/|$)/, "*", true],
   ["W", /^\/admin\/backups(\/|$)/, "*"],
+  ["*", /^\/admin\/email-templates(\/|$)/, "settings"],
   ["GET", /^\/admin\/backups(\/|$)/, "settings"],
   ["*", /^\/admin\/(settings|team|audit|roles)(\/|$)/, "settings"],
   ["*", /^\/admin\/coupons(\/|$)/, "finance"],
