@@ -353,6 +353,17 @@ recovery. The Backups page shows whether uploads were archived and the
 off-server copy worked. Restore uploads with
 `docker compose run --rm -v ./offsite-backups:/o backend sh -c 'tar -xzf /o/<file>.uploads.tar.gz -C /app/uploads'`.
 
+### Job Success Score
+
+Each seller gets an Upwork-style Job Success Score: the share of their
+recently closed orders that ended well. Accepted deliveries with no review or
+a rating of 4+ count as positive; ratings under 3 and cancelled orders count
+as negative; 3–4 stars are neutral and don't count. The last 6 months are
+used when they hold at least 5 counted orders, otherwise 12, then 24 months;
+with fewer than 5 there is no score. 90%+ shows "Top performer", 75%+
+"Rising". Shown on the gig page's seller card and the seller's level
+dashboard; public API `GET /v1/users/:id/job-success`.
+
 ### Category fees
 
 Site settings → **Category fees** overrides the default platform fee per

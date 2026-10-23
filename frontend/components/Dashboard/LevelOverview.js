@@ -88,6 +88,13 @@ export default function LevelOverview() {
             tone="emerald"
           />
           <Metric
+            icon={IoFlashOutline}
+            label="Job Success"
+            value={data?.jobSuccess?.score != null ? `${data.jobSuccess.score}%` : "—"}
+            sub={data?.jobSuccess?.score != null ? `last ${data.jobSuccess.windowMonths} months` : `needs ${data?.jobSuccess?.minOrders || 5} closed orders`}
+            tone="emerald"
+          />
+          <Metric
             icon={IoStarOutline}
             label="Rating"
             value={

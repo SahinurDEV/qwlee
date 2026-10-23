@@ -1,4 +1,5 @@
 "use client";
+import JobSuccessBadge from "@/components/common/JobSuccessBadge";
 // "Get to know the seller" section card on the gig detail page.
 //
 // The "Contact me" button now opens the shared ContactSellerModal (the
@@ -65,6 +66,7 @@ export default function AboutCard({ gig, user, hideActions = false }) {
               <span className="text-gray-500">({user.review.total})</span>
             </div>
           ) : null}
+          <div className="mt-1"><JobSuccessBadge userId={user?.id || user?._id} /></div>
         </div>
         {!hideActions && !isMyOwn && (
           <button
