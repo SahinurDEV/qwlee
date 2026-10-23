@@ -48,3 +48,28 @@ test("category fees: validated, and a completed order in that category pays the 
     await call("PATCH", "/admin/settings/site", { token: sup.token, body: orig });
   }
 });
+
+test("loyalty fees: validated, and repeat clients of a seller pay the lower tier", async () => {
+  const sup = await login("admin@example.com", "Admin123!");
+  const orig = (await call("GET", "/admin/settings/site", { token: sup.token })).data.site;
+  assert.equal(orig.marketplace.loyaltyFees.enabled, false, "off by default");
+  try {
+    for (const tiers of [[{ over: -1, percent: 2 }], [{ over: 100, percent: 90 }]]) {
+      assert.equal((await call("PATCH", "/admin/settings/site", { token: sup.token, body: { marketplace: { loyaltyFees: { enabled: true, tiers } } } })).status, 400);
+    }
+    const idOf = (v) => String(v?.id || v?._id || v || "");
+    const list = (await call("GET", "/admin/payments?limit=200", { token: sup.token })).data.results;
+    const pair = (o) => `${idOf(o.freelancerId)}:${idOf(o.clientId)}`;
+    const repeat = new Set(list.filter((o) => o.status === "delivered").map(pair));
+    const order = list.find((o) => ["active", "late"].includes(o.status) && !["released", "refunded"].includes(o.escrow?.status) && repeat.has(pair(o)));
+    const r = await call("PATCH", "/admin/settings/site", { token: sup.token, body: { marketplace: { categoryFees: [], loyaltyFees: { enabled: true, tiers: [{ over: 0, percent: 1.5 }] } } } });
+    assert.equal(r.status, 200, JSON.stringify(r.json));
+    assert.deepEqual(r.data.site.marketplace.loyaltyFees, { enabled: true, tiers: [{ over: 0, percent: 1.5 }] });
+    if (!order) return; // no repeat client with an open order in this dataset
+    const done = await call("POST", `/admin/orders/${order.id}/complete`, { token: sup.token });
+    assert.equal(done.status, 200, JSON.stringify(done.json));
+    assert.ok(done.data.order.platformFeePercent <= 1.5, `fee ${done.data.order.platformFeePercent}`);
+  } finally {
+    await call("PATCH", "/admin/settings/site", { token: sup.token, body: orig });
+  }
+});

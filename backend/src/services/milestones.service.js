@@ -52,7 +52,7 @@ async function release(orderId, userId, index) {
   if (list.filter((m) => m.status === "pending").length === 1) {
     return require("./orderLifecycle.service").completeOrder(order, { reason: "milestones" });
   }
-  const feePercent = await appConfigService.getPlatformFeePercent(order.gigId);
+  const feePercent = await appConfigService.getPlatformFeePercent(order.gigId, { clientId: order.clientId });
   const amount = round2(list[n].amount);
   const fee = round2((amount * feePercent) / 100);
   const net = round2(amount - fee);
