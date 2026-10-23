@@ -35,6 +35,8 @@ Load demo data (in another terminal):
 docker compose exec backend npm run seed
 ```
 
+With the default `SEED_DEMO_IF_EMPTY=true`, the API loads this demo data by itself the first time it starts against an empty database (a fresh install, or a lost Docker volume). It never touches a database that already has users. Set `SEED_DEMO_IF_EMPTY=false` in production; the API then only logs a warning when it finds no users.
+
 Demo logins after seeding: `admin@example.com / Admin123!`, `seller@example.com / Seller123!`, `buyer@example.com / Buyer123!`.
 
 Seed images are committed under `backend/public/seed/` and served by the API at `/seed/...`, so demo data never depends on an external image host. Seeded image URLs use `PUBLIC_API_URL`; re-run the seed if you change it.
