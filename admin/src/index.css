@@ -61,3 +61,8 @@ p { line-height: 1.6; }
 .ant-notification-notice-success .ant-notification-notice-description {
    color: rgb(247, 230, 230)  
 } */
+
+/* Phones: tighter table cells so more columns fit before the table scrolls. */
+@media (max-width: 767px) {
+  table th, table td { padding: 0.5rem 0.75rem !important; }
+}
