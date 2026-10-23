@@ -114,6 +114,10 @@ const defaultRoutes = [
     route: require("./talent.routes"),
   },
   {
+    path: "/ai",
+    route: require("./ai.routes"),
+  },
+  {
     path: "/categories",
     route: categoriesRoute,
   },
