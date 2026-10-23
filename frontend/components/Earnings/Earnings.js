@@ -180,7 +180,7 @@ function MonthlyStrip({ withdrawals }) {
                 className="w-full rounded-t-md bg-gradient-to-t from-emerald-500 to-emerald-300 transition-all hover:from-emerald-600 hover:to-emerald-400"
                 style={{ height: `${h}%` }}
               />
-              <span className="text-[11px] text-gray-500">{b.label}</span>
+              <span className="text-xs text-gray-500">{b.label}</span>
             </div>
           );
         })}
@@ -578,7 +578,7 @@ function SellerEarnings({ user }) {
               />
             </Form.Item>
 
-            <div className="text-[11px] text-gray-500 -mt-1 mb-4">
+            <div className="text-xs text-gray-500 -mt-1 mb-4">
               {method === "bank"
                 ? "Bank transfers are paid by our finance team, typically within 2–5 business days. A small bank processing fee may apply."
                 : `Sent to your ${method === "paypal" ? "PayPal" : "Payoneer"} account as soon as the request is approved.`}

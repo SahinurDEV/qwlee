@@ -97,7 +97,7 @@ const MessageCart = ({ message }) => {
             }`}
           >
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-[10px] font-semibold uppercase tracking-wide text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+              <span className="text-xs font-semibold uppercase tracking-wide text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
                 <IoVideocamOutline /> Video call
               </span>
             </div>
@@ -113,7 +113,7 @@ const MessageCart = ({ message }) => {
               <IoVideocamOutline />
               Join call
             </a>
-            <div className="mt-2 text-[11px] text-gray-400 break-all">
+            <div className="mt-2 text-xs text-gray-400 break-all">
               {url}
             </div>
           </div>
@@ -369,7 +369,7 @@ function GigReferenceCard({ gigRef, me }) {
         />
       </div>
       <div className="p-3">
-        <div className="text-[10px] uppercase tracking-wide text-emerald-700 font-semibold inline-flex items-center gap-1">
+        <div className="text-xs uppercase tracking-wide text-emerald-700 font-semibold inline-flex items-center gap-1">
           <IoStorefrontOutline />
           Gig reference
         </div>

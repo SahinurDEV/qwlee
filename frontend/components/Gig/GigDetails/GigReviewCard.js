@@ -94,10 +94,10 @@ export default function GigReviewCard({ item }) {
               <span className="text-xs font-semibold text-gray-900">
                 {seller.fullName || seller.username || "Seller"}
               </span>
-              <span className="text-[11px] text-emerald-700 font-medium">
+              <span className="text-xs text-emerald-700 font-medium">
                 Seller&apos;s response
               </span>
-              <span className="ml-auto text-[11px] text-gray-500">
+              <span className="ml-auto text-xs text-gray-500">
                 {reply.repliedAt
                   ? moment(reply.repliedAt).format("D MMM YYYY")
                   : ""}
@@ -138,7 +138,7 @@ export default function GigReviewCard({ item }) {
                   autoFocus
                 />
                 <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
-                  <span className="text-[11px] text-gray-400">
+                  <span className="text-xs text-gray-400">
                     {replyText.length}/{MAX_REPLY}
                   </span>
                   <div className="flex items-center gap-2">

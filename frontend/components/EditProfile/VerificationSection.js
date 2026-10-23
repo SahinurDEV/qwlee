@@ -216,7 +216,7 @@ function FilePicker({ label, hint, file, onChange, required = false }) {
               {label}
               {required ? " *" : ""}
             </span>
-            {hint && <span className="text-[11px] text-gray-400 mt-0.5 px-2 text-center">{hint}</span>}
+            {hint && <span className="text-xs text-gray-400 mt-0.5 px-2 text-center">{hint}</span>}
           </div>
         )}
         <input
@@ -231,7 +231,7 @@ function FilePicker({ label, hint, file, onChange, required = false }) {
         <button
           type="button"
           onClick={() => onChange(null)}
-          className="mt-1 text-[11px] font-medium text-gray-500 hover:text-gray-900"
+          className="mt-1 text-xs font-medium text-gray-500 hover:text-gray-900"
         >
           Remove
         </button>

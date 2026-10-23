@@ -87,7 +87,7 @@ export default function OpenDisputeModal({ open, onClose, orderId, viewerRole })
             placeholder="Explain the issue with specifics — what was expected, what was delivered, dates…"
             className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-emerald-500 resize-none"
           />
-          <div className="text-[11px] text-gray-400 mt-1 text-right">
+          <div className="text-xs text-gray-400 mt-1 text-right">
             {description.length}/2000
           </div>
         </div>

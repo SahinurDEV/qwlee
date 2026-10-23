@@ -341,13 +341,13 @@ function ExtensionRequestCard({ extension, mine, isSeller, currentStatus, onResp
       }`}
     >
       <div className="flex items-center gap-2 mb-2">
-        <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
+        <span className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
           <IoCalendarOutline className="w-3 h-3" />
           Extension request
         </span>
         {resolved && (
           <span
-            className={`text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full ${
+            className={`text-xs font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full ${
               currentStatus === "accepted"
                 ? "text-emerald-700 bg-emerald-100"
                 : "text-rose-700 bg-rose-100"
@@ -428,11 +428,11 @@ function DeliveryCard({ delivery, mine, isSeller, orderStatus, onAcceptDelivery,
       }`}
     >
       <div className="flex items-center gap-2 mb-2">
-        <span className="text-[10px] font-semibold uppercase tracking-wide text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+        <span className="text-xs font-semibold uppercase tracking-wide text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
           Delivery
         </span>
         {accepted && (
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-sky-700 bg-sky-100 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+          <span className="text-xs font-semibold uppercase tracking-wide text-sky-700 bg-sky-100 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
             <IoCheckmarkDone /> Accepted
           </span>
         )}
@@ -514,7 +514,7 @@ function AttachmentPreview({ file, onRemove }) {
           className="w-full h-full object-cover"
         />
       ) : (
-        <div className="w-full h-full flex flex-col items-center justify-center text-[10px] text-gray-600">
+        <div className="w-full h-full flex flex-col items-center justify-center text-xs text-gray-600">
           <span className="font-semibold">FILE</span>
           <span className="truncate w-full text-center px-1">{file?.name}</span>
         </div>

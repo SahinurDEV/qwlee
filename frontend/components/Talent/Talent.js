@@ -38,8 +38,8 @@ export default function Talent() {
       <h1 className="text-3xl font-semibold">Find talent</h1>
       {invites.length > 0 && <section className="border rounded-xl p-5"><h2 className="font-semibold mb-2">You were invited to</h2>
         <ul className="space-y-1">{invites.map((r) => <li key={r.id || r._id}><Link className="text-emerald-700" href={`/requests/${r.id || r._id}`}>{r.title}</Link> <span className="text-sm text-gray-500">· offers on invites are free</span></li>)}</ul></section>}
-      <form className="flex gap-2 items-center max-w-xl" onSubmit={(e) => { e.preventDefault(); search(); }}>
-        <input className={input} placeholder="Name, skill or keyword" value={q} onChange={(e) => setQ(e.target.value)} />
+      <form className="flex flex-wrap gap-2 items-center max-w-xl" onSubmit={(e) => { e.preventDefault(); search(); }}>
+        <input className={`${input} basis-full sm:basis-auto sm:flex-1`} placeholder="Name, skill or keyword" value={q} onChange={(e) => setQ(e.target.value)} />
         <label className="flex items-center gap-1 text-sm whitespace-nowrap"><input type="checkbox" checked={pro} onChange={(e) => setPro(e.target.checked)} /> Pro only</label>
         <button className="px-4 py-2 rounded-lg bg-emerald-600 text-white">Search</button>
       </form>

@@ -334,7 +334,7 @@ export default function OrderActions({ order, orderId, isSeller }) {
           >
             <IoFlagOutline /> Open a dispute
           </button>
-          <p className="text-[11px] text-gray-400 mt-2 text-center">
+          <p className="text-xs text-gray-400 mt-2 text-center">
             Pauses the order and notifies the other party.
           </p>
         </section>
@@ -385,7 +385,7 @@ function CountdownGrid({ timeLeft, isLate }) {
           <div className={`text-xl font-bold ${isLate ? "text-rose-700" : "text-gray-900"}`}>
             {String(c.value || 0).padStart(2, "0")}
           </div>
-          <div className="text-[10px] uppercase tracking-wide text-gray-500 mt-0.5">
+          <div className="text-xs uppercase tracking-wide text-gray-500 mt-0.5">
             {c.label}
           </div>
         </div>

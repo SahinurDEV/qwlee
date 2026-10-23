@@ -135,7 +135,7 @@ export default function MessagesMenu({ active = true }) {
       >
         <MdOutlineEmail className="w-5 h-5" />
         {totalUnread > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 bg-emerald-500 text-white text-[10px] min-w-[16px] h-[16px] rounded-full flex items-center justify-center px-1">
+          <span className="absolute -top-0.5 -right-0.5 bg-emerald-500 text-white text-xs min-w-[16px] h-[16px] rounded-full flex items-center justify-center px-1">
             {totalUnread > 99 ? "99+" : totalUnread}
           </span>
         )}
@@ -208,7 +208,7 @@ export default function MessagesMenu({ active = true }) {
                         </div>
                       </div>
                       {c.unread > 0 && (
-                        <span className="ml-1 shrink-0 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 rounded-full bg-emerald-500 text-white text-[10px] font-semibold">
+                        <span className="ml-1 shrink-0 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 rounded-full bg-emerald-500 text-white text-xs font-semibold">
                           {c.unread}
                         </span>
                       )}
