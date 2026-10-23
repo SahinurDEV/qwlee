@@ -118,7 +118,7 @@ export default function SiteSettings() {
             </div>
           </Card>
           <Card title="Payment providers & SMTP">
-            <p className="text-sm text-ink-600">Provider keys, SMTP and email template previews live on the <a className="text-primary-700 underline" href="/dashboard/setting">Settings</a> page.</p>
+            <p className="text-sm text-ink-600">Provider keys, SMTP and email template previews live on the <a className="text-primary-700 underline" href={`${import.meta.env.BASE_URL}dashboard/setting`}>Settings</a> page.</p>
           </Card>
           {s.growth ? (
             <Card title="Referrals" subtitle="Invitees get a first-order discount; inviters get a coupon when it completes">

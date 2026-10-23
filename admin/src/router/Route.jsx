@@ -168,4 +168,4 @@ export const router = createBrowserRouter([
       { path: "help", element: <HelpArticles /> },
     ],
   },
-]);
+], { basename: import.meta.env.BASE_URL.replace(/\/$/, "") || "/" });
