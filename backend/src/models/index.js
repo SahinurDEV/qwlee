@@ -42,3 +42,4 @@ module.exports.RiskFlag = require('./riskFlag.model');
 module.exports.AdminRole = require('./adminRole.model');
 module.exports.Appeal = require('./appeal.model');
 module.exports.HourlyContract = require('./hourlyContract.model');
+module.exports.Contest = require('./contest.model');

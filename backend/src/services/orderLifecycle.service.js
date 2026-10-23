@@ -401,6 +401,7 @@ const runHousekeeping = async ({ trigger = "timer" } = {}) => {
     const h = require("./hourly.service");
     return (await h.closeWeeks(now)) + (await h.payDue(now));
   }, trigger);
+  await track("contests", () => require("./contest.service").housekeeping(now), trigger);
   await track("sellerPlans", () => require("./sellerPlan.service").renewDue(now), trigger);
   const markedLate = await track("markLate", async () => {
     const late = await Payment.updateMany(
