@@ -353,6 +353,10 @@ recovery. The Backups page shows whether uploads were archived and the
 off-server copy worked. Restore uploads with
 `docker compose run --rm -v ./offsite-backups:/o backend sh -c 'tar -xzf /o/<file>.uploads.tar.gz -C /app/uploads'`.
 
+### Team accounts
+
+Buyers can create a team at `/teams` (max 5 owned teams, 50 members each) and invite colleagues by email. Invites for unregistered emails are claimed when that person signs up and opens `/teams`. Roles: owner (manages roles), admin (can invite members), member. Active members see every member's orders via `GET /v1/teams/:id/orders`. API: `GET/POST /v1/teams`, `POST /v1/teams/:id/invite|accept|decline`, `PATCH|DELETE /v1/teams/:id/members/:memberId`. Covered by `backend/tests/teams.test.js`.
+
 ### Qwlee Pro and the hiring concierge
 
 `/pro` is the vetted tier (like Fiverr Pro). Sellers apply with a headline,

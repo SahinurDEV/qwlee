@@ -177,6 +177,7 @@ export default function TopNav() {
     { icon: IoHeartOutline, label: "Wishlist", href: "/list" },
     { icon: IoBagHandleOutline, label: "Browse services", href: "/gig" },
     { icon: IoSparklesOutline, label: "Qwlee Pro", href: "/pro" },
+    { icon: IoSparklesOutline, label: "Teams", href: "/teams" },
   ];
 
   const sharedLinks = [
