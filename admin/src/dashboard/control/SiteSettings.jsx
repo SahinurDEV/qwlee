@@ -86,6 +86,7 @@ export default function SiteSettings() {
               <Field label="Expected back (your local time, optional)"><input aria-label="Maintenance until" type="datetime-local" className={input} value={s.maintenance.until ? toLocalInput(s.maintenance.until) : ""} onChange={(e) => set("maintenance", { until: e.target.value ? new Date(e.target.value).toISOString() : "" })} /></Field>
             </div>
           </Card>
+          <CategoryFees rules={s.marketplace.categoryFees || []} base={s.marketplace.feePercent} onChange={(categoryFees) => set("marketplace", { categoryFees })} />
           <HomepageBuilder home={s.homepage} onChange={(patch) => set("homepage", patch)} />
           <Card title="SEO" subtitle="Default title and description for search engines and link previews">
             <div className="space-y-3">
@@ -228,3 +229,34 @@ const toLocalInput = (iso) => {
   if (Number.isNaN(d.getTime())) return "";
   return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 };
+
+// Per-category platform fee overrides (applied when an order, milestone or
+// tip is paid out; a sub-category rule beats its parent's).
+function CategoryFees({ rules, base, onChange }) {
+  const { data } = useAdminQuery("/categories?limit=500");
+  const cats = data?.results || [];
+  const name = (id) => cats.find((c) => c.id === id)?.name || "Unknown category";
+  const free = cats.filter((c) => !rules.some((r) => r.categoryId === c.id));
+  const edit = (i, patch) => onChange(rules.map((r, k) => (k === i ? { ...r, ...patch } : r)));
+  return (
+    <Card title="Category fees" subtitle={`Override the ${base}% platform fee for specific categories. Applies to orders completed after you save.`}>
+      <div className="space-y-2" data-testid="category-fees">
+        {rules.map((r, i) => (
+          <div key={r.categoryId} className="flex items-center gap-2 text-sm">
+            <span className="flex-1">{name(r.categoryId)}</span>
+            <input aria-label={`Fee for ${name(r.categoryId)}`} type="number" min={0} max={50} step="0.5" className={input + " w-24"} value={r.percent} onChange={(e) => edit(i, { percent: e.target.value })} />
+            <span className="text-ink-500">%</span>
+            <button type="button" className="text-xs text-rose-700" onClick={() => onChange(rules.filter((_, k) => k !== i))}>Remove</button>
+          </div>
+        ))}
+        {!rules.length ? <p className="text-sm text-ink-500">No overrides: every category pays {base}%.</p> : null}
+        {free.length ? (
+          <select aria-label="Add category fee" className={select} value="" onChange={(e) => e.target.value && onChange([...rules, { categoryId: e.target.value, percent: base }])}>
+            <option value="">Add a category…</option>
+            {free.map((c) => <option key={c.id} value={c.id}>{c.parentId ? "↳ " : ""}{c.name}</option>)}
+          </select>
+        ) : null}
+      </div>
+    </Card>
+  );
+}
