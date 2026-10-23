@@ -60,4 +60,14 @@ router
   .route("/:orderId")
   .get(auth("withOutAdmin"), ordersController.getOrderById);
 
+// Calls and scheduling inside an order (orderCall.service).
+const callsSvc = require("../../services/orderCall.service");
+const cA = require("../../utils/catchAsync");
+const sendC = (code, fn) => cA(async (req, res) => res.status(code).json({ code, message: "OK", data: { attributes: await fn(req) } }));
+router.get("/:orderId/calls", auth("withOutAdmin"), sendC(200, (req) => callsSvc.list(req.params.orderId, req.user)));
+router.post("/:orderId/calls", auth("withOutAdmin"), sendC(201, (req) => callsSvc.propose(req.params.orderId, req.user, req.body)));
+router.post("/:orderId/calls/:callId/accept", auth("withOutAdmin"), sendC(200, (req) => callsSvc.accept(req.params.orderId, req.params.callId, req.user, req.body?.slot)));
+router.post("/:orderId/calls/:callId/decline", auth("withOutAdmin"), sendC(200, (req) => callsSvc.setStatus(req.params.orderId, req.params.callId, req.user, "declined")));
+router.post("/:orderId/calls/:callId/cancel", auth("withOutAdmin"), sendC(200, (req) => callsSvc.setStatus(req.params.orderId, req.params.callId, req.user, "cancelled")));
+
 module.exports = router;
