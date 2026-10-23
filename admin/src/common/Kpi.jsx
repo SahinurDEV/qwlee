@@ -40,7 +40,7 @@ export default function Kpi({
           {delta != null ? (
             <span
               className={cls(
-                "text-[11px] font-medium px-1.5 py-0.5 rounded-full",
+                "text-xs font-medium px-1.5 py-0.5 rounded-full",
                 direction === "down"
                   ? "bg-rose-50 text-rose-700"
                   : "bg-primary-50 text-primary-700"

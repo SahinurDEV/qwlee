@@ -36,7 +36,7 @@ export default function Appeals() {
       <Card bodyClassName="p-0">
         <div className="p-4 border-b border-ink-100"><Tabs value={status} onChange={(v) => { setStatus(v); setPage(1); }} tabs={TABS} /></div>
         {data?.results?.length ? (
-          <table className="w-full">
+          <div className="overflow-x-auto"><table className="w-full">
             <thead className="border-b border-ink-100"><tr><Th>User</Th><Th>Ban</Th><Th>Appeal</Th><Th>Status</Th><Th /></tr></thead>
             <tbody className="divide-y divide-ink-100">
               {data.results.map((a) => (
@@ -56,7 +56,7 @@ export default function Appeals() {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
         ) : !loading ? <Empty>No {status === "all" ? "" : status} appeals.</Empty> : null}
         <div className="px-4 pb-4"><Pager data={data} page={page} setPage={setPage} /></div>
       </Card>

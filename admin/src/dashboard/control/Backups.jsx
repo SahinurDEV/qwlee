@@ -44,14 +44,14 @@ export default function Backups() {
         </Card>
       ) : null}
       <Card title="Archives" subtitle={`Stored in the "backups" Docker volume on this server.`}>
-        <table className="w-full text-sm" data-testid="backup-files">
+        <div className="overflow-x-auto"><table className="w-full text-sm" data-testid="backup-files">
           <tbody>
             {(data?.files || []).map((f) => (
               <tr key={f.name} className="border-t border-ink-100"><td className="py-1.5 font-mono text-xs">{f.name}</td><td>{size(f.bytes)}</td><td className="text-ink-500">{formatDate(f.at, { withTime: true })}</td></tr>
             ))}
             {data && !data.files.length ? <tr><td className="py-2 text-ink-500">No archives yet.</td></tr> : null}
           </tbody>
-        </table>
+        </table></div>
       </Card>
       <Card title="Restore guide">
         <ol className="list-decimal pl-5 space-y-2 text-sm text-ink-700">

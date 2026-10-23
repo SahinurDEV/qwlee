@@ -179,7 +179,7 @@ export default function Support() {
                         </div>
                       </div>
                       {t.unreadByAdmin > 0 && (
-                        <span className="ml-1 shrink-0 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-rose-500 text-white text-[11px] font-bold">
+                        <span className="ml-1 shrink-0 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-rose-500 text-white text-xs font-bold">
                           {t.unreadByAdmin}
                         </span>
                       )}

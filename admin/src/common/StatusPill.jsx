@@ -47,7 +47,7 @@ export default function StatusPill({ status, label }) {
   return (
     <span
       className={cls(
-        "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold border",
+        "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold border",
         cls1
       )}
     >

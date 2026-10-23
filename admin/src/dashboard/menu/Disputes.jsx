@@ -201,7 +201,7 @@ export default function Disputes() {
                           d?.initiatorId?.email ||
                           "User"}
                       </div>
-                      <div className="text-[11px] text-ink-400">
+                      <div className="text-xs text-ink-400">
                         Opened {timeAgo(d.createdAt)} · order{" "}
                         {String(d?.orderId?._id || d?.orderId || "")
                           .slice(-8)
@@ -275,7 +275,7 @@ export default function Disputes() {
                         : "bg-primary-50 border border-primary-100 text-primary-900 ml-auto"
                     )}
                   >
-                    <div className="flex items-center gap-2 text-[11px] uppercase tracking-wide font-semibold opacity-70 mb-1">
+                    <div className="flex items-center gap-2 text-xs uppercase tracking-wide font-semibold opacity-70 mb-1">
                       <span>{r.role}</span>
                       {r?.userId?.fullName || r?.userId?.username ? (
                         <span className="opacity-80 normal-case font-normal">
@@ -287,7 +287,7 @@ export default function Disputes() {
                       </span>
                     </div>
                     {r.proposedResolution ? (
-                      <div className="text-[11px] mb-1 font-semibold">
+                      <div className="text-xs mb-1 font-semibold">
                         Proposed: {r.proposedResolution.replace(/_/g, " ")}
                       </div>
                     ) : null}
@@ -310,7 +310,7 @@ export default function Disputes() {
                     </p>
                   ) : null}
                   {dispute.resolvedAt ? (
-                    <p className="text-[11px] text-ink-500 mt-1">
+                    <p className="text-xs text-ink-500 mt-1">
                       {formatDate(dispute.resolvedAt)}
                       {dispute?.resolvedByAdminId?.fullName
                         ? ` · ${dispute.resolvedByAdminId.fullName}`

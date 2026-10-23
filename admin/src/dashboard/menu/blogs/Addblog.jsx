@@ -94,7 +94,7 @@ const Addblog = () => {
         }}
         onFinish = {handleCreateBlog}
       >
-        <div className="flex items-center gap-6 mt-8">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 mt-8">
           <div className=" w-full">
             <Form.Item
               name="title"
@@ -144,7 +144,7 @@ const Addblog = () => {
             </Form.Item>
           </div>
         </div>
-        <div className="flex items-center gap-6 mt-8">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 mt-8">
           <div className=" w-full">
             <Form.Item
               name="content"
@@ -216,7 +216,7 @@ const Addblog = () => {
           <Form.Item>
             <Button
               htmlType="submit"
-              className=" h-[55px] w-[380px] bg-[#00BF63] rounded-[8px] text-white"
+              className=" h-[55px] w-full sm:w-[380px] bg-[#00BF63] rounded-[8px] text-white"
             >
               Add Blog
             </Button>

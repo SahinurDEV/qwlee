@@ -60,7 +60,7 @@ export default function Newsletter() {
           </select>
         </div>
         {data?.results?.length ? (
-          <table className="w-full">
+          <div className="overflow-x-auto"><table className="w-full">
             <thead className="border-b border-ink-100"><tr><Th>Email</Th><Th>Status</Th><Th>Source</Th><Th>Subscribed</Th></tr></thead>
             <tbody className="divide-y divide-ink-100">
               {data.results.map((r) => (
@@ -72,7 +72,7 @@ export default function Newsletter() {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
         ) : !loading ? <Empty>No subscribers yet.</Empty> : null}
         <div className="px-4 pb-4"><Pager data={data} page={page} setPage={setPage} /></div>
       </Card>

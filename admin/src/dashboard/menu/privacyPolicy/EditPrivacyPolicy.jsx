@@ -84,7 +84,7 @@ const EditPrivacyPolicy = () => {
           <Form.Item>
             <Button
               htmlType="submit"
-              className=" h-[55px] w-[380px] bg-[#00BF63] rounded-[8px] text-white"
+              className=" h-[55px] w-full sm:w-[380px] bg-[#00BF63] rounded-[8px] text-white"
             >
               Update Privacy
             </Button>

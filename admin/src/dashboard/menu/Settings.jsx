@@ -322,7 +322,7 @@ function CustomProvidersTab({ config }) {
                     <div>
                       <h3 className="text-base font-semibold text-ink-900">
                         {p.name}{" "}
-                        <span className="text-[10px] font-medium uppercase tracking-wide text-ink-500 ml-1">
+                        <span className="text-xs font-medium uppercase tracking-wide text-ink-500 ml-1">
                           ({p.id})
                         </span>
                       </h3>
@@ -366,15 +366,15 @@ function CustomProvidersTab({ config }) {
           <p className="text-xs text-ink-500 mt-1">
             For redirect-style gateways the platform doesn&apos;t natively
             support yet. Use{" "}
-            <code className="text-[11px] bg-ink-50 px-1 py-0.5 rounded">
+            <code className="text-xs bg-ink-50 px-1 py-0.5 rounded">
               {"{amount}"}
             </code>
             {", "}
-            <code className="text-[11px] bg-ink-50 px-1 py-0.5 rounded">
+            <code className="text-xs bg-ink-50 px-1 py-0.5 rounded">
               {"{currency}"}
             </code>
             {", "}
-            <code className="text-[11px] bg-ink-50 px-1 py-0.5 rounded">
+            <code className="text-xs bg-ink-50 px-1 py-0.5 rounded">
               {"{orderId}"}
             </code>{" "}
             placeholders.
@@ -601,7 +601,7 @@ function SmtpTester({ defaultEmail }) {
       </div>
 
       <div className="flex items-center justify-between mt-4 pt-3 border-t border-ink-100">
-        <p className="text-[11px] text-ink-500">
+        <p className="text-xs text-ink-500">
           Test emails use mock data — no real records are touched.
         </p>
         <button
