@@ -774,6 +774,32 @@ async function sendVerificationRejected(to, { recipientName, reason }) {
   );
 }
 
+// Admin changed a gig in bulk (status or featured).
+const GIG_STATUS_TEXT = {
+  active: "is live again on the marketplace",
+  pending: "is waiting for review",
+  "requires-modification": "needs changes before it can go live",
+  draft: "was moved back to drafts",
+  denied: "was not approved",
+  paused: "was paused by our team",
+};
+async function sendGigStatusChanged(to, { recipientName, gigTitle, status, featured, reason, gigUrl }) {
+  const what = featured === true ? "is now featured on Qwlee" : featured === false ? "is no longer featured" : GIG_STATUS_TEXT[status] || `is now ${status}`;
+  await sendEmail(
+    to,
+    `Update on your gig: ${gigTitle}`,
+    emailShell({
+      preheader: `Your gig ${what}.`,
+      heroEyebrow: "Your gig",
+      heroTitle: `Your gig ${what}`,
+      intro: `Hi ${recipientName || "there"} — our team updated &ldquo;${gigTitle}&rdquo;.`,
+      bodyHtml: reason ? `<p style="margin:0;font-size:13px;color:#64748b;">Note from the team:</p>` + quoteBlock(reason) : "",
+      cta: { label: "View your gigs", url: gigUrl || `${FRONTEND_URL}/dashboard` },
+      accent: status === "denied" || status === "requires-modification" ? "amber" : "emerald",
+    })
+  );
+}
+
 module.exports = {
   // Plumbing
   sendEmail,
@@ -805,6 +831,7 @@ module.exports = {
   sendAccountBanned,
   sendVerificationApproved,
   sendVerificationRejected,
+  sendGigStatusChanged,
 };
 
 // Optional emails a user can switch off (Notification settings). Others

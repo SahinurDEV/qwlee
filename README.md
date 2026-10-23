@@ -203,7 +203,7 @@ Besides the built-in admin roles (super, moderator, support and finance), a supe
 - **Appeals:** a banned user who tries to sign in sees the reason and the end date. The refused sign-in returns a 30-minute appeal token, so they can appeal right there without sending their password again (`POST /v1/auth/appeal {appealToken, message}`). They can have one open appeal at a time.
 - **Reviewing appeals:** moderators handle them under People → Ban appeals (`GET /v1/admin/appeals`, `PATCH /v1/admin/appeals/:id {decision: accepted|rejected, reply}`). Accepting lifts the ban, and the user is emailed either way.
 - **Bulk users:** tick rows on Users to ban, unban or sign several accounts out at once (`POST /v1/admin/bulk/users`, up to 200). Admin accounts and yourself are skipped.
-- **Bulk gigs:** tick rows on Gigs to approve, request changes, pause, deny, feature or unfeature several gigs (`POST /v1/admin/bulk/gigs`). The note is shown to each seller on their dashboard. Unlike the single-gig action, bulk changes don't email the sellers.
+- **Bulk gigs:** tick rows on Gigs to approve, request changes, pause, deny, feature or unfeature several gigs (`POST /v1/admin/bulk/gigs`). The note is shown to each seller on their dashboard. Each seller whose gig actually changes also gets an "Update on your gig" email with the note (template editable in Admin → Email templates).
 
 ## Announcements
 
