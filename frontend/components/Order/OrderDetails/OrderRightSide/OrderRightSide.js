@@ -30,6 +30,7 @@ import LeaveReviewModal from "./LeaveReviewModal";
 import OpenDisputeModal from "./OpenDisputeModal";
 import TipCard from "./TipCard";
 import MilestonesCard from "./MilestonesCard";
+import CallsCard from "./CallsCard";
 import CancellationCard from "./CancellationCard";
 import { IoStar, IoCalendarOutline, IoFlagOutline } from "react-icons/io5";
 
@@ -166,6 +167,7 @@ export default function OrderActions({ order, orderId, isSeller }) {
       )}
 
       <MilestonesCard order={order} orderId={orderId} isSeller={isSeller} />
+      <CallsCard orderId={orderId} />
 
       {!isSeller && status === "delivered" && <TipCard order={order} orderId={orderId} />}
 

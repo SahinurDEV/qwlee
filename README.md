@@ -353,6 +353,10 @@ recovery. The Backups page shows whether uploads were archived and the
 off-server copy worked. Restore uploads with
 `docker compose run --rm -v ./offsite-backups:/o backend sh -c 'tar -xzf /o/<file>.uploads.tar.gz -C /app/uploads'`.
 
+### Calls and scheduling inside orders
+
+On the order page the buyer or seller can propose 1-5 future time slots for a call (`POST /v1/orders/:id/calls {slots, topic, durationMin}`, max 3 open proposals per order). The other side picks a slot (`POST /v1/orders/:id/calls/:callId/accept {slot}`) or declines; either can cancel. Accepting creates a meeting link at `MEETING_BASE_URL` (default `https://meet.jit.si`, random room name). Only the link format is tested; no video provider integration has been verified. Covered by `backend/tests/calls.test.js`.
+
 ### AI assistant (opt-in)
 
 `/ai-assistant` offers a gig description writer (`POST /v1/ai/gig-description`), a request brief writer (`POST /v1/ai/brief`), reply ideas (`POST /v1/ai/replies`) and seller matches for your own open requests (`GET /v1/ai/match/:requestId`, keyword overlap with seller profiles, Pro/online boost). `GET /v1/ai/status` reports `{enabled, provider}`. Settings: `AI_HELPERS=off` turns everything off; `AI_API_URL` + `AI_API_KEY` (+ `AI_MODEL`) point text generation at an OpenAI-compatible chat endpoint. Without them, or if the provider fails, a deterministic template mock (`utils/aiMock.js`) answers. Only the mock has been tested; no real provider has been verified. Covered by `backend/tests/ai.test.js`.
