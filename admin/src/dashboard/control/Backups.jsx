@@ -30,12 +30,14 @@ export default function Backups() {
       <ErrorNote error={error} />
       {data ? (
         <Card title="Status">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm" data-testid="backup-status">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm" data-testid="backup-status">
             <div><div className="text-xs text-ink-500">Health</div><span className={`px-2 py-0.5 rounded-full text-xs ${TONE[data.health]}`}>{data.health}</span></div>
             <div><div className="text-xs text-ink-500">Last backup</div><div className="font-medium" title={last ? formatDate(last.at, { withTime: true }) : ""}>{last ? timeAgo(last.at) : "—"}</div></div>
             <div><div className="text-xs text-ink-500">Size</div><div className="font-medium">{last?.ok ? size(last.bytes) : "—"}</div></div>
             <div><div className="text-xs text-ink-500">Took</div><div className="font-medium">{last ? `${last.seconds}s` : "—"}</div></div>
             <div><div className="text-xs text-ink-500">Schedule</div><div className="font-medium">{last ? `every ${last.intervalHours}h, keep ${last.keep}` : "—"}</div></div>
+            <div><div className="text-xs text-ink-500">Uploads archived</div><div className="font-medium">{last ? (last.uploads ? "Yes" : "No") : "—"}</div></div>
+            <div><div className="text-xs text-ink-500">Off-server copy</div><div className={`font-medium ${last && !last.offsite ? "text-amber-700" : ""}`}>{last ? (last.offsite ? "Yes" : "Not set up") : "—"}</div></div>
           </div>
           {last && !last.ok ? <p className="mt-3 text-sm text-rose-700">Last run failed: {last.error || "unknown error"}</p> : null}
           {!data.configured ? <p className="mt-3 text-sm text-ink-600">No backup folder at <code>{data.dir}</code>. Start the <code>backup</code> service from docker-compose.yml.</p> : null}
