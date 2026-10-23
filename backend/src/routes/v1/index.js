@@ -110,6 +110,10 @@ const defaultRoutes = [
     route: require("./team.routes"),
   },
   {
+    path: "/talent",
+    route: require("./talent.routes"),
+  },
+  {
     path: "/categories",
     route: categoriesRoute,
   },

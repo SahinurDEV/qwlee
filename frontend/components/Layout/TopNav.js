@@ -178,6 +178,7 @@ export default function TopNav() {
     { icon: IoBagHandleOutline, label: "Browse services", href: "/gig" },
     { icon: IoSparklesOutline, label: "Qwlee Pro", href: "/pro" },
     { icon: IoSparklesOutline, label: "Teams", href: "/teams" },
+    { icon: IoSparklesOutline, label: "Find talent", href: "/talent" },
   ];
 
   const sharedLinks = [
