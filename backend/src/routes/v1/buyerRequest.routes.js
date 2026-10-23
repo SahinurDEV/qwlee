@@ -15,6 +15,11 @@ router.use((req, res, next) => {
 
 router.route("/").get(optionalAuth(), c.listOpen).post(auth("withOutAdmin"), c.createRequest);
 router.get("/mine", auth("withOutAdmin"), c.listMine);
+// Proposal credits: balance and buying packs from the seller balance.
+const creditsSvc = require("../../services/credits.service");
+const catchAsyncC = require("../../utils/catchAsync");
+router.get("/credits/me", auth("withOutAdmin"), catchAsyncC(async (req, res) => res.json({ code: 200, message: "Credits", data: { attributes: await creditsSvc.summary(req.user.id) } })));
+router.post("/credits/buy", auth("withOutAdmin"), catchAsyncC(async (req, res) => res.json({ code: 200, message: "Credits bought", data: { attributes: await creditsSvc.buy(req.user.id, req.body?.packs) } })));
 router.get("/offers/mine", auth("withOutAdmin"), c.listMyOffers);
 router.post("/offers/:offerId/withdraw", auth("withOutAdmin"), c.withdrawOffer);
 router.post("/offers/:offerId/decline", auth("withOutAdmin"), c.declineOffer);

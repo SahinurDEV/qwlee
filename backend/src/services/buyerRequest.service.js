@@ -127,7 +127,16 @@ const updateRequest = async (requestId, buyer, body) => {
   const r = await getRequestDoc(requestId);
   if (idOf(r.buyerId) !== String(buyer.id)) throw new ApiError(httpStatus.FORBIDDEN, "Not your request");
   if (body.status !== undefined) {
-    if (body.status === "closed" && r.status === "open") r.status = "closed";
+    if (body.status === "closed" && r.status === "open") {
+      r.status = "closed";
+      // Closed without hiring: sellers get their proposal credits back.
+      const credits = require("./credits.service");
+      const offers = await RequestOffer.find({ requestId: r._id, status: "pending", "credits.spent": { $gt: 0 }, "credits.refunded": { $ne: true } });
+      for (const o of offers) {
+        const done = await RequestOffer.updateOne({ _id: o._id, "credits.refunded": { $ne: true } }, { $set: { "credits.refunded": true } });
+        if (done.modifiedCount) await credits.refund(o.sellerId, o.credits.spent, o.credits.from);
+      }
+    }
     else if (body.status === "open" && r.status === "closed") {
       r.status = "open";
       r.expiresAt = new Date(Date.now() + REQUEST_TTL_DAYS * 86400000);
@@ -172,7 +181,9 @@ const createOffer = async (requestId, seller, body) => {
   if (prior && ["pending", "accepted"].includes(prior.status)) {
     throw new ApiError(httpStatus.CONFLICT, "You already sent an offer on this request");
   }
-  const fields = { buyerId: r.buyerId, gigId, price, deliveryDays, revisions, message, status: "pending", orderId: null };
+  const credits = require("./credits.service");
+  const paid = await credits.spend(seller.id);
+  const fields = { buyerId: r.buyerId, gigId, price, deliveryDays, revisions, message, status: "pending", orderId: null, credits: { spent: paid.spent || 0, from: paid.from || "", refunded: false } };
   const offer = prior
     ? await Object.assign(prior, fields).save()
     : await RequestOffer.create({ requestId: r._id, sellerId: seller.id, ...fields });

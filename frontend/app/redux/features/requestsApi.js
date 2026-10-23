@@ -38,7 +38,17 @@ const requestsApi = baseApi.injectEndpoints({
     }),
     sendRequestOffer: builder.mutation({
       query: ({ requestId, ...body }) => ({ url: `/requests/${requestId}/offers`, method: "POST", body }),
-      invalidatesTags: ["Requests"],
+      invalidatesTags: ["Requests", "Credits"],
+    }),
+    getMyCredits: builder.query({
+      query: () => "/requests/credits/me",
+      transformResponse: attrs,
+      providesTags: ["Credits"],
+    }),
+    buyCredits: builder.mutation({
+      query: (packs) => ({ url: "/requests/credits/buy", method: "POST", body: { packs } }),
+      transformResponse: attrs,
+      invalidatesTags: ["Credits"],
     }),
     withdrawRequestOffer: builder.mutation({
       query: (offerId) => ({ url: `/requests/offers/${offerId}/withdraw`, method: "POST" }),
@@ -61,4 +71,6 @@ export const {
   useSendRequestOfferMutation,
   useWithdrawRequestOfferMutation,
   useDeclineRequestOfferMutation,
+  useGetMyCreditsQuery,
+  useBuyCreditsMutation,
 } = requestsApi;

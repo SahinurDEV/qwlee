@@ -8,6 +8,8 @@ const requestOfferSchema = mongoose.Schema(
     sellerId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
     buyerId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     gigId: { type: mongoose.Schema.Types.ObjectId, ref: "Gig", default: null },
+    // Proposal credits taken for this offer (credits.service).
+    credits: { spent: { type: Number, default: 0 }, from: { type: String, default: "" }, refunded: { type: Boolean, default: false } },
     price: { type: Number, required: true, min: 5 },
     deliveryDays: { type: Number, required: true, min: 1, max: 90 },
     revisions: { type: Number, default: 1, min: 0, max: 20 },

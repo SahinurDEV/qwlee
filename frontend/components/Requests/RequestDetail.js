@@ -9,6 +9,8 @@ import {
   useSendRequestOfferMutation,
   useWithdrawRequestOfferMutation,
   useDeclineRequestOfferMutation,
+  useGetMyCreditsQuery,
+  useBuyCreditsMutation,
 } from "@/app/redux/features/requestsApi";
 import { useCreateBuyerOrderMutation } from "@/app/redux/features/order/buyerOrderApi";
 import { RequestsNav, RequestMeta, StatusBadge, idOf, errMsg } from "./shared";
@@ -111,6 +113,14 @@ function OfferForm({ requestId, request }) {
   const [form, setForm] = useState({ price: String(request.budget), deliveryDays: String(request.deliveryDays), revisions: "1", message: "" });
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const [send, { isLoading }] = useSendRequestOfferMutation();
+  const { data: credits } = useGetMyCreditsQuery();
+  const [buyCredits, { isLoading: buying }] = useBuyCreditsMutation();
+  async function buy() {
+    const res = await buyCredits(1);
+    if (res.error) return toast.error(errMsg(res, "Could not buy credits"));
+    toast.success(`${res.data.purchased} credits added`);
+  }
+  const short = credits?.enabled && credits.total < credits.costPerOffer;
   async function submit(e) {
     e.preventDefault();
     const res = await send({ requestId, price: Number(form.price), deliveryDays: Number(form.deliveryDays), revisions: Number(form.revisions), message: form.message });
@@ -120,7 +130,20 @@ function OfferForm({ requestId, request }) {
   const input = "w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-emerald-500 outline-none";
   return (
     <form onSubmit={submit} className="bg-white border border-emerald-200 rounded-xl p-5 mb-6 space-y-3">
-      <h2 className="text-lg font-semibold">Send an offer</h2>
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <h2 className="text-lg font-semibold">Send an offer</h2>
+        {credits?.enabled ? (
+          <div className="text-sm text-gray-600 flex items-center gap-2" data-testid="proposal-credits">
+            <span>
+              Costs <b>{credits.costPerOffer}</b> credit · you have <b>{credits.total}</b>
+              {credits.nextRefillAt ? ` (free ${credits.monthlyAllowance} refill ${new Date(credits.nextRefillAt).toLocaleDateString()})` : ""}
+            </span>
+            <button type="button" onClick={buy} disabled={buying} className="px-2.5 py-1 rounded-md border border-gray-200 hover:bg-gray-50 text-xs">
+              Buy {credits.packSize} for ${Number(credits.packPrice).toFixed(2)}
+            </button>
+          </div>
+        ) : null}
+      </div>
       <div className="grid grid-cols-3 gap-3">
         <label><span className="text-sm">Price (USD)</span><input className={input} type="number" min={5} value={form.price} onChange={set("price")} required /></label>
         <label><span className="text-sm">Days</span><input className={input} type="number" min={1} max={90} value={form.deliveryDays} onChange={set("deliveryDays")} required /></label>
@@ -129,7 +152,7 @@ function OfferForm({ requestId, request }) {
       <label className="block"><span className="text-sm">Message to the buyer</span>
         <textarea className={input} rows={4} minLength={10} maxLength={2000} value={form.message} onChange={set("message")} required />
       </label>
-      <button disabled={isLoading} className="px-5 py-2.5 rounded-lg bg-emerald-600 text-white font-medium hover:bg-emerald-700 disabled:opacity-60">
+      <button disabled={isLoading || short} className="px-5 py-2.5 rounded-lg bg-emerald-600 text-white font-medium hover:bg-emerald-700 disabled:opacity-60">
         {isLoading ? "Sending…" : "Send offer"}
       </button>
     </form>
