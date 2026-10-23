@@ -86,6 +86,28 @@ export default function SiteSettings() {
               <Field label="Expected back (your local time, optional)"><input aria-label="Maintenance until" type="datetime-local" className={input} value={s.maintenance.until ? toLocalInput(s.maintenance.until) : ""} onChange={(e) => set("maintenance", { until: e.target.value ? new Date(e.target.value).toISOString() : "" })} /></Field>
             </div>
           </Card>
+          <Card title="Loyalty fees" subtitle="Lower the fee once a seller has earned a set amount from the same client (like Upwork's sliding fee)">
+            <div className="space-y-3" data-testid="loyalty-fees">
+              <Toggle label="Loyalty fees on" hint="Applies to the client's next orders with that seller. Seller Plus discounts still apply on top." checked={!!s.marketplace.loyaltyFees?.enabled} onChange={(v) => set("marketplace", { loyaltyFees: { ...(s.marketplace.loyaltyFees || { tiers: [] }), enabled: v } })} />
+              {(s.marketplace.loyaltyFees?.tiers || []).map((t, i) => {
+                const upd = (patch) => {
+                  const tiers = [...s.marketplace.loyaltyFees.tiers];
+                  tiers[i] = { ...tiers[i], ...patch };
+                  set("marketplace", { loyaltyFees: { ...s.marketplace.loyaltyFees, tiers } });
+                };
+                return (
+                  <div key={i} className="flex items-end gap-3">
+                    <Field label="After earning more than ($)"><input aria-label={`Loyalty tier ${i + 1} amount`} type="number" min={0} className={input} value={t.over} onChange={(e) => upd({ over: e.target.value })} /></Field>
+                    <Field label="Fee (%)"><input aria-label={`Loyalty tier ${i + 1} fee`} type="number" min={0} max={50} step="0.1" className={input} value={t.percent} onChange={(e) => upd({ percent: e.target.value })} /></Field>
+                    <button type="button" className="text-sm text-rose-600 pb-2" onClick={() => set("marketplace", { loyaltyFees: { ...s.marketplace.loyaltyFees, tiers: s.marketplace.loyaltyFees.tiers.filter((_, j) => j !== i) } })}>Remove</button>
+                  </div>
+                );
+              })}
+              {(s.marketplace.loyaltyFees?.tiers || []).length < 5 && (
+                <button type="button" className="text-sm text-emerald-700" onClick={() => set("marketplace", { loyaltyFees: { ...(s.marketplace.loyaltyFees || { enabled: false }), tiers: [...(s.marketplace.loyaltyFees?.tiers || []), { over: 1000, percent: 2 }] } })}>+ Add tier</button>
+              )}
+            </div>
+          </Card>
           <CategoryFees rules={s.marketplace.categoryFees || []} base={s.marketplace.feePercent} onChange={(categoryFees) => set("marketplace", { categoryFees })} />
           <HomepageBuilder home={s.homepage} onChange={(patch) => set("homepage", patch)} />
           <Card title="SEO" subtitle="Default title and description for search engines and link previews">

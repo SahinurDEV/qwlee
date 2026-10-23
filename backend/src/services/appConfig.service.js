@@ -197,12 +197,34 @@ async function getPublicMethods() {
 // category's, then the default.
 // Fee actually charged: the rule below, minus the seller's Seller Plus
 // discount (sellerPlan.service), never below 0.
-async function getPlatformFeePercent(gigId) {
-  const base = await baseFeePercent(gigId);
+async function getPlatformFeePercent(gigId, { clientId } = {}) {
+  let base = await baseFeePercent(gigId);
   if (!gigId) return base;
   const gig = await require("../models/gig.model").findById(gigId, "userId").lean().catch(() => null);
+  if (gig && clientId) base = Math.min(base, await loyaltyCap(gig.userId, clientId, base));
   const off = gig ? await require("./sellerPlan.service").feeDiscount(gig.userId) : 0;
   return Math.max(0, Math.round((base - off) * 100) / 100);
+}
+
+// Loyalty fees (Site settings → Marketplace): the more a seller has earned
+// from one client, the lower the fee on that client's next orders.
+async function loyaltyCap(sellerId, clientId, base) {
+  const doc = await getConfig();
+  const lf = doc?.site?.marketplace?.loyaltyFees;
+  if (!lf?.enabled || !Array.isArray(lf.tiers) || !lf.tiers.length) return base;
+  const billed = await clientBilled(sellerId, clientId);
+  let cap = base;
+  for (const t of lf.tiers) if (billed > Number(t.over)) cap = Math.min(cap, Number(t.percent));
+  return cap;
+}
+
+async function clientBilled(sellerId, clientId) {
+  const mongoose = require("mongoose");
+  const [agg] = await mongoose.model("Payment").aggregate([
+    { $match: { freelancerId: new mongoose.Types.ObjectId(String(sellerId)), clientId: new mongoose.Types.ObjectId(String(clientId)), status: "delivered", isDeleted: { $ne: true } } },
+    { $group: { _id: null, total: { $sum: { $ifNull: ["$escrow.amount", "$price"] } } } },
+  ]).catch(() => []);
+  return Number(agg?.total || 0);
 }
 
 async function baseFeePercent(gigId) {
@@ -223,6 +245,7 @@ async function baseFeePercent(gigId) {
 }
 
 module.exports = {
+  clientBilled,
   getPlatformFeePercent,
   getConfig,
   updateConfig,
