@@ -28,6 +28,7 @@ const SAMPLES = {
   sendAccountBanned: [{ recipientName: "Alex", reason: "Repeated spam" }],
   sendAnnouncement: [{ recipientName: "Alex", title: "New feature", message: "You can now pay in milestones.", link: "/help" }],
   sendVerificationApproved: [{ recipientName: "Sam" }],
+  sendGigStatusChanged: [{ recipientName: "Sam", gigTitle: "I will design your logo", status: "requires-modification", reason: "Please add a clearer cover image" }],
   sendVerificationRejected: [{ recipientName: "Sam", reason: "The document photo was blurry" }],
 };
 const FIELDS = ["subject", "heroTitle", "intro", "footerNote", "ctaLabel"];

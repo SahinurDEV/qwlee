@@ -121,8 +121,29 @@ async function bulkGigs(list, { action, status, reason }, admin) {
     update = { gigStatus: status, moderation: { reason: String(reason || "").slice(0, 500), reviewedBy: admin._id, reviewedAt: new Date() } };
   } else if (action === "feature" || action === "unfeature") update = { featured: action === "feature" };
   else throw new ApiError(httpStatus.BAD_REQUEST, "action must be status, feature or unfeature");
-  const r = await Gig.updateMany({ _id: { $in: clean }, isDeleted: { $ne: true } }, { $set: update });
-  return { matched: r.matchedCount, modified: r.modifiedCount };
+  const filter = { _id: { $in: clean }, isDeleted: { $ne: true } };
+  // Only gigs that actually change get an email.
+  const changing = await Gig.find(
+    { ...filter, ...(action === "status" ? { gigStatus: { $ne: status } } : { featured: { $ne: action === "feature" } }) },
+    "title slug userId"
+  ).populate({ path: "userId", select: "email fullName" }).lean();
+  const r = await Gig.updateMany(filter, { $set: update });
+  const email = require("./email.service");
+  const base = (process.env.FRONTEND_URL || "http://localhost:8000").replace(/\/+$/, "");
+  let emailed = 0;
+  for (const g of changing) {
+    if (!g.userId?.email) continue;
+    emailed++;
+    email.sendGigStatusChanged(g.userId.email, {
+      recipientName: g.userId.fullName,
+      gigTitle: g.title,
+      status: action === "status" ? status : undefined,
+      featured: action === "status" ? undefined : action === "feature",
+      reason: action === "status" ? reason : "",
+      gigUrl: g.slug ? `${base}/gig/${g.slug}` : undefined,
+    }).catch(() => {});
+  }
+  return { matched: r.matchedCount, modified: r.modifiedCount, emailed };
 }
 
 module.exports = { appealToken, liftIfExpired, liftExpiredBans, createAppeal, listAppeals, decideAppeal, bulkUsers, bulkGigs };

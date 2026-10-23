@@ -97,6 +97,14 @@ test("bulk actions: users and gigs", async () => {
   const f = await call("POST", "/admin/bulk/gigs", { token: mod.token, body: { ids: gigs, action: "feature" } });
   assert.equal(f.status, 200);
   assert.equal(f.data.modified, gigs.length);
+  assert.equal(f.data.emailed, gigs.length, "each seller is emailed");
+  const MP = (process.env.MAILPIT_URL || "http://localhost:8025").replace(/\/+$/, "");
+  let found = 0;
+  for (let i = 0; i < 40 && !found; i++) {
+    found = (await (await fetch(`${MP}/api/v1/search?query=${encodeURIComponent('subject:"Update on your gig"')}&limit=5`)).json()).messages_count || 0;
+    if (!found) await new Promise((r) => setTimeout(r, 250));
+  }
+  assert.ok(found > 0, "bulk change email delivered");
   const back = await call("POST", "/admin/bulk/gigs", { token: mod.token, body: { ids: gigs, action: "unfeature" } });
   assert.equal(back.data.modified, gigs.length);
 });
