@@ -59,6 +59,7 @@ import Security from "../dashboard/control/Security";
 import Approvals from "../dashboard/control/Approvals";
 import RiskFlags from "../dashboard/control/RiskFlags";
 import Jobs from "../dashboard/control/Jobs";
+import Backups from "../dashboard/control/Backups";
 import Appeals from "../dashboard/control/Appeals";
 import Newsletter from "../dashboard/control/Newsletter";
 import Coupons from "../dashboard/control/Coupons";
@@ -156,6 +157,7 @@ export const router = createBrowserRouter([
       { path: "approvals", element: <Approvals /> },
       { path: "risk-flags", element: <RiskFlags /> },
       { path: "jobs", element: <Jobs /> },
+      { path: "backups", element: <Backups /> },
       { path: "appeals", element: <Appeals /> },
       { path: "newsletter", element: <Newsletter /> },
       { path: "coupons", element: <Coupons /> },

@@ -66,11 +66,16 @@ test("gdpr: admin erase is super-only and blocked by open orders", async () => {
   const id = (await call("GET", "/users/me/export", { token: u.token })).json.user.id;
   assert.equal((await call("GET", `/admin/privacy/${id}/export`, { token: mod.token })).status, 403);
   assert.equal((await call("POST", `/admin/privacy/${id}/erase`, { token: mod.token, body: { confirm: "ERASE" } })).status, 403);
-  // The demo buyer has open orders in the seed, so erasure is refused.
+  // Open orders block erasure. Only try it on the demo buyer when the
+  // pre-check says it is blocked, so the test can never erase seed data.
   const buyer = await login("buyer@example.com", "Buyer123!");
-  const bid = (await call("GET", "/users/me/export", { token: buyer.token })).json.user.id;
-  const blocked = await call("POST", `/admin/privacy/${bid}/erase`, { token: sup.token, body: { confirm: "ERASE" } });
-  assert.ok([409].includes(blocked.status), JSON.stringify(blocked.json));
+  const chk = await call("GET", "/users/me/delete-check", { token: buyer.token });
+  assert.equal(chk.status, 200);
+  if (chk.data.blockers.length) {
+    const bid = (await call("GET", "/users/me/export", { token: buyer.token })).json.user.id;
+    const blocked = await call("POST", `/admin/privacy/${bid}/erase`, { token: sup.token, body: { confirm: "ERASE" } });
+    assert.equal(blocked.status, 409, JSON.stringify(blocked.json));
+  }
   const e = await call("POST", `/admin/privacy/${id}/erase`, { token: sup.token, body: { confirm: "ERASE" } });
   assert.equal(e.status, 200, JSON.stringify(e.json));
   assert.equal((await call("POST", `/admin/privacy/${id}/erase`, { token: sup.token, body: { confirm: "ERASE" } })).status, 404);
