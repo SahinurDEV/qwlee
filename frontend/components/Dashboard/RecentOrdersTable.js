@@ -42,7 +42,36 @@ export default function RecentOrdersTable({
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-      <div className="overflow-x-auto">
+      <ul className="md:hidden divide-y divide-gray-100">
+        {orders.slice(0, 6).map((o) => {
+          const title = o?.items?.[0]?.name || o?.gigId?.title || "Gig";
+          const counterparty = o?.[counterpartyKey];
+          const price = o?.items?.[0]?.price ?? o?.price ?? 0;
+          const status = o?.status || "active";
+          return (
+            <li key={o._id || o.id}>
+              <Link href={`/order/${o._id || o.id}`} className="flex gap-3 p-3 active:bg-gray-50">
+                <div className="relative shrink-0 w-12 h-12 rounded-md overflow-hidden bg-gray-100">
+                  <ImageWithFallback src={o?.gigId?.images?.[0]} name={title} fill sizes="48px" className="object-cover" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm text-gray-900 line-clamp-1">{title}</div>
+                  <div className="text-xs text-gray-500 truncate">
+                    {counterparty?.fullName || "—"} · {o?.deliveryDate ? moment(o.deliveryDate).fromNow() : "—"}
+                  </div>
+                  <div className="mt-1 flex items-center justify-between">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${STATUS_TONE[status] || "bg-gray-50 text-gray-700 border-gray-100"}`}>
+                      {capitalise(status)}
+                    </span>
+                    <span className="text-sm font-medium text-gray-900">${Number(price).toFixed(0)}</span>
+                  </div>
+                </div>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+      <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
             <tr>

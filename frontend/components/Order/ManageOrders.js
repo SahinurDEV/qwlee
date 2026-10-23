@@ -196,7 +196,13 @@ export default function ManageOrders() {
         ) : pageRows.length === 0 ? (
           <EmptyState activeTab={activeTab} isSelling={isSelling} />
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          <ul className="md:hidden divide-y divide-gray-100">
+            {pageRows.map((o) => (
+              <MobileRow key={o._id} order={o} isSelling={isSelling} />
+            ))}
+          </ul>
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="text-left text-xs uppercase tracking-wide text-gray-400 bg-gray-50/60">
                 <tr>
@@ -215,6 +221,7 @@ export default function ManageOrders() {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </section>
 
@@ -232,6 +239,37 @@ export default function ManageOrders() {
         />
       )}
     </main>
+  );
+}
+
+function MobileRow({ order, isSelling }) {
+  const counterparty = isSelling ? order.clientId : order.freelancerId;
+  const gig = order.gigId || {};
+  const status = STATUS_STYLE[order.status] || STATUS_STYLE.active;
+  const total = Number(order.items?.[0]?.price || order.price || 0);
+  return (
+    <li>
+      <Link href={`/order/${order._id}`} className="flex gap-3 p-4 active:bg-gray-50">
+        <div className="relative w-16 h-12 rounded-md overflow-hidden bg-gray-100 shrink-0">
+          <ImageWithFallback src={gig?.images?.[0]} name={gig?.title} fill sizes="64px" className="object-cover" alt={gig?.title || "gig"} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="text-sm font-medium text-gray-900 line-clamp-2">
+            {gig?.title || order?.data?.title || "Gig"}
+          </div>
+          <div className="mt-0.5 text-xs text-gray-500 truncate">
+            {counterparty?.fullName || "—"} · #{String(order._id).slice(-8).toUpperCase()}
+          </div>
+          <div className="mt-2 flex items-center justify-between gap-2">
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border ${status.chip}`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${status.dot}`} />
+              {status.label}
+            </span>
+            <span className="text-sm font-semibold text-gray-900">${total.toLocaleString()}</span>
+          </div>
+        </div>
+      </Link>
+    </li>
   );
 }
 
