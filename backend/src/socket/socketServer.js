@@ -45,7 +45,41 @@ io.use((socket, next) => {
   next();
 });
 
+// Maintenance mode also pauses chat: non-admin sockets are refused at
+// connect time and any event they send while it is on gets an error
+// instead of being handled. Admin sockets keep working.
+const siteSettings = require("../services/siteSettings.service");
+const maintenanceOn = async () => {
+  try { return !!(await siteSettings.get()).maintenance?.enabled; } catch { return false; }
+};
+const isAdminSocket = async (socket) => {
+  if (!socket.verifiedUserId) return false;
+  if (socket.isAdmin !== undefined) return socket.isAdmin;
+  try {
+    const User = require("../models/user.model");
+    const u = await User.findById(socket.verifiedUserId, "role").lean();
+    socket.isAdmin = u?.role === "admin";
+  } catch { socket.isAdmin = false; }
+  return socket.isAdmin;
+};
+io.use(async (socket, next) => {
+  if ((await maintenanceOn()) && !(await isAdminSocket(socket))) {
+    const err = new Error("MAINTENANCE");
+    err.data = { maintenance: true };
+    return next(err);
+  }
+  next();
+});
+
 io.on("connection", async (socket) => {
+  socket.use(async (packet, next) => {
+    if ((await maintenanceOn()) && !(await isAdminSocket(socket))) {
+      socket.emit("maintenance", { enabled: true });
+      return next(new Error("MAINTENANCE"));
+    }
+    next();
+  });
+
   // If the handshake carried a verified user, bind presence immediately.
   if (socket.verifiedUserId) {
     socket.userId = socket.verifiedUserId;
