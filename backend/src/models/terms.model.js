@@ -7,4 +7,6 @@ const termsSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+termsSchema.plugin(require("./plugins/sanitizeHtmlFields.plugin"), { fields: ["content"] });
+
 module.exports = mongoose.model("Terms", termsSchema);

@@ -7,4 +7,6 @@ const trustSafety = new mongoose.Schema(
   { timestamps: true }
 );
 
+trustSafety.plugin(require("./plugins/sanitizeHtmlFields.plugin"), { fields: ["content"] });
+
 module.exports = mongoose.model("TrustSafety", trustSafety);
