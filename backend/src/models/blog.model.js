@@ -18,4 +18,6 @@ const blogSchema = new mongoose.Schema(
 
 blogSchema.plugin(paginate);
 
+blogSchema.plugin(require("./plugins/sanitizeHtmlFields.plugin"), { fields: ["content"] });
+
 module.exports = mongoose.model("Blog", blogSchema);
