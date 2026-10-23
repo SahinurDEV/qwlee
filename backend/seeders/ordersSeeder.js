@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const { Orders, Payment } = require("../src/models");
 const { pick, rand, daysAgo, daysFromNow, chance } = require("./utils/random");
 
@@ -66,7 +67,11 @@ async function seedOrders({ buyers, sellers, gigs }) {
       package: pkg,
     };
 
+    // Orders and their Payment twin share one _id, so any link built from
+    // either collection (reviews, notifications, /order/:id) resolves.
+    const _id = new mongoose.Types.ObjectId();
     orderDocs.push({
+      _id,
       freelancerId: seller._id,
       clientId: buyer._id,
       gigId: gig._id,
@@ -83,6 +88,7 @@ async function seedOrders({ buyers, sellers, gigs }) {
     // include the rich `data` payload the redesigned page reads from
     // (requirements, package summary, revisions left).
     paymentDocs.push({
+      _id,
       sessionId: `cs_seed_${Date.now()}_${i}`,
       items: [
         {
