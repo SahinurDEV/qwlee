@@ -51,7 +51,30 @@ export default function DataTable({
   }
   return (
     <div className={cls("overflow-hidden border border-ink-200 rounded-2xl bg-white shadow-card", className)}>
-      <div className="overflow-x-auto">
+      {/* Phones: each row becomes a stacked card (label / value). */}
+      <ul className="md:hidden divide-y divide-ink-100">
+        {rows.map((row, i) => (
+          <li
+            key={rowKey(row) || i}
+            onClick={onRowClick ? () => onRowClick(row) : undefined}
+            className={cls("px-4 py-3 space-y-1.5", onRowClick && "cursor-pointer active:bg-ink-50")}
+          >
+            {columns.map((c, ci) =>
+              ci === 0 || !c.label ? (
+                <div key={c.key} className={cls("min-w-0", ci === 0 && "font-medium")}>
+                  {c.render ? c.render(row) : row[c.key]}
+                </div>
+              ) : (
+                <div key={c.key} className="flex items-start justify-between gap-3 text-sm">
+                  <span className="text-xs uppercase tracking-wide text-ink-400 shrink-0 pt-0.5">{c.label}</span>
+                  <span className="min-w-0 text-right">{c.render ? c.render(row) : row[c.key]}</span>
+                </div>
+              )
+            )}
+          </li>
+        ))}
+      </ul>
+      <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left bg-ink-50/60 text-xs uppercase tracking-wide text-ink-500">
