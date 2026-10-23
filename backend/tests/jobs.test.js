@@ -29,7 +29,7 @@ test("job monitor: housekeeping steps are recorded; run now is super only", asyn
   assert.equal(typeof r.data.markedLate, "number");
   const s = await call("GET", "/admin/jobs/status", { token: fin.token });
   assert.equal(s.status, 200);
-  assert.equal(s.data.jobs.length, 7);
+  assert.equal(s.data.jobs.length, 8);
   for (const j of s.data.jobs) {
     assert.ok(j.lastRun, `${j.job} recorded`);
     assert.ok(new Date(j.lastRun.startedAt).getTime() >= t0 - 1000, `${j.job} is this run`);

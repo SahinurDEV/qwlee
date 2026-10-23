@@ -31,6 +31,7 @@ const RULES = [
   ["*", /^\/admin\/(chats|order-chats)(\/|$)/, "support", true],
   ["GET", /^\/admin\/users\/[^/]+\/view$/, "read", true],
   ["W", /^\/admin\/users\/[^/]+\/role$/, "settings"],
+  ["W", /^\/admin\/users\/[^/]+\/seller-plan$/, "finance"],
   ["W", /^\/admin\/users(\/|$)/, "users.moderate"],
   ["W", /^\/admin\/seller-levels(\/|$)/, "users.moderate"],
   ["W", /^\/admin\/gigs(\/|$)/, "gigs.write"],
