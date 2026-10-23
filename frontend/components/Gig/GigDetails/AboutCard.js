@@ -68,6 +68,9 @@ export default function AboutCard({ gig, user, hideActions = false }) {
           ) : null}
           <div className="mt-1 flex flex-wrap gap-1.5">
             <JobSuccessBadge userId={user?.id || user?._id} />
+            {user?.isPro ? (
+              <span data-testid="pro-badge" className="inline-flex items-center px-2 py-0.5 rounded-full bg-gray-900 text-white text-xs font-semibold">Pro</span>
+            ) : null}
             {user?.planBadge ? (
               <span data-testid="plan-badge" className="inline-flex items-center px-2 py-0.5 rounded-full border border-violet-200 bg-violet-50 text-violet-800 text-xs font-semibold">
                 {user.planBadge === "premium" ? "Premium seller" : "Plus seller"}

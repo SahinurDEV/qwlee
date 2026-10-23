@@ -76,6 +76,7 @@ export default function FilterBar() {
   const country = params.get("country") || "";
   const onlineOnly = params.get("online") === "true";
   const verifiedOnly = params.get("verifiedOnly") === "true";
+  const proOnly = params.get("pro") === "true";
   const minRating = params.get("minRating") || "";
   const level = params.get("level") || "";
   const minGigRating = params.get("minGigRating") || "";
@@ -103,6 +104,7 @@ export default function FilterBar() {
     (country ? 1 : 0) +
     (onlineOnly ? 1 : 0) +
     (verifiedOnly ? 1 : 0) +
+    (proOnly ? 1 : 0) +
     (minRating ? 1 : 0);
 
   return (
@@ -209,7 +211,7 @@ export default function FilterBar() {
             wide
             onClear={() =>
               applyParams((n) => {
-                ["level", "language", "country", "online", "verifiedOnly", "minRating"].forEach(
+                ["level", "language", "country", "online", "verifiedOnly", "pro", "minRating"].forEach(
                   (k) => n.delete(k)
                 );
                 close();
@@ -304,6 +306,11 @@ export default function FilterBar() {
                     setOrDelete(n, "verifiedOnly", v ? "true" : "")
                   )
                 }
+              />
+              <Toggle
+                label="Pro sellers only"
+                checked={proOnly}
+                onChange={(v) => applyParams((n) => setOrDelete(n, "pro", v ? "true" : ""))}
               />
             </div>
           </PopoverShell>

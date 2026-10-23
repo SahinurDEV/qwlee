@@ -102,6 +102,10 @@ const defaultRoutes = [
     route: require("./contest.routes"),
   },
   {
+    path: "/pro",
+    route: require("./pro.routes"),
+  },
+  {
     path: "/categories",
     route: categoriesRoute,
   },

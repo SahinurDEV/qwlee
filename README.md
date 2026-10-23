@@ -353,6 +353,19 @@ recovery. The Backups page shows whether uploads were archived and the
 off-server copy worked. Restore uploads with
 `docker compose run --rm -v ./offsite-backups:/o backend sh -c 'tar -xzf /o/<file>.uploads.tar.gz -C /app/uploads'`.
 
+### Qwlee Pro and the hiring concierge
+
+`/pro` is the vetted tier (like Fiverr Pro). Sellers apply with a headline,
+at least 2 years of experience, 2+ portfolio links and notable clients.
+Moderators review applications in Admin → **Pro applications** (approve,
+reject with a note, or remove Pro later). Pro sellers get a **Pro** badge on
+their seller card and appear under the marketplace **Pro sellers only**
+filter (`GET /v1/gig?pro=true`). Buyers can send the **hiring concierge** a
+brief, budget and timeline; it opens a support ticket for the team to answer
+with a shortlist. API: `GET /v1/pro/me`, `POST /v1/pro/apply`,
+`POST /v1/pro/concierge`, `GET /v1/admin/pro-applications`,
+`POST /v1/admin/users/:id/pro {approve, note}`.
+
 ### Hourly contracts
 
 Buyers can hire a seller by the hour at `/hourly` (or **Hire hourly** on a
