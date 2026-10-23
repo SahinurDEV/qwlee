@@ -406,6 +406,15 @@ stored on the order). Rules reference category ids; `npm run seed` remembers
 each rule by category name (and parent name) before the reset and re-attaches
 it to the new category afterwards, so rules survive a re-seed.
 
+### Loyalty fees
+
+Site settings → **Loyalty fees** (off by default) lowers the fee for repeat
+business: once a seller has earned more than a tier's amount from one client
+(completed orders), that client's later orders with the seller pay at most
+the tier's fee. Defaults when switched on: over $500 → 3 %, over $10,000 →
+1 %. Up to 5 tiers. The cap applies after category rules and before the
+Seller Plus discount.
+
 ### Email templates
 
 Admin → **Email templates** (settings permission) lists every transactional

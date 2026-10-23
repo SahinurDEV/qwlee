@@ -19,6 +19,21 @@ const url = (v) => {
   if (s && !/^https?:\/\//i.test(s) && !(s.startsWith("/") && !s.startsWith("//"))) throw new ApiError(httpStatus.BAD_REQUEST, `"${s}" must be an http(s) URL or a /path`);
   return s;
 };
+function loyaltyFees(v) {
+  const d = { enabled: false, tiers: [{ over: 500, percent: 3 }, { over: 10000, percent: 1 }] };
+  if (!v || typeof v !== "object") return d;
+  const tiers = Array.isArray(v.tiers) ? v.tiers : d.tiers;
+  if (tiers.length > 5) throw new ApiError(httpStatus.BAD_REQUEST, "At most 5 loyalty fee tiers");
+  const out = tiers.map((t) => {
+    const over = Number(t?.over);
+    const percent = Number(t?.percent);
+    if (!Number.isFinite(over) || over < 0 || over > 10000000) throw new ApiError(httpStatus.BAD_REQUEST, "Loyalty tier amount must be 0–10,000,000");
+    if (!Number.isFinite(percent) || percent < 0 || percent > 50) throw new ApiError(httpStatus.BAD_REQUEST, "Loyalty fees must be 0–50%");
+    return { over: Math.round(over * 100) / 100, percent: Math.round(percent * 100) / 100 };
+  }).sort((a, b) => a.over - b.over);
+  return { enabled: v.enabled === true || v.enabled === "true", tiers: out };
+}
+
 function categoryFees(v) {
   const seen = new Set();
   const out = [];
@@ -80,6 +95,7 @@ function defaults() {
       requireGigApproval: false,
       secondApprovalOver: Number(process.env.SECOND_APPROVAL_OVER || 0),
       categoryFees: [],
+      loyaltyFees: { enabled: false, tiers: [{ over: 500, percent: 3 }, { over: 10000, percent: 1 }] },
     },
     branding: { siteName: process.env.SITE_NAME || "Qwlee", logoUrl: "", primaryColor: "#059669" },
     homepage: { heroTitle: "", heroSubtitle: "", announcement: { enabled: false, text: "", link: "", tone: "info" }, sections: [], blocks: [] },
@@ -125,6 +141,10 @@ function normalise(site = {}, base = defaults()) {
       // Per-category overrides of feePercent: [{ categoryId, percent }].
       // A sub-category rule beats its parent's; no rule = feePercent.
       categoryFees: categoryFees(m.categoryFees),
+      // Loyalty fees: once a seller has earned more than `over` (USD,
+      // completed orders) from the same client, later orders with that
+      // client pay at most `percent`. Off by default.
+      loyaltyFees: loyaltyFees(m.loyaltyFees),
     },
     branding: { siteName: str(b.siteName, 40) || "Qwlee", logoUrl: url(b.logoUrl), primaryColor: color(b.primaryColor, "#059669") },
     homepage: {
