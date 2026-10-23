@@ -353,6 +353,25 @@ recovery. The Backups page shows whether uploads were archived and the
 off-server copy worked. Restore uploads with
 `docker compose run --rm -v ./offsite-backups:/o backend sh -c 'tar -xzf /o/<file>.uploads.tar.gz -C /app/uploads'`.
 
+### Hourly contracts
+
+Buyers can hire a seller by the hour at `/hourly` (or **Hire hourly** on a
+gig's seller card): title, rate ($3–999/h) and a weekly hour limit (1–80).
+Once the seller accepts, they log time for the current week (0.25 h steps,
+never over the weekly limit) and can remove entries that aren't invoiced yet.
+Weeks run Monday–Sunday (UTC). When a week ends, order housekeeping (Admin →
+Jobs → `hourlyBilling`) turns its hours into an invoice; the buyer has
+`HOURLY_REVIEW_DAYS` (5) to approve or dispute it, after which it is paid
+automatically. Invoices are paid from the buyer's Qwlee balance and the seller
+gets the amount minus the platform fee (Seller Plus discount applies). If the
+balance is short the invoice becomes **unpaid** and the contract pauses until
+the buyer pays it. With demo payments on, buyers can add demo funds from the
+contract page (`POST /v1/hourly/wallet/topup`); a real card top-up is not
+built yet. Disputed invoices wait for a super admin (`GET /v1/admin/hourly
+?disputed=true`, pay with `POST /v1/hourly/:id/invoices/:invId/pay`).
+`POST /v1/admin/hourly/run {asOf, payAsOf}` runs billing now (super only).
+Either side can pause (buyer), resume (buyer) or end the contract.
+
 ### Seller Plus
 
 Sellers can subscribe at `/seller-plan` (avatar menu → Seller Plus). Plans

@@ -94,6 +94,10 @@ const defaultRoutes = [
     route: buyerRequestRoute,
   },
   {
+    path: "/hourly",
+    route: require("./hourly.routes"),
+  },
+  {
     path: "/categories",
     route: categoriesRoute,
   },
