@@ -157,6 +157,7 @@ export default function TopNav() {
     { icon: IoStatsChartOutline, label: "Analytics", href: "/analytics" },
     { icon: IoSparklesOutline, label: "Seller Plus", href: "/seller-plan" },
     { icon: IoListOutline, label: "Manage orders", href: "/order" },
+    { icon: IoListOutline, label: "Hourly contracts", href: "/hourly" },
     { icon: IoSparklesOutline, label: "Create a new gig", href: "/gig/add" },
     { icon: IoHeartOutline, label: "Wishlist", href: "/list" },
     authedUser?.username && {
@@ -169,6 +170,7 @@ export default function TopNav() {
   const buyingLinks = [
     { icon: IoStorefrontOutline, label: "Dashboard", href: "/dashboard" },
     { icon: IoListOutline, label: "Orders", href: "/order" },
+    { icon: IoListOutline, label: "Hourly contracts", href: "/hourly" },
     { icon: IoHeartOutline, label: "Wishlist", href: "/list" },
     { icon: IoBagHandleOutline, label: "Browse services", href: "/gig" },
   ];

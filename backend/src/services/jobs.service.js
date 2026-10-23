@@ -4,7 +4,7 @@
 const JobRun = require("../models/jobRun.model");
 const logger = require("../config/logger");
 
-const JOBS = ["autoComplete", "markLate", "autoCancel", "sellerPlans", "subscriptions", "announcements", "bansLifted", "kpiEmail"];
+const JOBS = ["autoComplete", "markLate", "autoCancel", "sellerPlans", "hourlyBilling", "subscriptions", "announcements", "bansLifted", "kpiEmail"];
 const intervalMs = () => Number(process.env.ORDER_HOUSEKEEPING_MS) || 10 * 60 * 1000;
 
 async function track(job, fn, trigger = "timer") {

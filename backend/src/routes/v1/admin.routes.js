@@ -118,6 +118,23 @@ router.get("/me", A, ac.me);
 router.get("/users", A, ac.listUsers);
 router.patch("/users/:userId", A, ac.updateUser);
 router.patch("/users/:userId/role", A, ac.setRole);
+// Hourly contracts: list all, and run weekly billing now (super only;
+// `asOf` lets support close a week early or tests move time forward).
+router.get("/hourly", A, require("../../utils/catchAsync")(async (req, res) => {
+  const HourlyContract = require("../../models/hourlyContract.model");
+  const q = req.query.status ? { status: String(req.query.status) } : {};
+  if (req.query.disputed === "true") q["invoices.status"] = "disputed";
+  const results = await HourlyContract.find(q).sort({ updatedAt: -1 }).limit(200).populate([{ path: "buyerId", select: "fullName email" }, { path: "sellerId", select: "fullName email" }]);
+  res.json({ code: 200, message: "Hourly contracts", data: { attributes: { results } } });
+}));
+router.post("/hourly/run", A, require("../../utils/catchAsync")(async (req, res) => {
+  const svc = require("../../services/hourly.service");
+  const asOf = req.body?.asOf ? new Date(req.body.asOf) : new Date();
+  if (Number.isNaN(asOf.getTime())) throw new (require("../../utils/ApiError"))(400, "Invalid asOf");
+  const invoiced = await svc.closeWeeks(asOf);
+  const paid = await svc.payDue(req.body?.payAsOf ? new Date(req.body.payAsOf) : asOf);
+  res.json({ code: 200, message: "Hourly billing ran", data: { attributes: { invoiced, paid } } });
+}));
 router.patch("/users/:userId/seller-plan", A, require("../../utils/catchAsync")(async (req, res) => {
   const d = await require("../../services/sellerPlan.service").adminSet(req.params.userId, req.body?.tier, req.body?.days);
   res.json({ code: 200, message: "Seller plan updated", data: { attributes: d } });
