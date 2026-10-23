@@ -68,6 +68,13 @@ async function getTransport() {
 // check the result instead of assuming success. Never throws.
 async function sendEmail(to, subject, html) {
   try {
+    const ctx = templateCtx.getStore();
+    if (ctx?.override?.subject) subject = fill(ctx.override.subject, { ...ctx.vars, subject }, false);
+    if (ctx?.capture) {
+      ({ subject, html } = await applyBranding(subject, html));
+      ctx.captured = { to, subject, html };
+      return true;
+    }
     if (!to) return false;
     const { smtp } = await readSmtp();
     if (!smtp?.host) {
@@ -106,6 +113,65 @@ async function applyBranding(subject, html) {
 }
 
 // ---------------------------------------------------------------------------
+// Admin template overrides (Admin → Email templates)
+// ---------------------------------------------------------------------------
+// Each named email runs inside templateCtx, so sendEmail and emailShell
+// know which template is being sent and can apply the admin's overrides:
+// subject, heading, intro, footer note and button label, with {{variables}}
+// taken from the email's own data. Values are HTML-escaped; layout, order
+// summary tables and links stay built-in.
+const { AsyncLocalStorage } = require("async_hooks");
+const templateCtx = new AsyncLocalStorage();
+let tplCache = { at: 0, map: new Map() };
+async function overrides() {
+  if (Date.now() - tplCache.at < 30000) return tplCache.map;
+  try {
+    const docs = await require("../models/emailTemplate.model").find().lean();
+    tplCache = { at: Date.now(), map: new Map(docs.map((d) => [d.key, d])) };
+  } catch {
+    tplCache = { at: Date.now(), map: new Map() };
+  }
+  return tplCache.map;
+}
+const invalidateTemplates = () => { tplCache.at = 0; };
+// html=true: the admin's text is escaped too (no raw HTML in overrides).
+function fill(tpl, vars, html = true) {
+  return (html ? escapeHtml(String(tpl)) : String(tpl)).replace(/\{\{\s*(\w+)\s*\}\}/g, (m, k) => {
+    const v = vars?.[k];
+    if (v === undefined || v === null || typeof v === "object") return "";
+    return html ? escapeHtml(String(v)) : String(v);
+  });
+}
+function templateVars(args) {
+  const data = args.find((a) => a && typeof a === "object" && !Array.isArray(a)) || {};
+  const out = {};
+  for (const [k, v] of Object.entries(data)) if (["string", "number", "boolean"].includes(typeof v)) out[k] = v;
+  if (["string", "number"].includes(typeof args[0]) && !Object.keys(data).length) out.code = String(args[0]);
+  return out;
+}
+// Wrap a template function so overrides apply (and disabled optional
+// templates are skipped).
+function withTemplate(key, fn) {
+  return async (to, ...args) => {
+    const override = (await overrides()).get(key) || null;
+    if (override?.disabled && EMAIL_CATEGORY[key]) {
+      logger.info(`Email ${key} to ${to} skipped: template turned off by an admin`);
+      return false;
+    }
+    const ctx = { key, override, vars: templateVars(args) };
+    return templateCtx.run(ctx, () => fn(to, ...args));
+  };
+}
+// Render without sending (admin preview). override: null = built-in text.
+async function renderTemplate(key, sample, override) {
+  const fn = RAW[key];
+  if (!fn) return null;
+  const ctx = { key, override: override === undefined ? (await overrides()).get(key) || null : override, vars: templateVars(sample), capture: true };
+  await templateCtx.run(ctx, () => fn("preview@example.com", ...sample));
+  return ctx.captured || null;
+}
+
+// ---------------------------------------------------------------------------
 // Template shell
 // ---------------------------------------------------------------------------
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:8000";
@@ -140,6 +206,15 @@ function emailShell({
   footerNote,
   accent = "emerald",
 }) {
+  const ctx = templateCtx.getStore();
+  const o = ctx?.override;
+  if (o) {
+    // heroTitle is escaped below; intro/footerNote are HTML slots.
+    if (o.heroTitle) heroTitle = fill(o.heroTitle, ctx.vars, false);
+    if (o.intro) intro = fill(o.intro, ctx.vars).replace(/\n/g, "<br/>");
+    if (o.footerNote) footerNote = fill(o.footerNote, ctx.vars).replace(/\n/g, "<br/>");
+    if (o.ctaLabel && cta) cta = { ...cta, label: fill(o.ctaLabel, ctx.vars, false) };
+  }
   const tone = ACCENTS[accent] || ACCENTS.emerald;
   const btn = (c) =>
     c
@@ -756,6 +831,15 @@ const gated = (name, fn) => async (to, ...args) => {
   }
   return fn(to, ...args);
 };
+const RAW = {};
+for (const name of Object.keys(module.exports)) {
+  if (name === "sendEmail") continue;
+  RAW[name] = module.exports[name];
+  module.exports[name] = withTemplate(name, module.exports[name]);
+}
 for (const name of Object.keys(EMAIL_CATEGORY)) module.exports[name] = gated(name, module.exports[name]);
+module.exports.TEMPLATE_KEYS = Object.keys(RAW);
+module.exports.renderTemplate = renderTemplate;
+module.exports.invalidateTemplates = invalidateTemplates;
 module.exports.EMAIL_CATEGORY = EMAIL_CATEGORY;
 

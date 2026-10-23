@@ -103,6 +103,7 @@ const NAV = [
       { to: "/dashboard/audit", label: "Audit log", icon: TbLogs, perm: "settings" },
       { to: "/dashboard/jobs", label: "Background jobs", icon: TbLogs, perm: "settings" },
       { to: "/dashboard/backups", label: "Backups", icon: TbLogs, perm: "settings" },
+      { to: "/dashboard/email-templates", label: "Email templates", icon: TbLogs, perm: "settings" },
     ],
   },
 ];
