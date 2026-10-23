@@ -340,3 +340,13 @@ Archives stay on the same server, so copy them off-box too, e.g.
 `docker compose cp backup:/backups ./offsite-backups` from cron, or sync the
 volume to object storage. Uploaded images in the `uploads` volume are not
 part of the Mongo backup.
+
+### Category fees
+
+Site settings → **Category fees** overrides the default platform fee per
+category (0–50 %). The fee is applied when money is released to the seller
+(order completion, each milestone, tips), using the gig's sub-category rule
+if there is one, then its category's, then the default. Orders completed
+before a change keep the fee they were charged (`platformFeePercent` is
+stored on the order). Rules reference category ids, so re-seeding (which
+recreates categories) drops their effect.

@@ -192,11 +192,24 @@ async function getPublicMethods() {
 // Platform commission taken from each completed order, in percent.
 // Admin can override it in Settings > Misc with key `platformFeePercent`;
 // otherwise PLATFORM_FEE_PERCENT from the environment, default 5.
-async function getPlatformFeePercent() {
+// Pass the order's gigId to apply a per-category rule (Site settings →
+// Marketplace → Category fees): the gig's sub-category rule wins, then its
+// category's, then the default.
+async function getPlatformFeePercent(gigId) {
   const doc = await getConfig();
   const raw = doc?.site?.marketplace?.feePercent ?? doc?.misc?.platformFeePercent ?? process.env.PLATFORM_FEE_PERCENT ?? 5;
   const pct = Number(raw);
-  return Number.isFinite(pct) && pct >= 0 && pct <= 100 ? pct : 5;
+  const base = Number.isFinite(pct) && pct >= 0 && pct <= 100 ? pct : 5;
+  const rules = doc?.site?.marketplace?.categoryFees;
+  if (!gigId || !Array.isArray(rules) || !rules.length) return base;
+  const gig = await require("../models/gig.model").findById(gigId, "categoriesId subCategoryId").lean().catch(() => null);
+  if (!gig) return base;
+  const by = new Map(rules.map((r) => [String(r.categoryId), Number(r.percent)]));
+  for (const id of [gig.subCategoryId, gig.categoriesId]) {
+    const v = id && by.get(String(id));
+    if (Number.isFinite(v) && v >= 0 && v <= 100) return v;
+  }
+  return base;
 }
 
 module.exports = {

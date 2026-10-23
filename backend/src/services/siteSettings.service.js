@@ -19,6 +19,22 @@ const url = (v) => {
   if (s && !/^https?:\/\//i.test(s) && !(s.startsWith("/") && !s.startsWith("//"))) throw new ApiError(httpStatus.BAD_REQUEST, `"${s}" must be an http(s) URL or a /path`);
   return s;
 };
+function categoryFees(v) {
+  const seen = new Set();
+  const out = [];
+  for (const r of Array.isArray(v) ? v : []) {
+    const id = String(r?.categoryId || "");
+    if (!/^[a-f0-9]{24}$/i.test(id)) throw new ApiError(httpStatus.BAD_REQUEST, "Pick a category for every fee rule");
+    if (seen.has(id)) throw new ApiError(httpStatus.BAD_REQUEST, "Each category can only have one fee rule");
+    seen.add(id);
+    const p = Number(r.percent);
+    if (!Number.isFinite(p) || p < 0 || p > 50) throw new ApiError(httpStatus.BAD_REQUEST, "Category fees must be 0–50%");
+    out.push({ categoryId: id, percent: Math.round(p * 100) / 100 });
+  }
+  if (out.length > 200) throw new ApiError(httpStatus.BAD_REQUEST, "At most 200 category fee rules");
+  return out;
+}
+
 // Homepage builder: the hero always comes first; these sections follow in
 // the admin's order and can be hidden. Up to 5 custom text blocks
 // ("block-1".."block-5") can be placed anywhere in the list.
@@ -63,6 +79,7 @@ function defaults() {
       demoPayments: process.env.DEMO_PAYMENTS === "true",
       requireGigApproval: false,
       secondApprovalOver: Number(process.env.SECOND_APPROVAL_OVER || 0),
+      categoryFees: [],
     },
     branding: { siteName: process.env.SITE_NAME || "Qwlee", logoUrl: "", primaryColor: "#059669" },
     homepage: { heroTitle: "", heroSubtitle: "", announcement: { enabled: false, text: "", link: "", tone: "info" }, sections: [], blocks: [] },
@@ -105,6 +122,9 @@ function normalise(site = {}, base = defaults()) {
       // Refunds / payouts at or above this amount (USD) need a second
       // admin's approval. 0 = off.
       secondApprovalOver: num(m.secondApprovalOver, 0, 0, 1000000),
+      // Per-category overrides of feePercent: [{ categoryId, percent }].
+      // A sub-category rule beats its parent's; no rule = feePercent.
+      categoryFees: categoryFees(m.categoryFees),
     },
     branding: { siteName: str(b.siteName, 40) || "Qwlee", logoUrl: url(b.logoUrl), primaryColor: color(b.primaryColor, "#059669") },
     homepage: {

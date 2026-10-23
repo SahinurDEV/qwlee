@@ -229,7 +229,7 @@ const loadParty = async (orderId, userId) => {
  * concurrent accept / auto-complete calls cannot double-credit.
  */
 const completeOrder = async (order, { reason = "accepted", fromStatuses = OPEN } = {}) => {
-  const feePercent = await appConfigService.getPlatformFeePercent();
+  const feePercent = await appConfigService.getPlatformFeePercent(order.gigId);
   const gross = Number(order.escrow?.amount ?? order.price ?? order.items?.[0]?.price ?? 0) + Number(order.escrow?.platformFunded || 0);
   // Milestones already released were paid out (and charged their fee) then.
   const done = { gross: Number(order.escrow?.releasedGross || 0), fee: Number(order.escrow?.releasedFee || 0), net: Number(order.escrow?.releasedNet || 0) };
@@ -291,7 +291,8 @@ const quoteTip = async (orderId, buyerId, amount) => {
 
 /** Credit a paid tip to the seller (net of platform fee). Idempotent on sessionId. */
 const recordTip = async (orderId, amount, { provider, sessionId }) => {
-  const feePercent = await appConfigService.getPlatformFeePercent();
+  const tipped = await Payment.findById(orderId, "gigId").lean();
+  const feePercent = await appConfigService.getPlatformFeePercent(tipped?.gigId);
   const fee = round2((amount * feePercent) / 100);
   const net = round2(amount - fee);
   const updated = await Payment.findOneAndUpdate(
