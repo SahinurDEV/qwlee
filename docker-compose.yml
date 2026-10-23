@@ -46,6 +46,9 @@ services:
       # Built-in demo checkout (no real money) when Stripe is not configured.
       # Turn off in production.
       DEMO_PAYMENTS: ${DEMO_PAYMENTS:-true}
+      # Load the demo data when the API starts against an empty database
+      # (fresh install or lost volume). Set to false in production.
+      SEED_DEMO_IF_EMPTY: ${SEED_DEMO_IF_EMPTY:-true}
     ports:
       - "${BACKEND_PORT:-7171}:7171"
       - "${SOCKET_PORT:-8181}:8181"
