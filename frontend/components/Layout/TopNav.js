@@ -179,6 +179,7 @@ export default function TopNav() {
     { icon: IoSparklesOutline, label: "Qwlee Pro", href: "/pro" },
     { icon: IoSparklesOutline, label: "Teams", href: "/teams" },
     { icon: IoSparklesOutline, label: "Find talent", href: "/talent" },
+    { icon: IoSparklesOutline, label: "AI assistant", href: "/ai-assistant" },
   ];
 
   const sharedLinks = [
