@@ -98,6 +98,10 @@ const defaultRoutes = [
     route: require("./hourly.routes"),
   },
   {
+    path: "/contests",
+    route: require("./contest.routes"),
+  },
+  {
     path: "/categories",
     route: categoriesRoute,
   },
