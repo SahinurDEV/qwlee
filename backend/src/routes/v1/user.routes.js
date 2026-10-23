@@ -64,6 +64,13 @@ router.post("/me/delete", auth("common"), catchAsync(async (req, res) => {
   res.json({ code: 200, message: "Account deleted", data: { attributes: await privacy.eraseUser(req.user._id, { by: "self" }) } });
 }));
 
+// Job Success Score (public): share of a seller's recent orders that ended well.
+router.get("/:userId/job-success", catchAsync(async (req, res) => {
+  if (!/^[a-f0-9]{24}$/i.test(req.params.userId)) throw new ApiError(400, "Invalid user id");
+  const data = await require("../../services/jobSuccess.service").forSeller(req.params.userId);
+  res.json({ code: 200, message: "Job Success", data: { attributes: data } });
+}));
+
 router.route("/").get(optionalAuth(), userController.getUsers);
 
 router
