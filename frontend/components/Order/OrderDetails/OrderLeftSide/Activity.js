@@ -183,7 +183,7 @@ export default function Activity({ order, orderId }) {
           continues in one canonical place. */}
       {isClosed ? (
         <div className="border-t border-gray-100 px-5 py-5 bg-gray-50/40">
-          <div className="flex items-start gap-3 rounded-xl bg-white border border-gray-200 p-4">
+          <div className="flex flex-wrap sm:flex-nowrap items-start gap-3 rounded-xl bg-white border border-gray-200 p-4">
             <div className="w-9 h-9 rounded-lg bg-gray-100 text-gray-600 flex items-center justify-center shrink-0">
               <IoLockClosedOutline className="w-5 h-5" />
             </div>
@@ -203,7 +203,7 @@ export default function Activity({ order, orderId }) {
             </div>
             <Link
               href="/inbox"
-              className="inline-flex items-center gap-1.5 shrink-0 px-3.5 py-2 rounded-lg text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition"
+              className="w-full sm:w-auto justify-center inline-flex items-center gap-1.5 shrink-0 px-3.5 py-2 rounded-lg text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition"
             >
               <IoChatbubblesOutline className="w-4 h-4" />
               Go to inbox
