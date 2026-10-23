@@ -98,6 +98,7 @@ const getGigs = catchAsync(async (req, res) => {
     'country',
     'online',
     'verifiedOnly',
+    'pro',
     'minRating',
     'level',
     'featured',

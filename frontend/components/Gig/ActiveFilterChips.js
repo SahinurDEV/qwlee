@@ -34,6 +34,7 @@ export default function ActiveFilterChips() {
   const country = params.get("country");
   const onlineOnly = params.get("online") === "true";
   const verifiedOnly = params.get("verifiedOnly") === "true";
+  const proOnly = params.get("pro") === "true";
   const minRating = params.get("minRating");
   const minGigRating = params.get("minGigRating");
   const minReviews = params.get("minReviews");
@@ -69,6 +70,7 @@ export default function ActiveFilterChips() {
   if (onlineOnly) chips.push({ keys: ["online"], label: "Online sellers" });
   if (verifiedOnly)
     chips.push({ keys: ["verifiedOnly"], label: "Verified only" });
+  if (proOnly) chips.push({ keys: ["pro"], label: "Pro only" });
 
   if (chips.length === 0) return null;
 

@@ -54,6 +54,7 @@ const NAV = [
       { to: "/dashboard/buyerlist", label: "Buyers", icon: BiSolidUserPlus },
       { to: "/dashboard/seller-levels", label: "Seller levels", icon: AiOutlineSafetyCertificate },
       { to: "/dashboard/appeals", label: "Ban appeals", icon: TbGavel, perm: "users.moderate" },
+      { to: "/dashboard/pro", label: "Pro applications", icon: TbGavel, perm: "users.moderate" },
     ],
   },
   {

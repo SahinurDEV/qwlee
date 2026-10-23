@@ -87,6 +87,9 @@ const queryGigs = async (filter, options, { excludeUserId, viewer, ...extra } = 
   if (filter.verifiedOnly === "true" || filter.verifiedOnly === true) {
     sellerFilter.isVerified = true;
   }
+  if (filter.pro === "true" || filter.pro === true) {
+    sellerFilter.isPro = true;
+  }
   if (filter.minRating) {
     sellerFilter["review.rating"] = { $gte: Number(filter.minRating) };
   }
@@ -134,7 +137,7 @@ const queryGigs = async (filter, options, { excludeUserId, viewer, ...extra } = 
   if (filter.hasVideo === "true" || filter.hasVideo === true) query.video = { $nin: ["", null] };
   for (const k of ["minGigRating", "minReviews", "hasVideo"]) delete filter[k];
 
-  const seller = ["language", "country", "online", "verifiedOnly", "minRating", "level"];
+  const seller = ["language", "country", "online", "verifiedOnly", "pro", "minRating", "level"];
   for (const key of Object.keys(filter)) {
     if (seller.includes(key)) continue;
     if (key === "title" && filter[key] !== "") {

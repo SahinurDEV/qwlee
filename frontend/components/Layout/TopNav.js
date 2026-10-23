@@ -156,6 +156,7 @@ export default function TopNav() {
     { icon: IoCashOutline, label: "Earnings", href: "/earnings" },
     { icon: IoStatsChartOutline, label: "Analytics", href: "/analytics" },
     { icon: IoSparklesOutline, label: "Seller Plus", href: "/seller-plan" },
+    { icon: IoSparklesOutline, label: "Apply for Pro", href: "/pro" },
     { icon: IoListOutline, label: "Manage orders", href: "/order" },
     { icon: IoListOutline, label: "Hourly contracts", href: "/hourly" },
     { icon: IoSparklesOutline, label: "Contests", href: "/contests" },
@@ -175,6 +176,7 @@ export default function TopNav() {
     { icon: IoSparklesOutline, label: "Contests", href: "/contests" },
     { icon: IoHeartOutline, label: "Wishlist", href: "/list" },
     { icon: IoBagHandleOutline, label: "Browse services", href: "/gig" },
+    { icon: IoSparklesOutline, label: "Qwlee Pro", href: "/pro" },
   ];
 
   const sharedLinks = [
