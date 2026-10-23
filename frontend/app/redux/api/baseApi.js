@@ -17,6 +17,7 @@ export const baseApi = createApi({
     },
   }),
   tagTypes: [
+    "Hourly",
     "SellerPlan",
     "Credits",
     "Subscriptions",

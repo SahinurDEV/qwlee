@@ -84,6 +84,11 @@ export default function AboutCard({ gig, user, hideActions = false }) {
             <IoChatbubbleEllipsesOutline /> Contact me
           </button>
         )}
+        {!hideActions && !isMyOwn && user?.username && (
+          <a href={`/hourly?seller=${user.username}`} className="hidden md:inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg border border-gray-200 hover:bg-gray-50">
+            Hire hourly
+          </a>
+        )}
       </div>
 
       <dl className="mt-6 grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
