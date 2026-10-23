@@ -294,8 +294,10 @@ back" time). While on, every marketplace page shows a maintenance screen
 (within a minute; the layout caches site settings for 60 s) and the API
 answers `503` with `MAINTENANCE: <message>` and `Retry-After` for everything
 except `/v1/info`, `/v1/auth`, `/v1/admin` and `/v1/docs`, unless the request
-carries an admin's access token. The admin dashboard keeps working. The chat
-socket server is not paused.
+carries an admin's access token. The admin dashboard keeps working. Chat pauses too: the
+socket server refuses new non-admin connections (`connect_error`
+`MAINTENANCE`) and answers events from already-connected users with a
+`maintenance` event instead of handling them. Admin sockets keep working.
 
 ### Personal data: export and account deletion (GDPR)
 
