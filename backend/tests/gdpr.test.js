@@ -80,3 +80,23 @@ test("gdpr: admin erase is super-only and blocked by open orders", async () => {
   assert.equal(e.status, 200, JSON.stringify(e.json));
   assert.equal((await call("POST", `/admin/privacy/${id}/erase`, { token: sup.token, body: { confirm: "ERASE" } })).status, 404);
 });
+
+test("gdpr: deletion redacts the person's chat messages and finds local files", async () => {
+  const { localNames } = require("../src/utils/localFileNames");
+  assert.deepEqual([...localNames(["https://x.test/api/uploads/a1.png", { content: { files: ["private:b2.pdf", "https://i.ibb.co/c.png"] } }, "/uploads/.private"])], ["a1.png", "b2.pdf"]);
+  const u = await fresh("msg");
+  const seller = await login("seller@example.com", "Seller123!");
+  const f = new FormData();
+  f.append("message", "my phone is 555-0100");
+  f.append("receiver", seller.user.id);
+  const sent = await fetch(`${API}/v1/message/add-message`, { method: "POST", headers: { authorization: `Bearer ${u.token}` }, body: f }).then((r) => r.json());
+  const msg = sent.data?.attributes ?? sent.data;
+  const chatId = String(msg.chat?._id || msg.chat?.id || msg.chat);
+  const d = await call("POST", "/users/me/delete", { token: u.token, body: { password: "Passw0rd!x", confirm: "DELETE" } });
+  assert.equal(d.status, 200, JSON.stringify(d.json));
+  assert.equal(d.data.removed.chatMessages, 1);
+  const list = await call("GET", `/message/get-messages?chatId=${chatId}&limit=50`, { token: seller.token });
+  const m = (list.data?.data || list.json?.data?.attributes?.data || []).find((x) => String(x._id || x.id) === String(msg._id || msg.id));
+  assert.ok(m, "thread kept for the other side");
+  assert.equal(m.content.message, "[message deleted]");
+});

@@ -67,6 +67,21 @@ async function blockers(user) {
   return list;
 }
 
+const { localNames } = require("../utils/localFileNames");
+async function deleteLocalFiles(refs) {
+  const fs = require("fs/promises");
+  const path = require("path");
+  const { UPLOAD_DIR } = require("./imageUpload.service");
+  const PRIVATE_DIR = process.env.PRIVATE_UPLOAD_DIR || path.join(UPLOAD_DIR, ".private");
+  let n = 0;
+  for (const name of localNames(refs)) {
+    for (const dir of [UPLOAD_DIR, PRIVATE_DIR]) {
+      try { await fs.unlink(path.join(dir, name)); n++; } catch {}
+    }
+  }
+  return n;
+}
+
 async function eraseUser(userId, { by = "self" } = {}) {
   const user = await User.findById(userId);
   if (!user || user.isDeleted) throw new ApiError(httpStatus.NOT_FOUND, "Account not found or already deleted");
@@ -75,6 +90,11 @@ async function eraseUser(userId, { by = "self" } = {}) {
   if (b.length) throw new ApiError(httpStatus.CONFLICT, `Can't delete the account yet: ${b.join("; ")}`);
   const id = String(user._id);
   const tag = id.slice(-8);
+  // Remember the files this person uploaded before references are cleared.
+  const portfolios = await M("Portfolio").find({ userId: user._id }).lean().catch(() => []);
+  const ownChat = await M("Message").find({ sender: user._id }, "content.files image").lean().catch(() => []);
+  const ownOrder = await M("OrderMessage").find({ sender: user._id }, "content.files").lean().catch(() => []);
+  const fileRefs = [user.image, user.coverImage, user.verification ? JSON.parse(JSON.stringify(user.verification)) : null, ...portfolios, ...ownChat, ...ownOrder];
   Object.assign(user, {
     fullName: "Deleted user",
     email: `deleted-${id}@deleted.invalid`,
@@ -111,6 +131,12 @@ async function eraseUser(userId, { by = "self" } = {}) {
     portfolio: await del("Portfolio", { userId: user._id }),
     openRequests: await del("BuyerRequest", { buyerId: user._id, status: "open" }),
   };
+  // Message text and attachments the person sent are replaced; the other
+  // side keeps the thread (order history / disputes) but not the content.
+  const redact = { "content.message": "[message deleted]", "content.files": [] };
+  removed.chatMessages = (await M("Message").updateMany({ sender: user._id }, { $set: redact }).catch(() => ({}))).modifiedCount || 0;
+  removed.orderMessages = (await M("OrderMessage").updateMany({ sender: user._id }, { $set: redact }).catch(() => ({}))).modifiedCount || 0;
+  removed.files = await deleteLocalFiles(fileRefs);
   const gigs = await M("Gig").updateMany({ userId: user._id }, { $set: { gigStatus: "paused", featured: false } });
   await M("Subscription").updateMany({ $or: [{ buyerId: user._id }, { sellerId: user._id }], status: "active" }, { $set: { status: "cancelled" } }).catch(() => {});
   require("../config/logger").info(`account ${id} erased (by ${by})`);
