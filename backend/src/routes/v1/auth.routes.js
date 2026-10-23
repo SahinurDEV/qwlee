@@ -22,7 +22,7 @@ router.post('/forgot-password', validate(authValidation.forgotPassword), authCon
 router.post('/logout', validate(authValidation.logout), authController.logout);
 router.post('/refresh-tokens', validate(authValidation.refreshTokens), authController.refreshTokens);
 // router.post('/send-verification-email', auth(), authController.sendVerificationEmail);
-router.post('/delete-me',auth('user'),validate(authValidation.deleteMe),authController.deleteMe);
+router.post('/delete-me',auth('common'),validate(authValidation.deleteMe),authController.deleteMe);
 
 
 // A banned user appeals with the token from their refused sign-in.

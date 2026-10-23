@@ -184,6 +184,24 @@ function ManageUser({ user, isSuper, onClose, onChanged }) {
           </div>
         </section>
         <UserSessions userId={user.id} />
+        {isSuper && user.role !== "admin" ? (
+          <section className="border-t border-ink-100 pt-4">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-500 mb-2">Personal data (GDPR)</h3>
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" variant="secondary" onClick={async () => {
+                try {
+                  const data = await adminFetch(`/admin/privacy/${user.id}/export`);
+                  const a = document.createElement("a");
+                  a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }));
+                  a.download = `user-${user.id}-data.json`;
+                  a.click();
+                  URL.revokeObjectURL(a.href);
+                } catch (e) { toast.error(e.message); }
+              }}>Export data</Button>
+              <Button size="sm" variant="danger" onClick={() => act({ title: "Erase this account?", description: "Anonymises the profile, pauses their gigs, deletes personal-only data and signs them out. Orders, payments and reviews stay. Can't be undone. Blocked while they have open orders, pending withdrawals or a balance.", danger: true, path: `/admin/privacy/${user.id}/erase`, body: { confirm: "ERASE" }, done, success: "Account erased" })}>Erase account</Button>
+            </div>
+          </section>
+        ) : null}
         <section className="border-t border-ink-100 pt-4">
           <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-500 mb-2">Role {isSuper ? "" : "(super admins only)"}</h3>
           <div className="flex flex-wrap items-end gap-2">

@@ -294,3 +294,27 @@ answers `503` with `MAINTENANCE: <message>` and `Retry-After` for everything
 except `/v1/info`, `/v1/auth`, `/v1/admin` and `/v1/docs`, unless the request
 carries an admin's access token. The admin dashboard keeps working. The chat
 socket server is not paused.
+
+### Personal data: export and account deletion (GDPR)
+
+- **Users**: Profile → Edit → *Your data*: "Download my data" (JSON of the
+  profile and everything linked to it: gigs, orders, reviews, messages,
+  requests, offers, withdrawals, notifications, tickets, favourites,
+  portfolio, subscriptions, activity, sessions, saved replies, appeals; no
+  password hashes, 2FA secrets or session token hashes). "Delete my account"
+  needs the password (not for Google sign-in) and typing DELETE.
+  API: `GET /v1/users/me/export`, `GET /v1/users/me/delete-check`,
+  `POST /v1/users/me/delete` `{password, confirm: "DELETE"}`. The old
+  `POST /v1/auth/delete-me` now does the same erasure.
+- **Super admins**: Users → Manage → *Personal data*: export, or erase
+  (`GET /v1/admin/privacy/:id/export`, `POST /v1/admin/privacy/:id/erase`
+  `{confirm: "ERASE"}`; audited).
+- **Erasure anonymises** rather than removes the account (orders, payments,
+  messages and reviews are kept for the other party and accounting, shown as
+  "Deleted user"): profile fields cleared, email/username replaced, sign-in
+  disabled and every session revoked, gigs paused, active subscriptions
+  cancelled; sessions, tokens, push subscriptions, saved replies, favourites,
+  notifications, activity, portfolio and open buyer requests are deleted.
+  It is refused while the user has open orders, pending withdrawals or a
+  balance, and for admin accounts. Uploaded files (e.g. verification
+  documents in private storage) and message text are not purged.
