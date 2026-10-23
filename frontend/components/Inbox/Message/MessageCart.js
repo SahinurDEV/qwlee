@@ -320,7 +320,7 @@ const MessageCart = ({ message }) => {
           src={imgUrl(
             me ? user?.image : receiver?.participants[0]?.image
           )}
-          alt=""
+          alt={(me ? user?.fullName : receiver?.participants?.[0]?.fullName) || "Profile photo"}
         />
         <div className={`flex flex-col gap-2 ${me ? "items-end" : "items-start"}`}>
           {gigRef && (gigRef.gigId || gigRef.title) && (

@@ -454,9 +454,9 @@ export default function DashboardHome() {
             secondaryKey="earnings"
             renderAvatar={(g) =>
               g.image ? (
-                // eslint-disable-next-line jsx-a11y/alt-text
                 <img
                   src={g.image}
+                  alt=""
                   className="w-10 h-7 rounded-md object-cover bg-ink-100"
                 />
               ) : (
