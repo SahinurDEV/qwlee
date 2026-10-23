@@ -350,3 +350,15 @@ if there is one, then its category's, then the default. Orders completed
 before a change keep the fee they were charged (`platformFeePercent` is
 stored on the order). Rules reference category ids, so re-seeding (which
 recreates categories) drops their effect.
+
+### Email templates
+
+Admin → **Email templates** (settings permission) lists every transactional
+email. For each one you can override the subject, heading, intro, footer note
+and button label using `{{variables}}` from that email's data (shown on the
+page; `{{subject}}` is the built-in subject), preview the result with sample
+data, send a test of the saved version to yourself, or reset to the built-in
+text. Optional emails (orders, reviews, messages, announcements) can be
+turned off entirely; sign-in, password, payout and moderation emails can't.
+Everything you type is HTML-escaped; the layout, order summary tables and
+links stay built-in. Overrides are cached for 30 s (cleared on save).

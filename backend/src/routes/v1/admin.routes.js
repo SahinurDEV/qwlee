@@ -291,4 +291,12 @@ const backupsSvc = require("../../services/backups.service");
 router.get("/backups", A, catchAsync2(async (req, res) => helpOk(res, await backupsSvc.status())));
 router.post("/backups/run", A, catchAsync2(async (req, res) => helpOk(res, await backupsSvc.requestNow(), "Backup requested")));
 
+// Email template editor (settings permission).
+const tplSvc = require("../../services/emailTemplates.service");
+router.get("/email-templates", A, catchAsync2(async (req, res) => helpOk(res, { results: await tplSvc.list() })));
+router.post("/email-templates/:key/preview", A, catchAsync2(async (req, res) => helpOk(res, await tplSvc.preview(req.params.key, req.body?.draft))));
+router.put("/email-templates/:key", A, catchAsync2(async (req, res) => helpOk(res, { template: await tplSvc.save(req.params.key, req.body, req.user._id) }, "Template saved")));
+router.delete("/email-templates/:key", A, catchAsync2(async (req, res) => helpOk(res, await tplSvc.reset(req.params.key), "Template reset")));
+router.post("/email-templates/:key/test", A, catchAsync2(async (req, res) => helpOk(res, await tplSvc.testSend(req.params.key, req.user.email), "Test email sent")));
+
 module.exports = router;
