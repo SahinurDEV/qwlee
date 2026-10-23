@@ -44,6 +44,7 @@ function GigContent() {
   const country = params.get("country") || undefined;
   const onlineOnly = params.get("online") === "true";
   const verifiedOnly = params.get("verifiedOnly") === "true";
+  const pro = params.get("pro") === "true";
   const minRating = params.get("minRating") || undefined;
   const level = params.get("level") || undefined;
   const minGigRating = params.get("minGigRating") || undefined;
@@ -101,6 +102,7 @@ function GigContent() {
     country,
     online: onlineOnly,
     verifiedOnly,
+    pro,
     minRating,
     level,
     minGigRating,

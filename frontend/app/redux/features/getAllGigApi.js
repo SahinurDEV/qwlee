@@ -18,6 +18,7 @@ const getAllGigApi = baseApi.injectEndpoints({
           country,
           online,
           verifiedOnly,
+          pro,
           minRating,
           level,
           minGigRating,
@@ -40,6 +41,7 @@ const getAllGigApi = baseApi.injectEndpoints({
         if (country) params.append("country", country);
         if (online) params.append("online", "true");
         if (verifiedOnly) params.append("verifiedOnly", "true");
+        if (pro) params.append("pro", "true");
         if (minRating) params.append("minRating", minRating);
         if (level) params.append("level", level);
         if (minGigRating) params.append("minGigRating", minGigRating);

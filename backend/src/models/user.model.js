@@ -99,6 +99,19 @@ const userSchema = mongoose.Schema(
       lastCharge: { type: Number, default: 0 },
     },
     planBadge: { type: String, default: "" },
+    // Vetted Pro seller (pro.service): set when an admin approves their
+    // Pro application.
+    isPro: { type: Boolean, default: false, index: true },
+    proApplication: {
+      status: { type: String, enum: ["none", "pending", "approved", "rejected"], default: "none" },
+      headline: { type: String, default: "" },
+      experienceYears: { type: Number, default: 0 },
+      portfolioLinks: { type: [String], default: [] },
+      clients: { type: String, default: "" },
+      submittedAt: { type: Date, default: null },
+      reviewedAt: { type: Date, default: null },
+      reviewNote: { type: String, default: "" },
+    },
     // Proposal credits for offers on buyer requests (see credits.service).
     proposalCredits: {
       monthly: { type: Number, default: null },

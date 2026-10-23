@@ -60,6 +60,7 @@ import Approvals from "../dashboard/control/Approvals";
 import RiskFlags from "../dashboard/control/RiskFlags";
 import Jobs from "../dashboard/control/Jobs";
 import Backups from "../dashboard/control/Backups";
+import ProApplications from "../dashboard/control/ProApplications";
 import EmailTemplates from "../dashboard/control/EmailTemplates";
 import Appeals from "../dashboard/control/Appeals";
 import Newsletter from "../dashboard/control/Newsletter";
@@ -159,6 +160,7 @@ export const router = createBrowserRouter([
       { path: "risk-flags", element: <RiskFlags /> },
       { path: "jobs", element: <Jobs /> },
       { path: "backups", element: <Backups /> },
+      { path: "pro", element: <ProApplications /> },
       { path: "email-templates", element: <EmailTemplates /> },
       { path: "appeals", element: <Appeals /> },
       { path: "newsletter", element: <Newsletter /> },

@@ -118,6 +118,14 @@ router.get("/me", A, ac.me);
 router.get("/users", A, ac.listUsers);
 router.patch("/users/:userId", A, ac.updateUser);
 router.patch("/users/:userId/role", A, ac.setRole);
+// Pro applications (users.moderate).
+router.get("/pro-applications", A, require("../../utils/catchAsync")(async (req, res) => {
+  res.json({ code: 200, message: "Pro applications", data: { attributes: await require("../../services/pro.service").listApplications(String(req.query.status || "pending")) } });
+}));
+router.post("/users/:userId/pro", A, require("../../utils/catchAsync")(async (req, res) => {
+  res.json({ code: 200, message: "Pro updated", data: { attributes: await require("../../services/pro.service").decide(req.params.userId, req.body || {}, req.user) } });
+}));
+
 // Hourly contracts: list all, and run weekly billing now (super only;
 // `asOf` lets support close a week early or tests move time forward).
 router.get("/hourly", A, require("../../utils/catchAsync")(async (req, res) => {
