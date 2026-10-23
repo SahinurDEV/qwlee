@@ -66,7 +66,14 @@ export default function AboutCard({ gig, user, hideActions = false }) {
               <span className="text-gray-500">({user.review.total})</span>
             </div>
           ) : null}
-          <div className="mt-1"><JobSuccessBadge userId={user?.id || user?._id} /></div>
+          <div className="mt-1 flex flex-wrap gap-1.5">
+            <JobSuccessBadge userId={user?.id || user?._id} />
+            {user?.planBadge ? (
+              <span data-testid="plan-badge" className="inline-flex items-center px-2 py-0.5 rounded-full border border-violet-200 bg-violet-50 text-violet-800 text-xs font-semibold">
+                {user.planBadge === "premium" ? "Premium seller" : "Plus seller"}
+              </span>
+            ) : null}
+          </div>
         </div>
         {!hideActions && !isMyOwn && (
           <button

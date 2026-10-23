@@ -353,6 +353,24 @@ recovery. The Backups page shows whether uploads were archived and the
 off-server copy worked. Restore uploads with
 `docker compose run --rm -v ./offsite-backups:/o backend sh -c 'tar -xzf /o/<file>.uploads.tar.gz -C /app/uploads'`.
 
+### Seller Plus
+
+Sellers can subscribe at `/seller-plan` (avatar menu → Seller Plus). Plans
+are paid monthly from the seller's balance:
+
+| Plan | Price | Perks |
+| --- | --- | --- |
+| Free | $0 | 20 proposal credits a month |
+| Seller Plus | `SELLER_PLUS_PRICE` ($25) | +30 credits each month, fee −`SELLER_PLUS_FEE_DISCOUNT` (1) point, Plus badge |
+| Seller Premium | `SELLER_PREMIUM_PRICE` ($49) | +80 credits each month, fee −`SELLER_PREMIUM_FEE_DISCOUNT` (2) points, Premium badge |
+
+The fee discount is taken off whatever fee applies (default or category
+rule), never below 0. Renewals run with order housekeeping (Admin → Jobs →
+`sellerPlans`); if the seller cancelled or their balance can't cover the
+renewal, the plan drops to Free at the end of the period. Finance admins can
+comp a plan for 1–365 days or reset it: `PATCH /v1/admin/users/:id/seller-plan
+{tier, days}`. Seller API: `GET/POST /v1/users/me/plan`, `POST /v1/users/me/plan/cancel`.
+
 ### Proposal credits
 
 Sending an offer on a buyer request costs proposal credits (like Upwork

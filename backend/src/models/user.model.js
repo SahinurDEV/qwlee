@@ -89,6 +89,16 @@ const userSchema = mongoose.Schema(
       required: false,
       default: 0,
     },
+    // Seller Plus subscription (sellerPlan.service). planBadge is the
+    // public copy of the tier for profile/gig badges.
+    sellerPlan: {
+      tier: { type: String, enum: ["free", "plus", "premium"], default: "free" },
+      since: { type: Date, default: null },
+      renewsAt: { type: Date, default: null },
+      cancelAtPeriodEnd: { type: Boolean, default: false },
+      lastCharge: { type: Number, default: 0 },
+    },
+    planBadge: { type: String, default: "" },
     // Proposal credits for offers on buyer requests (see credits.service).
     proposalCredits: {
       monthly: { type: Number, default: null },

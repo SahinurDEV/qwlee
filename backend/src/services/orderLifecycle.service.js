@@ -397,6 +397,7 @@ const runHousekeeping = async ({ trigger = "timer" } = {}) => {
     }
     return due.length;
   }, trigger);
+  await track("sellerPlans", () => require("./sellerPlan.service").renewDue(now), trigger);
   const markedLate = await track("markLate", async () => {
     const late = await Payment.updateMany(
       { status: "active", deliveryDate: { $lt: now }, "delivery.state": { $ne: "submitted" }, requirementsStatus: { $ne: "pending" } },

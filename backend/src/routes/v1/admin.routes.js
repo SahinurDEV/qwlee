@@ -118,6 +118,10 @@ router.get("/me", A, ac.me);
 router.get("/users", A, ac.listUsers);
 router.patch("/users/:userId", A, ac.updateUser);
 router.patch("/users/:userId/role", A, ac.setRole);
+router.patch("/users/:userId/seller-plan", A, require("../../utils/catchAsync")(async (req, res) => {
+  const d = await require("../../services/sellerPlan.service").adminSet(req.params.userId, req.body?.tier, req.body?.days);
+  res.json({ code: 200, message: "Seller plan updated", data: { attributes: d } });
+}));
 router.post("/users/:userId/reset-password", A, ac.resetPassword);
 router.post("/users/:userId/logout-all", A, ac.logoutEverywhere);
 router.get("/users/:userId/sessions", A, ac.userSessions);
