@@ -109,7 +109,7 @@ export default function EmojiPicker({ open, onClose, onPick, anchorClassName = "
           </button>
         ))}
       </div>
-      <div className="px-2 py-1 text-[10px] uppercase tracking-wide text-gray-400 font-semibold">
+      <div className="px-2 py-1 text-xs uppercase tracking-wide text-gray-400 font-semibold">
         {active.name}
       </div>
       <div className="grid grid-cols-8 gap-0.5 px-1.5 pb-2 max-h-[200px] overflow-y-auto">

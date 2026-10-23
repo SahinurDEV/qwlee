@@ -528,7 +528,7 @@ function Pill({ label, active, badge, children }) {
       >
         {label}
         {badge != null && (
-          <span className="text-[10px] font-semibold bg-emerald-600 text-white rounded-full px-1.5 py-0.5">
+          <span className="text-xs font-semibold bg-emerald-600 text-white rounded-full px-1.5 py-0.5">
             {badge}
           </span>
         )}
@@ -579,7 +579,7 @@ function PopoverShell({ title, wide, children, onApply, onClear }) {
 
 function SectionLabel({ children }) {
   return (
-    <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 mb-1.5">
+    <div className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1.5">
       {children}
     </div>
   );

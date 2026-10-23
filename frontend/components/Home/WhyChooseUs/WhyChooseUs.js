@@ -53,11 +53,11 @@ const WhyChooseUs = () => {
   return (
     <div className="bg-secondary py-10">
       <div className="container mx-auto">
-        <h2 className="text-[35px] text-center my-5 font-bold">
+        <h2 className="text-[28px] md:text-[35px] text-center my-5 font-bold">
           Why Choose Us
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          <RevealStagger gap={0.08} className="flex flex-col gap-5 items-end">
+          <RevealStagger gap={0.08} className="flex flex-col gap-5 md:items-end">
             {whyChooseUsData.slice(0, 3).map((item) => (
               <RevealItem key={item.id} className="w-full md:w-auto">
                 <WhyChooseUsCard1 data={item} />
@@ -117,7 +117,7 @@ const WhyChooseUsCard = ({ data }) => {
 const WhyChooseUsCard1 = ({ data }) => {
   return (
     <div className="p-5 flex flex-col justify-end w-full md:w-[300px]">
-      <div className="flex items-center flex-row-reverse justify-start  gap-2">
+      <div className="flex items-center md:flex-row-reverse justify-start gap-2">
         <Image
           src={data.img}
           width={32}
@@ -128,7 +128,7 @@ const WhyChooseUsCard1 = ({ data }) => {
         <h2 className="text-[16px] font-bold">{data.name}</h2>
       </div>
       <div className="mt-3">
-        <p className="text-[14px] text-end">{data.description}</p>
+        <p className="text-[14px] md:text-end">{data.description}</p>
       </div>
     </div>
   );

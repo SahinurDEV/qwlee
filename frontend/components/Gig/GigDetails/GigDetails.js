@@ -171,11 +171,29 @@ export default function GigDetails({ slug }) {
         </div>
 
         {/* Right rail: package picker */}
-        <aside className="lg:col-span-4">
+        <aside id="packages" className="lg:col-span-4 scroll-mt-20">
           <div className="lg:sticky lg:top-20">
             <GigPackagePicker gig={result} />
           </div>
         </aside>
+      </div>
+
+      {/* Phones: the package picker sits below the reviews, so keep a
+          sticky bar that jumps straight to it (Fiverr does the same). */}
+      <div className="lg:hidden h-20" aria-hidden="true" />
+      <div className="lg:hidden fixed inset-x-0 bottom-0 z-30 bg-white/95 backdrop-blur border-t border-gray-200 px-4 py-3 flex items-center justify-between gap-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <div className="min-w-0">
+          <div className="text-xs text-gray-500">Starting at</div>
+          <div className="text-lg font-semibold text-gray-900">
+            ${Math.min(...(Array.isArray(result?.package) && result.package.length ? result.package.map((x) => Number(x.price) || 0) : [Number(result?.price) || 0])).toLocaleString()}
+          </div>
+        </div>
+        <a
+          href="#packages"
+          className="inline-flex items-center justify-center px-5 py-2.5 rounded-lg bg-emerald-600 text-white text-sm font-semibold active:bg-emerald-700"
+        >
+          See packages
+        </a>
       </div>
     </div>
   );

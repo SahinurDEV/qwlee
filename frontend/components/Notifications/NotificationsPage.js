@@ -158,7 +158,7 @@ export default function NotificationsPage() {
             >
               {t.label}
               <span
-                className={`text-[10px] font-semibold rounded-full px-1.5 py-0.5 ${
+                className={`text-xs font-semibold rounded-full px-1.5 py-0.5 ${
                   tab === t.v
                     ? "bg-emerald-100 text-emerald-800"
                     : "bg-gray-100 text-gray-600"

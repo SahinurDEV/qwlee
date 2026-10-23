@@ -51,11 +51,12 @@ function BlogDetails({ slug }) {
         pathTitle={"Blog"}
         path={"/blogs"}
       />
-      <div className="container py-[100px]">
+      <div className="container py-8 md:py-[100px]">
         <div className="">
-          <div className="relative overflow-hidden">
+          <div className="relative w-full aspect-video max-h-[550px] rounded-lg overflow-hidden bg-gray-100">
             <Image
-              className="w-full max-h-[550px] rounded-lg absolute"
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, 1200px"
               src={imgUrl(data?.image)}
               fill
               alt={data?.title || "Blog cover image"}
@@ -63,7 +64,7 @@ function BlogDetails({ slug }) {
           </div>
         </div>
 
-        <div className="mt-[70px]">
+        <div className="mt-6 md:mt-[70px]">
           <div className="h-auto">
             <div>
               <div className="flex text-[#6B6B6B] gap-5 pb-3">
@@ -82,7 +83,7 @@ function BlogDetails({ slug }) {
             </div>
 
             {/* Blog Description */}
-            <BlogDescription content={data?.description} />
+            <BlogDescription content={data?.content || data?.description} />
           </div>
         </div>
       </div>

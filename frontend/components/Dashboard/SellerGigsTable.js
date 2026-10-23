@@ -74,7 +74,7 @@ export default function SellerGigsTable() {
           >
             {t.label}
             <span
-              className={`ml-1.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
+              className={`ml-1.5 text-xs font-semibold px-1.5 py-0.5 rounded-full ${
                 tab === t.v
                   ? "bg-emerald-100 text-emerald-800"
                   : "bg-gray-100 text-gray-600"
@@ -157,7 +157,7 @@ export default function SellerGigsTable() {
                         {g.moderation?.reason &&
                           (g.status === "denied" ||
                             g.status === "requires-modification") && (
-                            <div className="mt-1 inline-flex items-start gap-1 text-[11px] text-rose-700">
+                            <div className="mt-1 inline-flex items-start gap-1 text-xs text-rose-700">
                               <IoAlertCircleOutline className="w-3.5 h-3.5 shrink-0 mt-0.5" />
                               <span className="line-clamp-2 max-w-[260px]">
                                 {g.moderation.reason}
@@ -178,7 +178,7 @@ export default function SellerGigsTable() {
                   </td>
                   <td className="px-3 py-4 text-right text-gray-900 tabular-nums">
                     {g.stats?.cancellationRate || 0}%
-                    <div className="text-[11px] text-gray-400">
+                    <div className="text-xs text-gray-400">
                       ({Number(g.stats?.cancellations || 0)})
                     </div>
                   </td>

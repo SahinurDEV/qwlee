@@ -361,7 +361,7 @@ export default function GigWizard({ mode = "create", gig = null }) {
                     i === step ? "bg-gray-900 text-white" : bad ? "bg-rose-50 text-rose-700" : ok ? "bg-emerald-50 text-emerald-800" : "text-gray-500 hover:bg-gray-100"
                   }`}
                 >
-                  <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] ${i === step ? "bg-white text-gray-900" : ok ? "bg-emerald-500 text-white" : bad ? "bg-rose-500 text-white" : "bg-gray-200 text-gray-600"}`}>
+                  <span className={`flex h-5 w-5 items-center justify-center rounded-full text-xs ${i === step ? "bg-white text-gray-900" : ok ? "bg-emerald-500 text-white" : bad ? "bg-rose-500 text-white" : "bg-gray-200 text-gray-600"}`}>
                     {ok && i !== step ? "✓" : i + 1}
                   </span>
                   {s.label}
@@ -559,8 +559,8 @@ export default function GigWizard({ mode = "create", gig = null }) {
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={g.preview} alt={`Gig image ${i + 1}`} className="h-full w-full object-cover" />
-                        {i === 0 && <span className="absolute left-2 top-2 rounded-full bg-gray-900/80 px-2 py-0.5 text-[10px] font-semibold text-white">Cover</span>}
-                        {g.file && <span className="absolute bottom-2 left-2 rounded-full bg-amber-500/90 px-2 py-0.5 text-[10px] font-semibold text-white">Not uploaded yet</span>}
+                        {i === 0 && <span className="absolute left-2 top-2 rounded-full bg-gray-900/80 px-2 py-0.5 text-xs font-semibold text-white">Cover</span>}
+                        {g.file && <span className="absolute bottom-2 left-2 rounded-full bg-amber-500/90 px-2 py-0.5 text-xs font-semibold text-white">Not uploaded yet</span>}
                         <div className="absolute right-2 top-2 flex gap-1">
                           <span className="rounded-full bg-white/90 p-1 text-gray-700" title="Drag to reorder"><IoReorderThree /></span>
                           <button type="button" aria-label="Move left" disabled={i === 0} onClick={() => moveImage(i, i - 1)} className="rounded-full bg-white/90 px-2 text-xs text-gray-700 disabled:opacity-40">←</button>
@@ -629,7 +629,7 @@ export default function GigWizard({ mode = "create", gig = null }) {
             <div className="space-y-2 p-4">
               <p className="line-clamp-2 text-sm font-semibold text-gray-900">{data.title.trim() || "I will …"}</p>
               <div className="flex items-center gap-1 text-xs text-gray-500"><IoStar className="text-amber-400" />New seller</div>
-              {data.tags.length > 0 && <div className="flex flex-wrap gap-1">{data.tags.map((t) => <span key={t} className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] text-gray-600">{t}</span>)}</div>}
+              {data.tags.length > 0 && <div className="flex flex-wrap gap-1">{data.tags.map((t) => <span key={t} className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{t}</span>)}</div>}
               <div className="flex items-center justify-between border-t border-gray-100 pt-2 text-xs text-gray-500">
                 <span>{tiers.length} package{tiers.length > 1 ? "s" : ""}</span>
                 <span>From <b className="text-base text-gray-900">{Number.isFinite(minPrice) ? `$${minPrice}` : "$—"}</b></span>

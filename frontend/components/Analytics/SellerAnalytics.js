@@ -70,7 +70,7 @@ export default function SellerAnalytics() {
                 {data.series.map((s) => (
                   <div key={s.period} className="flex-1 min-w-[8px] flex flex-col items-center justify-end h-full group" title={`${s.period}: ${money(s.earnings)} · ${s.orders} orders`}>
                     <div className="w-full rounded-t bg-emerald-500 group-hover:bg-emerald-600" style={{ height: `${Math.max(2, (s.earnings / max) * 100)}%` }} />
-                    {data.series.length <= 14 ? <span className="mt-1 text-[10px] text-gray-500 truncate w-full text-center">{s.period.slice(5)}</span> : null}
+                    {data.series.length <= 14 ? <span className="mt-1 text-xs text-gray-500 truncate w-full text-center">{s.period.slice(5)}</span> : null}
                   </div>
                 ))}
               </div>
@@ -90,7 +90,7 @@ export default function SellerAnalytics() {
               <tbody>
                 {data.gigs.map((g) => (
                   <tr key={g.id} className="border-t border-gray-100">
-                    <td className="py-2 pr-3 max-w-xs"><Link href={`/gig/${g.slug}`} className="line-clamp-1 text-gray-900 hover:underline">{g.title}</Link>{g.status !== "active" ? <span className="text-[11px] text-gray-500"> · {g.status}</span> : null}</td>
+                    <td className="py-2 pr-3 max-w-xs"><Link href={`/gig/${g.slug}`} className="line-clamp-1 text-gray-900 hover:underline">{g.title}</Link>{g.status !== "active" ? <span className="text-xs text-gray-500"> · {g.status}</span> : null}</td>
                     <td className="py-2 px-2 text-right tabular-nums">{g.impressions.toLocaleString()}</td>
                     <td className="py-2 px-2 text-right tabular-nums">{g.clicks.toLocaleString()}</td>
                     <td className="py-2 px-2 text-right tabular-nums">{g.ctr}%</td>

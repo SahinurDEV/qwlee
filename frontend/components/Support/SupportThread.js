@@ -97,7 +97,7 @@ export default function SupportThread() {
               </p>
             </div>
             {ticket?.status && (
-              <span className={`text-[10px] font-semibold uppercase tracking-wide border rounded-full px-2 py-0.5 ${tone}`}>
+              <span className={`text-xs font-semibold uppercase tracking-wide border rounded-full px-2 py-0.5 ${tone}`}>
                 {ticket.status}
               </span>
             )}

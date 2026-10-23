@@ -1,10 +1,12 @@
 'use client'
 import PrimaryLayout from "@/components/Layout/PrimaryLayout";
 import Chat from "@/components/Inbox/Chat/Chat";
-import { useSelector } from "react-redux";
+import { usePathname } from "next/navigation";
 
 const InboxLayout = ({ children }) => {
-  const {isOpen} = useSelector(state=>state.userToChat)
+  // On phones show either the list (/inbox) or the open thread (/inbox/:id),
+  // driven by the URL so deep links and refreshes open the thread.
+  const isOpen = /^\/inbox\/[^/]+/.test(usePathname() || "");
   return (
     <PrimaryLayout isFooterAdd={true}>
       <div className="w-full grid grid-cols-1 md:grid-cols-12 p-2 gap-4 md:container">

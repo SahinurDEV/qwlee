@@ -116,12 +116,12 @@ export default function SupportInbox() {
                               {t.subject}
                             </span>
                             <span
-                              className={`text-[10px] font-semibold uppercase tracking-wide border rounded-full px-2 py-0.5 ${tone}`}
+                              className={`text-xs font-semibold uppercase tracking-wide border rounded-full px-2 py-0.5 ${tone}`}
                             >
                               {t.status}
                             </span>
                             {t.unreadByUser > 0 && (
-                              <span className="text-[10px] font-bold bg-emerald-500 text-white rounded-full px-1.5">
+                              <span className="text-xs font-bold bg-emerald-500 text-white rounded-full px-1.5">
                                 {t.unreadByUser} new
                               </span>
                             )}
@@ -196,7 +196,7 @@ export default function SupportInbox() {
                   placeholder="Be as specific as possible: order ids, dates, anything you've tried…"
                   className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-emerald-500 resize-none"
                 />
-                <div className="text-[11px] text-gray-400 mt-1 text-right">
+                <div className="text-xs text-gray-400 mt-1 text-right">
                   {body.length}/4000
                 </div>
               </div>

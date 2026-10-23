@@ -129,7 +129,7 @@ export default function UsernameProfile({ user }) {
           )}
         </div>
         <div className="px-6 md:px-10 pb-6 -mt-12 md:-mt-16 flex flex-col md:flex-row md:items-end gap-4 md:gap-6 relative">
-          <div className="rounded-full ring-4 ring-white bg-white shadow-md">
+          <div className="self-start rounded-full ring-4 ring-white bg-white shadow-md">
             <Avatar
               src={user.image}
               name={user.fullName}
@@ -206,22 +206,22 @@ export default function UsernameProfile({ user }) {
         <div className="lg:col-span-8 space-y-10">
           {/* In-page jump bar — scrolls, doesn't hide content */}
           <nav className="sticky top-16 z-10 -mx-2 px-2 py-2 bg-white/85 backdrop-blur border-b border-gray-200 flex gap-5 overflow-x-auto text-sm">
-            <a href="#about" className="text-gray-600 hover:text-emerald-700 whitespace-nowrap">About</a>
+            <a href="#about" className="py-1.5 text-gray-600 hover:text-emerald-700 whitespace-nowrap">About</a>
             {user.skills?.length ? (
-              <a href="#skills" className="text-gray-600 hover:text-emerald-700 whitespace-nowrap">Skills</a>
+              <a href="#skills" className="py-1.5 text-gray-600 hover:text-emerald-700 whitespace-nowrap">Skills</a>
             ) : null}
             {isFreelancer ? (
-              <a href="#gigs" className="text-gray-600 hover:text-emerald-700 whitespace-nowrap">
+              <a href="#gigs" className="py-1.5 text-gray-600 hover:text-emerald-700 whitespace-nowrap">
                 Gigs{user.gigs?.length ? ` (${user.gigs.length})` : ""}
               </a>
             ) : null}
             {user.portfolios?.length ? (
-              <a href="#portfolio" className="text-gray-600 hover:text-emerald-700 whitespace-nowrap">
+              <a href="#portfolio" className="py-1.5 text-gray-600 hover:text-emerald-700 whitespace-nowrap">
                 Portfolio ({user.portfolios.length})
               </a>
             ) : null}
             {isFreelancer ? (
-              <a href="#reviews" className="text-gray-600 hover:text-emerald-700 whitespace-nowrap">
+              <a href="#reviews" className="py-1.5 text-gray-600 hover:text-emerald-700 whitespace-nowrap">
                 Reviews{totalReviews ? ` (${totalReviews})` : ""}
               </a>
             ) : null}
@@ -416,7 +416,7 @@ function SellerCard({ user, isOwner, avg, totalReviews, joined }) {
             redirectBackTo={`/${user.username}`}
             className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition"
           />
-          <p className="text-[11px] text-gray-400 text-center">
+          <p className="text-xs text-gray-400 text-center">
             Replies typically within {user.responseTime ? `${user.responseTime}h` : "a few hours"}.
           </p>
         </div>
@@ -474,7 +474,7 @@ function GigsGrid({ gigs, sellerUsername }) {
           href={`/gig?id=${g._id || g.id}`}
           className="block rounded-xl border border-gray-200 bg-white overflow-hidden hover:shadow-md transition"
         >
-          <div className="relative w-full aspect-[4/3] bg-gray-100">
+          <div className="relative w-full aspect-video bg-gray-100">
             <ImageWithFallback
               src={g.images?.[0]}
               name={g.title}
