@@ -353,6 +353,10 @@ recovery. The Backups page shows whether uploads were archived and the
 off-server copy worked. Restore uploads with
 `docker compose run --rm -v ./offsite-backups:/o backend sh -c 'tar -xzf /o/<file>.uploads.tar.gz -C /app/uploads'`.
 
+### AI assistant (opt-in)
+
+`/ai-assistant` offers a gig description writer (`POST /v1/ai/gig-description`), a request brief writer (`POST /v1/ai/brief`), reply ideas (`POST /v1/ai/replies`) and seller matches for your own open requests (`GET /v1/ai/match/:requestId`, keyword overlap with seller profiles, Pro/online boost). `GET /v1/ai/status` reports `{enabled, provider}`. Settings: `AI_HELPERS=off` turns everything off; `AI_API_URL` + `AI_API_KEY` (+ `AI_MODEL`) point text generation at an OpenAI-compatible chat endpoint. Without them, or if the provider fails, a deterministic template mock (`utils/aiMock.js`) answers. Only the mock has been tested; no real provider has been verified. Covered by `backend/tests/ai.test.js`.
+
 ### Talent search and invite-to-request
 
 `/talent` lets anyone search sellers by name, skill or keyword (`GET /v1/talent?q=&skill=&pro=true&online=true`; only public profile fields are returned). Buyers can invite a seller to one of their open buyer requests (`POST /v1/requests/:id/invite {sellerId}`, max 20 per request); the seller is notified and sees it under `GET /v1/requests/invites/mine`. Offers on requests you were invited to cost no proposal credits. Covered by `backend/tests/talent.test.js`.
