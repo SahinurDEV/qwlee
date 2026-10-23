@@ -29,6 +29,8 @@ services:
     # Image uploads are stored here when IMGBB_API_KEY is not set.
     volumes:
       - uploads:/app/uploads
+      # Read backup status; "Back up now" drops a trigger file here.
+      - backups:/backups
     environment:
       NODE_ENV: production
       PORT: 7171
@@ -47,6 +49,24 @@ services:
     ports:
       - "${BACKEND_PORT:-7171}:7171"
       - "${SOCKET_PORT:-8181}:8181"
+
+  # Nightly MongoDB backups into the "backups" volume (scripts/backup.sh).
+  # Status shows in Admin → Backups. Copy archives off the box for real
+  # disaster recovery (see README → Backups).
+  backup:
+    image: mongo:7
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    entrypoint: ["sh", "/backup.sh"]
+    volumes:
+      - ./scripts/backup.sh:/backup.sh:ro
+      - backups:/backups
+    environment:
+      MONGODB_URL: mongodb://mongo:27017/qwlee
+      BACKUP_KEEP: ${BACKUP_KEEP:-7}
+      BACKUP_INTERVAL_HOURS: ${BACKUP_INTERVAL_HOURS:-24}
 
   # Local email catcher: every email the app sends shows up at
   # http://localhost:8025. Point SMTP_* at a real server to send for real.
@@ -96,3 +116,4 @@ services:
 volumes:
   uploads:
   mongo-data:
+  backups:

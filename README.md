@@ -318,3 +318,25 @@ socket server is not paused.
   It is refused while the user has open orders, pending withdrawals or a
   balance, and for admin accounts. Uploaded files (e.g. verification
   documents in private storage) and message text are not purged.
+
+### Backups
+
+The `backup` compose service (mongo:7 running `scripts/backup.sh`) writes a
+gzipped `mongodump` archive to the `backups` volume every
+`BACKUP_INTERVAL_HOURS` (24) and keeps the newest `BACKUP_KEEP` (7). Each run
+writes `status.json`. Admin → **Backups** (settings permission) shows health
+(ok / failing / stale = overdue by 2 h / never), the last run, the kept
+archives and a restore guide; super admins can "Back up now" (picked up
+within 30 s). One-off backup: `docker compose run --rm backup once`.
+
+Restore (replaces current data; turn on maintenance mode first):
+
+```sh
+docker compose exec backup sh -c 'mongorestore --uri="$MONGODB_URL" --gzip --drop --nsInclude "qwlee.*" --archive=/backups/<archive>'
+docker compose restart backend
+```
+
+Archives stay on the same server, so copy them off-box too, e.g.
+`docker compose cp backup:/backups ./offsite-backups` from cron, or sync the
+volume to object storage. Uploaded images in the `uploads` volume are not
+part of the Mongo backup.
