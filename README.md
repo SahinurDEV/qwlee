@@ -353,6 +353,19 @@ recovery. The Backups page shows whether uploads were archived and the
 off-server copy worked. Restore uploads with
 `docker compose run --rm -v ./offsite-backups:/o backend sh -c 'tar -xzf /o/<file>.uploads.tar.gz -C /app/uploads'`.
 
+### Proposal credits
+
+Sending an offer on a buyer request costs proposal credits (like Upwork
+Connects), which keeps low-effort offers down. Every seller gets
+`PROPOSAL_CREDITS_MONTHLY` free credits (20) that top back up 30 days after
+the last refill (unused free credits don't roll over). Extra credits come in
+packs of 10 at `PROPOSAL_CREDIT_PRICE` each ($0.15), paid from the seller's
+balance, and never expire. Each offer costs `PROPOSAL_CREDIT_COST` (1); free
+credits are used first. When a buyer closes a request without hiring, the
+credits for its pending offers go back to the sellers. The offer form shows
+the balance and a Buy button. `PROPOSAL_CREDITS_ENABLED=false` turns it off.
+API: `GET /v1/requests/credits/me`, `POST /v1/requests/credits/buy {packs}`.
+
 ### Job Success Score
 
 Each seller gets an Upwork-style Job Success Score: the share of their
