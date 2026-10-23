@@ -372,6 +372,20 @@ built yet. Disputed invoices wait for a super admin (`GET /v1/admin/hourly
 `POST /v1/admin/hourly/run {asOf, payAsOf}` runs billing now (super only).
 Either side can pause (buyer), resume (buyer) or end the contract.
 
+### Contests
+
+Buyers can run a contest at `/contests`: title, brief, prize ($20–50,000)
+and a run time of 1–30 days, optionally **sealed** (sellers only see their own
+entries). The prize is taken from the buyer's balance when the contest is
+posted. Sellers submit up to 3 entries each (description + links to their
+work) until the deadline, and can withdraw them. The buyer picks a winner;
+the winner hands over the final files (links); when the buyer accepts — or
+`CONTEST_HANDOVER_DAYS` (7) after the handover — the prize minus the
+platform fee is paid to the winner. A contest with no entries can be
+cancelled for a full refund; with entries only support can cancel it. At the
+deadline an open contest moves to judging (Admin → Jobs → `contests`). API
+under `/v1/contests`. File uploads for entries aren't built yet (links only).
+
 ### Seller Plus
 
 Sellers can subscribe at `/seller-plan` (avatar menu → Seller Plus). Plans
