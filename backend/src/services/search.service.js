@@ -1,3 +1,4 @@
+const { escapeRegex } = require("../utils/publicUser");
 // Search-log service.
 
 const { SearchLog } = require("../models");
@@ -49,7 +50,7 @@ async function getTrending({ days = 7, limit = 10 } = {}) {
 async function listForAdmin({ search = "", country = "", scope = "all", limit = 50, page = 1 } = {}) {
   const filter = {};
   if (search.trim()) {
-    filter.query = { $regex: search.trim().toLowerCase(), $options: "i" };
+    filter.query = { $regex: escapeRegex(search.trim().toLowerCase().slice(0, 100)), $options: "i" };
   }
   if (country) {
     filter.country = country;
