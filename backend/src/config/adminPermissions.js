@@ -21,6 +21,8 @@ const allRoles = () => ({ ...ROLE_PERMISSIONS, ...CUSTOM });
 const RULES = [
   // Any admin manages their own two-factor.
   ["*", /^\/admin\/2fa(\/|$)/, "read"],
+  // Personal-data export and account erasure: super admins only, audited.
+  ["*", /^\/admin\/privacy(\/|$)/, "*", true],
   ["*", /^\/admin\/(settings|team|audit|roles)(\/|$)/, "settings"],
   ["*", /^\/admin\/coupons(\/|$)/, "finance"],
   ["*", /^\/admin\/(chats|order-chats)(\/|$)/, "support", true],

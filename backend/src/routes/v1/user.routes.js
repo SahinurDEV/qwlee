@@ -42,6 +42,28 @@ router.route("/by-username/:username").get(userController.getUserPublicByUsernam
 // from buyer to freelancer. Must live above /:userId to avoid clashing.
 router.route("/become-seller").post(auth("common"), userController.becomeSeller);
 
+// Personal data: download everything we store, or erase the account.
+const privacy = require("../../services/privacy.service");
+const catchAsync = require("../../utils/catchAsync");
+const ApiError = require("../../utils/ApiError");
+router.get("/me/export", auth("common"), catchAsync(async (req, res) => {
+  const data = await privacy.exportUser(req.user._id);
+  res.set("Content-Disposition", `attachment; filename="qwlee-data-${new Date().toISOString().slice(0, 10)}.json"`);
+  res.set("Cache-Control", "no-store");
+  res.json(data);
+}));
+router.get("/me/delete-check", auth("common"), catchAsync(async (req, res) => {
+  res.json({ code: 200, message: "OK", data: { attributes: { blockers: await privacy.blockers(req.user) } } });
+}));
+router.post("/me/delete", auth("common"), catchAsync(async (req, res) => {
+  if (req.body?.confirm !== "DELETE") throw new ApiError(400, 'Type DELETE to confirm');
+  const User = require("../../models/user.model");
+  const u = await User.findById(req.user._id);
+  const hasPassword = !!u?.password && !u.googleId;
+  if (hasPassword && !(await u.isPasswordMatch(String(req.body?.password || "")))) throw new ApiError(400, "Incorrect password");
+  res.json({ code: 200, message: "Account deleted", data: { attributes: await privacy.eraseUser(req.user._id, { by: "self" }) } });
+}));
+
 router.route("/").get(optionalAuth(), userController.getUsers);
 
 router
