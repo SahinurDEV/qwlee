@@ -38,14 +38,15 @@ const queryTrustSafety = catchAsync(async (req, res) => {
 // Marketplace counters for the homepage stat strip. Cheap to compute and
 // cached in front of CloudFront / Vercel would be ideal — for now we just
 // run countDocuments on each request; the collections are small.
-const { User, Gig, Orders, Categories } = require("../models");
+// Orders live in the Payment collection (the old "Orders" model is unused).
+const { User, Gig, Payment, Categories } = require("../models");
 
 const getStats = catchAsync(async (req, res) => {
     const [sellers, buyers, gigs, orders, categories] = await Promise.all([
         User.countDocuments({ role: "freelancer", isDeleted: { $ne: true } }),
         User.countDocuments({ role: "buyer", isDeleted: { $ne: true } }),
         Gig.countDocuments({ isDeleted: { $ne: true } }),
-        Orders.countDocuments({ isDeleted: { $ne: true } }),
+        Payment.countDocuments({ status: "delivered" }),
         Categories.countDocuments({}),
     ]);
 

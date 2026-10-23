@@ -3,18 +3,12 @@
 // numbers in a thin band below the hero slider so the homepage doesn't
 // feel hollow even before the user scrolls.
 //
-// Each number animates with a "tick up from 0" effect via framer-motion's
+// Each number is shown as soon as the stats load.
 // `useMotionValue` + `animate` when the strip enters the viewport, so
 // the figures feel earned. Once.
 
-import { useEffect, useRef, useState } from "react";
-import {
-  motion,
-  useInView,
-  useMotionValue,
-  useTransform,
-  animate as motionAnimate,
-} from "framer-motion";
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { base } from "@/lib/constant";
 
 function formatCount(n) {
@@ -24,30 +18,11 @@ function formatCount(n) {
   return String(n);
 }
 
-// Single counter that ticks from 0 to `value` over ~1.2s once visible.
+// Plain counter. The old tick-up animation only ran once the strip was
+// "in view", so it could stay stuck at 0 (e.g. after a fast scroll or on
+// some mobile browsers). Show the real number straight away.
 function Counter({ value }) {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-50px 0px" });
-  const mv = useMotionValue(0);
-  const display = useTransform(mv, (latest) => formatCount(Math.round(latest)));
-
-  useEffect(() => {
-    if (!inView || value == null) return;
-    const controls = motionAnimate(mv, value, {
-      duration: 1.2,
-      ease: [0.22, 1, 0.36, 1],
-    });
-    return () => controls.stop();
-  }, [inView, value, mv]);
-
-  if (value == null) {
-    return <span ref={ref}>—</span>;
-  }
-  return (
-    <motion.span ref={ref} className="tabular-nums">
-      {display}
-    </motion.span>
-  );
+  return <span className="tabular-nums">{formatCount(value)}</span>;
 }
 
 export default function MarketplaceStats() {
@@ -58,7 +33,10 @@ export default function MarketplaceStats() {
     const ctrl = new AbortController();
     (async () => {
       try {
-        const res = await fetch(`${base}/v1/info/stats`, { signal: ctrl.signal });
+        const res = await fetch(`${base}/v1/info/stats`, {
+          signal: ctrl.signal,
+          headers: { "ngrok-skip-browser-warning": "1" },
+        });
         const json = await res.json();
         setStats(json?.data?.attributes || null);
       } catch (err) {

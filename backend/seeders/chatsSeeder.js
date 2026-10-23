@@ -50,14 +50,21 @@ async function seedChats({ buyers, sellers, gigs }) {
   const inboxDocs = [];
 
   // Build up to 8 chat threads across realistic pairings.
+  // The demo buyer always gets the first two threads (one with the demo
+  // seller) so buyer@example.com never opens an empty inbox.
   const pairings = [];
-  for (let i = 0; i < 8; i++) {
+  const demoBuyer = buyers.find((b) => b.email === "buyer@example.com");
+  const demoSeller = sellers.find((s) => s.email === "seller@example.com");
+  if (demoBuyer && demoSeller) pairings.push({ buyer: demoBuyer, seller: demoSeller });
+  for (let i = 0; pairings.length < 8 && i < 40; i++) {
     const gig = pick(gigs);
     const seller = sellers.find(
       (s) => s._id.toString() === gig.userId.toString()
     );
     if (!seller) continue;
-    const buyer = pick(buyers);
+    const wantDemo = demoBuyer && pairings.filter((p) => p.buyer === demoBuyer).length < 2;
+    const buyer = wantDemo ? demoBuyer : pick(buyers);
+    if (pairings.some((p) => p.buyer === buyer && p.seller === seller)) continue;
     pairings.push({ buyer, seller });
   }
 

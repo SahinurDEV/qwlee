@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const { Orders, Payment } = require("../src/models");
 const { pick, rand, daysAgo, daysFromNow, chance } = require("./utils/random");
 
@@ -31,10 +32,17 @@ async function seedOrders({ buyers, sellers, gigs }) {
   // (and the tests that sign in with it) never starts with an empty list.
   const demoBuyer = buyers.find((b) => b.email === "buyer@example.com");
   let demoOrders = 0;
+  const demoSeller = sellers.find((s) => s.email === "seller@example.com");
 
   for (let i = 0; i < STATUS_DISTRIBUTION.length; i++) {
     const status = STATUS_DISTRIBUTION[i];
-    const gig = pick(gigs);
+    // First order: demo buyer x demo seller, so both demo accounts share
+    // an order (calls, reviews and chat tests rely on it).
+    const demoSellerGig =
+      i === 0 && demoSeller
+        ? gigs.find((g) => g.userId.toString() === demoSeller._id.toString())
+        : null;
+    const gig = demoSellerGig || pick(gigs);
     const seller = sellers.find(
       (s) => s._id.toString() === gig.userId.toString()
     );
@@ -66,7 +74,11 @@ async function seedOrders({ buyers, sellers, gigs }) {
       package: pkg,
     };
 
+    // Orders and their Payment twin share one _id, so any link built from
+    // either collection (reviews, notifications, /order/:id) resolves.
+    const _id = new mongoose.Types.ObjectId();
     orderDocs.push({
+      _id,
       freelancerId: seller._id,
       clientId: buyer._id,
       gigId: gig._id,
@@ -83,6 +95,7 @@ async function seedOrders({ buyers, sellers, gigs }) {
     // include the rich `data` payload the redesigned page reads from
     // (requirements, package summary, revisions left).
     paymentDocs.push({
+      _id,
       sessionId: `cs_seed_${Date.now()}_${i}`,
       items: [
         {
