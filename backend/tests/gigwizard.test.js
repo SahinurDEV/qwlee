@@ -2,6 +2,13 @@ const { test } = require("node:test");
 const assert = require("node:assert/strict");
 
 const API = (process.env.API_URL || "http://localhost:7171").replace(/\/+$/, "");
+// Seeded/uploaded images may carry the public (tunnel) host. Fetch them
+// from the API under test instead so the check works offline.
+const localUrl = (u) => {
+  const url = new URL(u, API + "/");
+  const m = url.pathname.match(/\/(seed|uploads)\/.*/);
+  return m ? `${API}${m[0]}` : url.href;
+};
 const json = async (res) => {
   const j = await res.json().catch(() => null);
   return { status: res.status, json: j, data: j?.data?.attributes ?? j?.data };
@@ -53,7 +60,7 @@ test("gig create uploads images, reorders them and price follows packages", asyn
     assert.equal(gig.price, 50);
     assert.match(gig.slug, /^i-will-build-a-tested-landing-page-for-you-/);
     // Images are reachable (local /uploads fallback or the ImgBB CDN).
-    const img = await fetch(gig.images[0]);
+    const img = await fetch(localUrl(gig.images[0]));
     assert.equal(img.status, 200);
     if (gig.images[0].includes("/uploads/")) assert.equal(img.headers.get("cross-origin-resource-policy"), "cross-origin");
 
