@@ -286,4 +286,9 @@ router.post("/privacy/:id/erase", A, catchAsync2(async (req, res) => {
   helpOk(res, await privacySvc.eraseUser(req.params.id, { by: `admin ${req.user._id}` }), "Account erased");
 }));
 
+// Backups (settings permission to view; super to request a backup now).
+const backupsSvc = require("../../services/backups.service");
+router.get("/backups", A, catchAsync2(async (req, res) => helpOk(res, await backupsSvc.status())));
+router.post("/backups/run", A, catchAsync2(async (req, res) => helpOk(res, await backupsSvc.requestNow(), "Backup requested")));
+
 module.exports = router;
