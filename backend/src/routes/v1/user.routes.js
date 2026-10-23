@@ -64,6 +64,13 @@ router.post("/me/delete", auth("common"), catchAsync(async (req, res) => {
   res.json({ code: 200, message: "Account deleted", data: { attributes: await privacy.eraseUser(req.user._id, { by: "self" }) } });
 }));
 
+// Seller Plus subscription (paid from balance).
+const plan = require("../../services/sellerPlan.service");
+const okPlan = (res, d) => res.json({ code: 200, message: "Seller plan", data: { attributes: d } });
+router.get("/me/plan", auth("common"), catchAsync(async (req, res) => okPlan(res, await plan.get(req.user.id))));
+router.post("/me/plan", auth("common"), catchAsync(async (req, res) => okPlan(res, await plan.subscribe(req.user, req.body?.tier))));
+router.post("/me/plan/cancel", auth("common"), catchAsync(async (req, res) => okPlan(res, await plan.cancel(req.user))));
+
 // Job Success Score (public): share of a seller's recent orders that ended well.
 router.get("/:userId/job-success", catchAsync(async (req, res) => {
   if (!/^[a-f0-9]{24}$/i.test(req.params.userId)) throw new ApiError(400, "Invalid user id");

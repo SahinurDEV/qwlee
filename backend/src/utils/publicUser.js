@@ -21,6 +21,7 @@ const PUBLIC_USER_FIELDS = [
   "isVerified",
   "isProfileCompleted",
   "createdAt",
+  "planBadge",
 ];
 
 const PUBLIC_USER_SELECT = PUBLIC_USER_FIELDS.join(" ");

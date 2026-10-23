@@ -195,7 +195,17 @@ async function getPublicMethods() {
 // Pass the order's gigId to apply a per-category rule (Site settings →
 // Marketplace → Category fees): the gig's sub-category rule wins, then its
 // category's, then the default.
+// Fee actually charged: the rule below, minus the seller's Seller Plus
+// discount (sellerPlan.service), never below 0.
 async function getPlatformFeePercent(gigId) {
+  const base = await baseFeePercent(gigId);
+  if (!gigId) return base;
+  const gig = await require("../models/gig.model").findById(gigId, "userId").lean().catch(() => null);
+  const off = gig ? await require("./sellerPlan.service").feeDiscount(gig.userId) : 0;
+  return Math.max(0, Math.round((base - off) * 100) / 100);
+}
+
+async function baseFeePercent(gigId) {
   const doc = await getConfig();
   const raw = doc?.site?.marketplace?.feePercent ?? doc?.misc?.platformFeePercent ?? process.env.PLATFORM_FEE_PERCENT ?? 5;
   const pct = Number(raw);

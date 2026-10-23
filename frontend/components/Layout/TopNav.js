@@ -155,6 +155,7 @@ export default function TopNav() {
     { icon: IoStorefrontOutline, label: "Dashboard", href: "/dashboard" },
     { icon: IoCashOutline, label: "Earnings", href: "/earnings" },
     { icon: IoStatsChartOutline, label: "Analytics", href: "/analytics" },
+    { icon: IoSparklesOutline, label: "Seller Plus", href: "/seller-plan" },
     { icon: IoListOutline, label: "Manage orders", href: "/order" },
     { icon: IoSparklesOutline, label: "Create a new gig", href: "/gig/add" },
     { icon: IoHeartOutline, label: "Wishlist", href: "/list" },
