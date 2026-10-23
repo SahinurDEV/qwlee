@@ -76,6 +76,31 @@ async function dropAllCollections() {
   console.log(`  ✓ cleared ${collections.length} collections`);
 }
 
+// Category fee rules (Site settings → Category fees) point at category
+// ids, which change on every re-seed. Remember each rule by category name
+// path ("Parent/Child") before the reset and re-attach it afterwards.
+async function snapshotFeeRules() {
+  const db = mongoose.connection.db;
+  const cfg = await db.collection("appconfigs").findOne({ key: "default" }).catch(() => null);
+  const rules = cfg?.site?.marketplace?.categoryFees || [];
+  if (!rules.length) return [];
+  const cats = await db.collection("categories").find({}, { projection: { name: 1, parentId: 1 } }).toArray();
+  const byId = new Map(cats.map((c) => [String(c._id), c]));
+  const pathOf = (c) => (c?.parentId && byId.get(String(c.parentId)) ? `${byId.get(String(c.parentId)).name}/${c.name}` : c?.name);
+  return rules.map((r) => ({ path: pathOf(byId.get(String(r.categoryId))), percent: r.percent })).filter((r) => r.path);
+}
+async function restoreFeeRules(saved) {
+  if (!saved.length) return 0;
+  const db = mongoose.connection.db;
+  const cats = await db.collection("categories").find({}, { projection: { name: 1, parentId: 1 } }).toArray();
+  const byId = new Map(cats.map((c) => [String(c._id), c]));
+  const pathOf = (c) => (c.parentId && byId.get(String(c.parentId)) ? `${byId.get(String(c.parentId)).name}/${c.name}` : c.name);
+  const idByPath = new Map(cats.map((c) => [pathOf(c), String(c._id)]));
+  const rules = saved.map((r) => idByPath.get(r.path) && { categoryId: idByPath.get(r.path), percent: r.percent }).filter(Boolean);
+  await db.collection("appconfigs").updateOne({ key: "default" }, { $set: { "site.marketplace.categoryFees": rules } }, { upsert: true });
+  return rules.length;
+}
+
 async function run() {
   const args = parseArgs(process.argv.slice(2));
   const url = process.env.MONGODB_URL;
@@ -84,6 +109,7 @@ async function run() {
   console.log(`→ connecting to ${url}`);
   await mongoose.connect(url);
 
+  const savedFees = await snapshotFeeRules();
   if (args.reset) {
     console.log("→ resetting all collections");
     await dropAllCollections();
@@ -122,6 +148,8 @@ async function run() {
     }
   }
 
+  const kept = await restoreFeeRules(savedFees);
+  if (savedFees.length) console.log(`→ category fee rules kept: ${kept}/${savedFees.length}`);
   console.log("\n✓ seed complete");
   console.log("---------------------------------------------------");
   for (const [name, count] of summary) console.log(`  ${name.padEnd(16)} ${count}`);
