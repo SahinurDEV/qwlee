@@ -106,6 +106,10 @@ const defaultRoutes = [
     route: require("./pro.routes"),
   },
   {
+    path: "/teams",
+    route: require("./team.routes"),
+  },
+  {
     path: "/categories",
     route: categoriesRoute,
   },
