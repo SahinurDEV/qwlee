@@ -221,7 +221,7 @@ export default function SearchLogs() {
                             <div className="text-ink-900 truncate">
                               {r.userId.fullName || r.userId.username}
                             </div>
-                            <div className="text-[11px] text-ink-500 truncate">
+                            <div className="text-xs text-ink-500 truncate">
                               {r.userId.email}
                             </div>
                           </div>
@@ -237,7 +237,7 @@ export default function SearchLogs() {
                       {r.country ? (
                         <span className="inline-flex items-center gap-1.5">
                           {r.countryCode ? (
-                            <span className="text-[10px] font-semibold bg-ink-100 text-ink-700 rounded px-1.5 py-0.5">
+                            <span className="text-xs font-semibold bg-ink-100 text-ink-700 rounded px-1.5 py-0.5">
                               {r.countryCode}
                             </span>
                           ) : null}

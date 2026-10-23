@@ -97,7 +97,7 @@ export default function PersonalInfo() {
 function InfoCell({ icon: Icon, label, value }) {
   return (
     <div className="rounded-xl border border-ink-100 px-4 py-3">
-      <div className="flex items-center gap-2 text-[10px] uppercase tracking-wide text-ink-400 font-semibold">
+      <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-ink-400 font-semibold">
         {Icon ? <Icon className="w-3.5 h-3.5" /> : null}
         {label}
       </div>

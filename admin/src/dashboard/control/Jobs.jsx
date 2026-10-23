@@ -35,7 +35,7 @@ export default function Jobs() {
       <PageHeader title="Background jobs" subtitle={data ? `Housekeeping runs every ${Math.round(data.intervalMs / 60000)} min. "Stale" means no run for 3 intervals.` : ""} actions={<Button loading={running} onClick={run}>Run housekeeping now</Button>} />
       <ErrorNote error={error} />
       <Card title="Jobs">
-        <table className="w-full text-sm" data-testid="jobs">
+        <div className="overflow-x-auto"><table className="w-full text-sm" data-testid="jobs">
           <thead><tr className="text-left text-ink-500 text-xs"><th className="py-2">Job</th><th>Health</th><th>Last run</th><th>Runs / failures (24h)</th><th>Avg</th><th>Last error</th></tr></thead>
           <tbody>
             {(data?.jobs || []).map((j) => (
@@ -49,10 +49,10 @@ export default function Jobs() {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       </Card>
       <Card title={job ? `History: ${LABELS[job] || job}` : "Recent runs"} subtitle="Click a job above to filter.">
-        <table className="w-full text-xs" data-testid="history">
+        <div className="overflow-x-auto"><table className="w-full text-xs" data-testid="history">
           <tbody>
             {(hist?.results || []).map((r) => (
               <tr key={r._id} className="border-t border-ink-100">
@@ -64,7 +64,7 @@ export default function Jobs() {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       </Card>
     </div>
   );

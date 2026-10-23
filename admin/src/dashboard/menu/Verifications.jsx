@@ -173,7 +173,7 @@ export default function Verifications() {
                           {u.verification?.documentType?.toUpperCase()}
                         </div>
                       </div>
-                      <span className="text-[10px] text-ink-400 whitespace-nowrap">
+                      <span className="text-xs text-ink-400 whitespace-nowrap">
                         {timeAgo(u.verification?.submittedAt)}
                       </span>
                     </button>
@@ -302,7 +302,7 @@ export default function Verifications() {
             placeholder="e.g. Selfie photo is too blurry — please retake in good lighting."
             className="w-full px-3 py-2 text-sm border border-ink-200 rounded-lg outline-none focus:border-primary resize-none"
           />
-          <div className="text-[11px] text-ink-400 mt-1">{reason.length}/500</div>
+          <div className="text-xs text-ink-400 mt-1">{reason.length}/500</div>
           <div className="flex justify-end gap-2 mt-4">
             <Button variant="secondary" onClick={() => setRejectOpen(false)} type="button">
               Cancel
@@ -335,7 +335,7 @@ export default function Verifications() {
 function Field({ label, children }) {
   return (
     <div>
-      <dt className="text-[10px] uppercase tracking-wide text-ink-400 font-semibold">
+      <dt className="text-xs uppercase tracking-wide text-ink-400 font-semibold">
         {label}
       </dt>
       <dd className="text-sm text-ink-900 mt-1">{children}</dd>
@@ -362,7 +362,7 @@ function DocPreview({ label, url, onZoom }) {
         alt={label}
         className="w-full h-full object-cover group-hover:scale-105 transition"
       />
-      <span className="absolute bottom-0 left-0 right-0 bg-black/55 text-white text-[11px] font-medium uppercase tracking-wide px-2 py-1">
+      <span className="absolute bottom-0 left-0 right-0 bg-black/55 text-white text-xs font-medium uppercase tracking-wide px-2 py-1">
         {label}
       </span>
     </button>

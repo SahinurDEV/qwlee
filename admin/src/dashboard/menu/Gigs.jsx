@@ -194,7 +194,7 @@ export default function Gigs() {
             <StatusPill status={STATUS_TONE[s] || "muted"} label={STATUS_LABEL[s]} />
             {g.moderation?.reason && (s === "denied" || s === "requires-modification") && (
               <span
-                className="text-[11px] text-rose-700 inline-flex items-start gap-1 max-w-[220px]"
+                className="text-xs text-rose-700 inline-flex items-start gap-1 max-w-[220px]"
                 title={g.moderation.reason}
               >
                 <IoAlertCircleOutline className="w-3.5 h-3.5 shrink-0 mt-0.5" />
@@ -348,7 +348,7 @@ export default function Gigs() {
               )}
             >
               {t.label}
-              <span className="ml-1 text-[10px] text-ink-400">{counts[t.v]}</span>
+              <span className="ml-1 text-xs text-ink-400">{counts[t.v]}</span>
             </button>
           ))}
         </div>
@@ -499,7 +499,7 @@ function DeleteGigModal({ gig, onClose }) {
                 placeholder="Why is this gig being removed? Shown to the seller."
                 className="w-full px-3 py-2 rounded-lg border border-ink-200 text-sm outline-none focus:border-primary-400 resize-none"
               />
-              <div className="text-right text-[11px] text-ink-400 mt-1">
+              <div className="text-right text-xs text-ink-400 mt-1">
                 {reason.length}/500
               </div>
             </div>
@@ -658,7 +658,7 @@ function ModerateGigModal({ gig, onClose }) {
               }
               className="w-full px-3 py-2 rounded-lg border border-ink-200 text-sm outline-none focus:border-primary-400 resize-none"
             />
-            <div className="text-right text-[11px] text-ink-400 mt-1">
+            <div className="text-right text-xs text-ink-400 mt-1">
               {reason.length}/500
             </div>
           </div>

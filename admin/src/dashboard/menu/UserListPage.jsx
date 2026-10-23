@@ -178,7 +178,7 @@ export default function UserListPage({ role }) {
           {u.isBan && u.banReason ? (
             <span
               title={u.banReason}
-              className="text-[10px] text-rose-600 max-w-[180px] truncate"
+              className="text-xs text-rose-600 max-w-[180px] truncate"
             >
               {u.banReason}
             </span>
@@ -340,7 +340,7 @@ export default function UserListPage({ role }) {
             className="w-full px-3 py-2.5 text-sm border border-ink-200 rounded-lg outline-none focus:border-primary focus:ring-2 focus:ring-primary-100 resize-none"
           />
           <div className="flex items-center justify-between mt-1">
-            <span className="text-[11px] text-ink-400">
+            <span className="text-xs text-ink-400">
               {banReason.length}/500 — leave blank for a generic message.
             </span>
           </div>

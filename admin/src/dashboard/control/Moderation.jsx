@@ -35,7 +35,7 @@ function Requests() {
       <ErrorNote error={error} />
       {data?.results?.length === 0 ? <Empty /> : null}
       {data?.results?.length ? (
-        <table className="w-full">
+        <div className="overflow-x-auto"><table className="w-full">
           <thead className="border-b border-ink-100"><tr><Th>Request</Th><Th>Buyer</Th><Th>Budget</Th><Th>Status</Th><Th className="text-right">Actions</Th></tr></thead>
           <tbody className="divide-y divide-ink-100">
             {data.results.map((r) => (
@@ -57,7 +57,7 @@ function Requests() {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       ) : null}
       <Pager data={data} page={page} setPage={setPage} />
     </Card>
@@ -72,7 +72,7 @@ function Offers() {
       <ErrorNote error={error} />
       {data?.results?.length === 0 ? <Empty /> : null}
       {data?.results?.length ? (
-        <table className="w-full">
+        <div className="overflow-x-auto"><table className="w-full">
           <thead className="border-b border-ink-100"><tr><Th>Offer</Th><Th>Seller</Th><Th>On request</Th><Th>Price</Th><Th>Status</Th><Th className="text-right">Actions</Th></tr></thead>
           <tbody className="divide-y divide-ink-100">
             {data.results.map((o) => (
@@ -86,7 +86,7 @@ function Offers() {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       ) : null}
       <Pager data={data} page={page} setPage={setPage} />
     </Card>
@@ -103,7 +103,7 @@ function Reviews() {
       <ErrorNote error={error} />
       {data?.results?.length === 0 ? <Empty /> : null}
       {data?.results?.length ? (
-        <table className="w-full">
+        <div className="overflow-x-auto"><table className="w-full">
           <thead className="border-b border-ink-100"><tr><Th>Review</Th><Th>Rating</Th><Th>By → For</Th><Th>Gig</Th><Th>Date</Th><Th className="text-right">Actions</Th></tr></thead>
           <tbody className="divide-y divide-ink-100">
             {data.results.map((r) => (
@@ -117,7 +117,7 @@ function Reviews() {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       ) : null}
       <Pager data={data} page={page} setPage={setPage} />
     </Card>

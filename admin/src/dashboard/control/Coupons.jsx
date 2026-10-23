@@ -73,8 +73,8 @@ export default function Coupons() {
                 <tbody>
                   {rows.map((c) => (
                     <tr key={c.id} className="border-t border-ink-100">
-                      <Td><span className="font-mono font-semibold">{c.code}</span>{c.note ? <div className="text-[11px] text-ink-500">{c.note}</div> : null}</Td>
-                      <Td>{c.type === "percent" ? `${c.value}%${c.maxDiscount ? ` (max ${formatMoney(c.maxDiscount)})` : ""}` : formatMoney(c.value)}{c.minOrder ? <div className="text-[11px] text-ink-500">min {formatMoney(c.minOrder)}</div> : null}{c.firstOrderOnly ? <div className="text-[11px] text-ink-500">first order</div> : null}</Td>
+                      <Td><span className="font-mono font-semibold">{c.code}</span>{c.note ? <div className="text-xs text-ink-500">{c.note}</div> : null}</Td>
+                      <Td>{c.type === "percent" ? `${c.value}%${c.maxDiscount ? ` (max ${formatMoney(c.maxDiscount)})` : ""}` : formatMoney(c.value)}{c.minOrder ? <div className="text-xs text-ink-500">min {formatMoney(c.minOrder)}</div> : null}{c.firstOrderOnly ? <div className="text-xs text-ink-500">first order</div> : null}</Td>
                       <Td>{c.uses}{c.maxUses ? ` / ${c.maxUses}` : ""}</Td>
                       <Td>{formatMoney(c.discountGiven)}</Td>
                       <Td>{c.expiresAt ? formatDate(c.expiresAt) : "—"}</Td>

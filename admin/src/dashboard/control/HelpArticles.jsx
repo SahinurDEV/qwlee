@@ -81,7 +81,7 @@ export default function HelpArticles() {
                 <tbody>
                   {rows.map((a) => (
                     <tr key={a.id} className="border-t border-ink-100">
-                      <Td><div className="font-medium">{a.title}</div><div className="text-[11px] text-ink-500">/help/{a.slug} · {a.audience}</div></Td>
+                      <Td><div className="font-medium">{a.title}</div><div className="text-xs text-ink-500">/help/{a.slug} · {a.audience}</div></Td>
                       <Td>{a.category}</Td>
                       <Td>{a.views}</Td>
                       <Td>{a.helpfulYes} / {a.helpfulNo}</Td>

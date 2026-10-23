@@ -223,7 +223,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }) {
           {nav.map((group) => (
             <div key={group.section} className="mb-3">
               {!collapsed && (
-                <div className="px-5 mt-3 mb-1 text-[10px] font-semibold uppercase tracking-wide text-ink-400">
+                <div className="px-5 mt-3 mb-1 text-xs font-semibold uppercase tracking-wide text-ink-400">
                   {group.section}
                 </div>
               )}

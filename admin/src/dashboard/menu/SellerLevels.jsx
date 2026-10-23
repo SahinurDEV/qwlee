@@ -124,7 +124,7 @@ function TierEditor() {
       ) : (
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
-            <thead className="bg-ink-50 text-ink-500 text-[11px] uppercase tracking-wider">
+            <thead className="bg-ink-50 text-ink-500 text-xs uppercase tracking-wider">
               <tr>
                 <th className="text-left px-3 py-2 font-semibold">ID</th>
                 <th className="text-left px-3 py-2 font-semibold">Label</th>
@@ -269,7 +269,7 @@ function SellersTable() {
 
       <div className="overflow-x-auto">
         <table className="min-w-full text-sm">
-          <thead className="bg-ink-50 text-ink-500 text-[11px] uppercase tracking-wider">
+          <thead className="bg-ink-50 text-ink-500 text-xs uppercase tracking-wider">
             <tr>
               <th className="text-left px-3 py-2 font-semibold">Seller</th>
               <th className="text-left px-3 py-2 font-semibold">Computed</th>
@@ -311,7 +311,7 @@ function SellersTable() {
                           <div className="text-sm text-ink-900 font-medium truncate">
                             {s.fullName}
                           </div>
-                          <div className="text-[11px] text-ink-500 truncate">
+                          <div className="text-xs text-ink-500 truncate">
                             {s.username ? `@${s.username}` : s.email}
                           </div>
                         </div>
@@ -481,7 +481,7 @@ function OverrideModal({ seller, tiers, onClose }) {
               placeholder="Why is this seller pinned to a specific tier?"
               className="w-full px-3 py-2 rounded-lg border border-ink-200 text-sm outline-none focus:border-primary-400 resize-none"
             />
-            <div className="text-right text-[11px] text-ink-400 mt-1">
+            <div className="text-right text-xs text-ink-400 mt-1">
               {reason.length}/500
             </div>
           </div>

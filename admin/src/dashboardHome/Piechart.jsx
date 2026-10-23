@@ -93,11 +93,11 @@ const handleChange = (value) => {
                 </div>
                 <div>
                       <div>
-                      <p className='text-[10px] font-normal'>Month of {userRatio?.data?.attributes?.month} buyer</p>
+                      <p className='text-xs font-normal'>Month of {userRatio?.data?.attributes?.month} buyer</p>
                       <h1 className='text-[18px] font-semibold'>{userRatio?.data?.attributes?.totalBuyers}</h1>
                       </div>
                       <div className='mt-[23px]'>
-                      <p className='text-[10px] font-normal'>Month of {userRatio?.data?.attributes?.month} Frelancers</p>
+                      <p className='text-xs font-normal'>Month of {userRatio?.data?.attributes?.month} Frelancers</p>
                       <h1 className='text-[18px] font-semibold'>{userRatio?.data?.attributes?.totalFreelancers}</h1>
                       </div>
                 </div>
