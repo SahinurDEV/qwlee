@@ -200,12 +200,12 @@ function FooterColumn({ title, links }) {
       <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-3">
         {title}
       </h3>
-      <ul className="space-y-2.5">
+      <ul className="space-y-1">
         {links.map((l) => (
           <li key={l.href}>
             <Link
               href={l.href}
-              className="text-sm text-gray-400 hover:text-white transition"
+              className="inline-block py-1.5 text-sm text-gray-400 hover:text-white transition"
             >
               {l.label}
             </Link>

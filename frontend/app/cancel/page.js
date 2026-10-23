@@ -18,7 +18,7 @@ const page = () => {
           src={cancelImage}
           alt="successPayment"
         />
-        <h1 className="text-4xl font-bold text-center my-3">Payment Cancel!</h1>
+        <h1 className="text-2xl sm:text-4xl font-bold text-center my-3">Payment Cancel!</h1>
         <Link
           href="/"
           className="mx-auto"

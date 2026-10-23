@@ -76,11 +76,11 @@ export default function GigCard({ item, sponsored = false }) {
             alt={item?.title || "gig"}
           />
           {sponsored ? (
-            <span className="absolute left-3 top-3 z-10 rounded-full bg-gray-900/80 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm">
+            <span className="absolute left-3 top-3 z-10 rounded-full bg-gray-900/80 px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-white shadow-sm">
               Sponsored
             </span>
           ) : item?.featured ? (
-            <span className="absolute left-3 top-3 z-10 rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-gray-900 shadow-sm">
+            <span className="absolute left-3 top-3 z-10 rounded-full bg-amber-400 px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-gray-900 shadow-sm">
               Featured
             </span>
           ) : null}
@@ -133,7 +133,7 @@ export default function GigCard({ item, sponsored = false }) {
               {skillList.map((s, i) => (
                 <span
                   key={`${s}-${i}`}
-                  className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-700"
+                  className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-700"
                 >
                   {s}
                 </span>

@@ -111,7 +111,7 @@ export default function ChatCart({ chatData }) {
               {preview || "Open conversation"}
             </p>
             {unread && (
-              <span className="ml-1 shrink-0 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-emerald-500 text-white text-[11px] font-bold">
+              <span className="ml-1 shrink-0 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-emerald-500 text-white text-xs font-bold">
                 {unreadCount > 99 ? "99+" : unreadCount}
               </span>
             )}

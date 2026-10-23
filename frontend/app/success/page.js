@@ -17,7 +17,7 @@ const page = () => {
                     src={successImage}
                     alt="successPayment"
                 />
-                <h1 className="text-4xl font-bold text-center mt-10">Payment Successful!</h1>
+                <h1 className="text-2xl sm:text-4xl font-bold text-center mt-10">Payment Successful!</h1>
             </div>
         </PrimaryLayout>
     );

@@ -64,7 +64,7 @@ const BuyerProfile = () => {
             >
               <IoCameraReverseOutline className="size-8 mx-auto" />
             </label>
-            <span className="text-white text-[10px]">
+            <span className="text-white text-xs">
               Recommend size 1920x330
             </span>
           </div>

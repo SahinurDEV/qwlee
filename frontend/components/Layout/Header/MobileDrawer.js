@@ -131,7 +131,7 @@ export default function MobileDrawer({ open, onClose }) {
               </div>
             </div>
             <span
-              className={`text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full ${
+              className={`text-xs font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full ${
                 isSelling
                   ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
                   : "bg-sky-50 text-sky-700 border border-sky-100"
@@ -149,7 +149,7 @@ export default function MobileDrawer({ open, onClose }) {
             {isSelling ? "Switch to Buying" : "Switch to Selling"}
           </button>
 
-          <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 px-1 mt-2 mb-1">
+          <div className="text-xs font-semibold uppercase tracking-wide text-gray-400 px-1 mt-2 mb-1">
             {isSelling ? "Selling" : "Buying"}
           </div>
           {modeLinks.map((l) => (
@@ -163,7 +163,7 @@ export default function MobileDrawer({ open, onClose }) {
             </button>
           ))}
 
-          <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 px-1 mt-4 mb-1">
+          <div className="text-xs font-semibold uppercase tracking-wide text-gray-400 px-1 mt-4 mb-1">
             Account
           </div>
           <button
@@ -208,7 +208,7 @@ export default function MobileDrawer({ open, onClose }) {
       )}
 
       <div className="mt-5 pt-4 border-t border-gray-100">
-        <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 px-1 mb-1">
+        <div className="text-xs font-semibold uppercase tracking-wide text-gray-400 px-1 mb-1">
           {t("explore")}
         </div>
         <button

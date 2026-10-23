@@ -101,7 +101,7 @@ export default function ExtendDeliveryDateModal({
                 <div className="text-sm font-semibold text-emerald-700 mt-1">
                   {newDeliveryDate.format("D MMM YYYY")}
                 </div>
-                <div className="text-[11px] text-gray-500 mt-0.5">
+                <div className="text-xs text-gray-500 mt-0.5">
                   +{newDeliveryDate.diff(originalDate, "days")} day
                   {newDeliveryDate.diff(originalDate, "days") === 1 ? "" : "s"}
                 </div>
@@ -121,7 +121,7 @@ export default function ExtendDeliveryDateModal({
             placeholder="Share why you need more time. Be specific — buyers are more likely to accept when the reason is clear."
             className="w-full rounded-lg border border-gray-200 outline-none p-3 resize-none text-sm focus:border-emerald-500"
           />
-          <div className="text-right text-[11px] text-gray-400 mt-1">
+          <div className="text-right text-xs text-gray-400 mt-1">
             {reason.length}/1000
           </div>
         </div>

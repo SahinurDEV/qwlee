@@ -434,7 +434,7 @@ export default function Message() {
       <div key={m._id || m.id || i} ref={i === messages.length - 1 ? lastMessageRef : null}>
         <MessageCart message={m} />
         {i === lastMine ? (
-          <p className="text-right text-[11px] text-gray-400 -mt-1 mb-2 pr-1" aria-live="polite">{m.readed ? "Seen" : "Sent"}</p>
+          <p className="text-right text-xs text-gray-400 -mt-1 mb-2 pr-1" aria-live="polite">{m.readed ? "Seen" : "Sent"}</p>
         ) : null}
       </div>
     ));
@@ -447,7 +447,7 @@ export default function Message() {
         <button
           type="button"
           className="md:hidden p-1.5 rounded-md hover:bg-gray-100"
-          onClick={() => dispatch(setIsOpen())}
+          onClick={() => router.push("/inbox")}
           aria-label="Back to inbox list"
         >
           <IoIosArrowBack className="text-xl" />
@@ -566,7 +566,7 @@ export default function Message() {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center text-[10px] text-gray-600 px-1 text-center">
+                    <div className="w-full h-full flex flex-col items-center justify-center text-xs text-gray-600 px-1 text-center">
                       <span className="font-semibold">FILE</span>
                       <span className="truncate w-full">{file.name}</span>
                     </div>

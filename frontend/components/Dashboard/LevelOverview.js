@@ -58,7 +58,7 @@ export default function LevelOverview() {
           </p>
         </div>
         <div className="text-right">
-          <div className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+          <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">
             Current level
           </div>
           <div className="mt-1 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-sm font-semibold">
@@ -137,7 +137,7 @@ export default function LevelOverview() {
                   Qualifies for{" "}
                   <span className="text-emerald-700">{nextLevel?.label}</span>
                 </h3>
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-700 inline-flex items-center gap-1">
+                <span className="text-xs font-semibold uppercase tracking-wider text-emerald-700 inline-flex items-center gap-1">
                   Next <IoArrowForwardOutline />
                 </span>
               </div>
@@ -206,7 +206,7 @@ function Metric({ icon: Icon, label, value, max, sub, tone = "emerald" }) {
           </span>
         </div>
         {sub ? (
-          <div className="text-[11px] text-gray-500 mt-0.5">{sub}</div>
+          <div className="text-xs text-gray-500 mt-0.5">{sub}</div>
         ) : null}
       </div>
     </div>

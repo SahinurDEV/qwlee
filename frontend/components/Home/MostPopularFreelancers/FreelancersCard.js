@@ -82,13 +82,13 @@ export default function FreelancersCard({ data }) {
           {skillList.slice(0, 3).map((s, i) => (
             <span
               key={`${s}-${i}`}
-              className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-700"
+              className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-700"
             >
               {s}
             </span>
           ))}
           {skillList.length > 3 && (
-            <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
+            <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
               +{skillList.length - 3}
             </span>
           )}

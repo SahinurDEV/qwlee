@@ -239,7 +239,7 @@ export default function TopNav() {
               </span>
             </span>
             <span
-              className={`text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${
+              className={`text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${
                 isSelling
                   ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
                   : "bg-sky-50 text-sky-700 border border-sky-100"
