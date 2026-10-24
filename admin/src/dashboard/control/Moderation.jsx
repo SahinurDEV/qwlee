@@ -109,7 +109,7 @@ function Reviews() {
             {data.results.map((r) => (
               <tr key={r.id}>
                 <Td className="max-w-[320px]">{truncate(r.review || "", 140) || <span className="text-ink-400">No text</span>}</Td>
-                <Td>{"★".repeat(Math.round(r.rating || 0))}<span className="text-ink-300">{"★".repeat(5 - Math.round(r.rating || 0))}</span></Td>
+                <Td>{"★".repeat(Math.round(r.rating || 0))}<span className="text-ink-300">{"★".repeat(5 - Math.round(r.rating || 0))}</span>{r.privateRating ? <div className="text-xs text-sky-700" title={r.privateNote || ""}>Private: {r.privateRating}/5{r.privateNote ? ` · ${truncate(r.privateNote, 60)}` : ""}</div> : null}</Td>
                 <Td className="text-xs">{r.userId?.fullName}<div className="text-ink-500">→ {r.freelancerId?.fullName}</div></Td>
                 <Td className="text-xs max-w-[200px] truncate">{r.gigId?.title}</Td>
                 <Td className="text-xs">{formatDate(r.createdAt)}</Td>
