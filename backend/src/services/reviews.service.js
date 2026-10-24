@@ -42,6 +42,12 @@ const createReview = async (payload, userId) => {
     );
   }
 
+  const windowDays = (await require("./siteSettings.service").get()).marketplace.reviewWindowDays;
+  const doneAt = order.completedAt || order.updatedAt;
+  if (windowDays && doneAt && Date.now() > new Date(doneAt).getTime() + windowDays * 86400000) {
+    throw new ApiError(httpStatus.BAD_REQUEST, `Reviews can be left up to ${windowDays} days after an order is completed.`);
+  }
+
   const existing = await Reviews.findOne({ orderId, userId });
   if (existing) {
     throw new ApiError(httpStatus.BAD_REQUEST, "You already reviewed this order");
