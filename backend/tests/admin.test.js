@@ -107,7 +107,7 @@ test("site settings drive fee, feature toggles and the public config", async () 
     assert.equal(pub.data.homepage.announcement.text, "Maintenance tonight");
     assert.equal(pub.data.features.signups, false);
     assert.equal(pub.data.marketplace, undefined, "internal settings not public");
-    const reg = await call("POST", "/auth/register", { body: { fullName: "No Signup", email: `nosignup${Date.now()}@example.com`, password: "Passw0rd!", role: "buyer" } });
+    const reg = await call("POST", "/auth/register", { body: { acceptTerms: true, fullName: "No Signup", email: `nosignup${Date.now()}@example.com`, password: "Passw0rd!", role: "buyer" } });
     assert.equal(reg.status, 403);
   } finally {
     await call("PATCH", "/admin/settings/site", { token: sup.token, body: orig });

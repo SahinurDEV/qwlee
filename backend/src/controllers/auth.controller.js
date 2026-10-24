@@ -19,8 +19,15 @@ const { isReserved } = require("../utils/reservedUsernames");
 const { deriveUniqueUsername } = require("../utils/deriveUsername");
 
 const siteSettings = require("../services/siteSettings.service");
+// Bump when the Terms change materially; stored with each consent.
+const TERMS_VERSION = "2026-10";
+
 const register = catchAsync(async (req, res) => {
   await siteSettings.assertFeature("signups", "Sign-up");
+  // Consent record (validation already requires acceptTerms === true).
+  delete req.body.acceptTerms;
+  req.body.termsAcceptedAt = new Date();
+  req.body.termsVersion = TERMS_VERSION;
   // Pick the final username. Client-provided wins (after format + reserved
   // + uniqueness checks); otherwise we derive a unique one from the email.
   if (req.body.username) {

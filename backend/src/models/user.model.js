@@ -84,6 +84,9 @@ const userSchema = mongoose.Schema(
       required: false,
       default: "",
     },
+    // Sign-up consent: 18+ and Terms/Privacy accepted (version + time).
+    termsAcceptedAt: { type: Date, default: null },
+    termsVersion: { type: String, default: "" },
     balance: {
       type: Number,
       required: false,
