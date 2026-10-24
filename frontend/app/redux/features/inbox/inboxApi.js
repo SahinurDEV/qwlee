@@ -96,7 +96,22 @@ export const inboxApi = baseApi.injectEndpoints({
     }),
     getChatContext: builder.query({
       query: (chatId) => `/chat/${chatId}/context`,
-      transformResponse: (response) => response?.data?.attributes?.orders || [],
+      transformResponse: (response) => {
+        const a = response?.data?.attributes || {};
+        return { orders: a.orders || [], responseTime: a.responseTime || null };
+      },
+    }),
+    editMessage: builder.mutation({
+      query: ({ id, message }) => ({ url: `/message/${id}/edit`, method: "PATCH", body: { message } }),
+      transformResponse: (r) => r?.data?.attributes,
+    }),
+    reactMessage: builder.mutation({
+      query: ({ id, emoji }) => ({ url: `/message/${id}/react`, method: "POST", body: { emoji } }),
+      transformResponse: (r) => r?.data?.attributes,
+    }),
+    translateMessage: builder.mutation({
+      query: ({ id, to }) => ({ url: `/message/${id}/translate`, method: "POST", body: { to } }),
+      transformResponse: (r) => r?.data?.attributes,
     }),
     cancelOrWithdrawOffer: builder.mutation({
       query: (offerId) => ({
@@ -124,5 +139,8 @@ export const {
   useSearchMessagesQuery,
   useLazySearchMessagesQuery,
   useGetChatContextQuery,
+  useEditMessageMutation,
+  useReactMessageMutation,
+  useTranslateMessageMutation,
   useStartChatWithUserMutation,
 } = inboxApi;

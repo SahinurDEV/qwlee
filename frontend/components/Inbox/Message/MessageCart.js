@@ -1,6 +1,9 @@
 "use client";
 import {
   useCancelOrWithdrawOfferMutation,
+  useEditMessageMutation,
+  useReactMessageMutation,
+  useTranslateMessageMutation,
   useGetChatQuery,
 } from "@/app/redux/features/inbox/inboxApi";
 import { imageBaseUrl, imgUrl} from "@/lib/constant";
@@ -34,10 +37,21 @@ export function replySnippet(m) {
   return (m.content?.message || "").slice(0, 120) || fileLabel(m.content) || "Message";
 }
 
-const MessageCart = ({ message, onReply, onDelete, highlighted = false }) => {
+export const REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🙏", "✅", "🎉"];
+const EDIT_WINDOW_MS = 15 * 60 * 1000;
+const browserLang = () => (typeof navigator !== "undefined" && (navigator.language || "en").slice(0, 2)) || "en";
+
+const MessageCart = ({ message, onReply, onDelete, onUpdated, highlighted = false }) => {
   const user = useUser();
-  const { id: messageId, content, chat, sender, createdAt, replyTo, deletedForEveryone } = message || {};
+  const { id: messageId, content, chat, sender, createdAt, replyTo, deletedForEveryone, editedAt, reactions = [], autoReply } = message || {};
   const [menuOpen, setMenuOpen] = useState(false);
+  const [reactOpen, setReactOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [translation, setTranslation] = useState(null);
+  const [editMessage, { isLoading: saving }] = useEditMessageMutation();
+  const [reactMessage] = useReactMessageMutation();
+  const [translateMessage, { isLoading: translating }] = useTranslateMessageMutation();
   const { data: receiver } = useGetChatQuery(chat);
   const me = user?.id === sender?.id;
   const [createOrder] = useCreateBuyerOrderMutation();
@@ -350,6 +364,41 @@ const MessageCart = ({ message, onReply, onDelete, highlighted = false }) => {
   };
 
   const gigRef = content?.gigReference;
+  const msgId = messageId || message?._id;
+  const canEdit =
+    me && !deletedForEveryone && !autoReply && content?.messageType === "text" &&
+    !/Started a video call/i.test(content?.message || "") &&
+    Date.now() - new Date(createdAt).getTime() < EDIT_WINDOW_MS;
+  const canTranslate = !me && !deletedForEveryone && !!(content?.message || "").trim();
+
+  const saveEdit = async () => {
+    const text = draft.trim();
+    if (!text || text === content?.message) return setEditing(false);
+    const res = await editMessage({ id: msgId, message: text });
+    if (res.error) return toast.error(res.error?.data?.message || "Could not edit the message");
+    onUpdated?.(res.data);
+    setEditing(false);
+  };
+  const react = async (emoji) => {
+    setReactOpen(false);
+    const res = await reactMessage({ id: msgId, emoji });
+    if (res.error) return toast.error(res.error?.data?.message || "Could not react");
+    onUpdated?.(res.data);
+  };
+  const translate = async () => {
+    if (translation) return setTranslation(null);
+    const res = await translateMessage({ id: msgId, to: browserLang() });
+    if (res.error) return toast.error(res.error?.data?.message || "Translation isn't available right now");
+    setTranslation(res.data?.text || "");
+  };
+  const reactionGroups = Object.entries(
+    (reactions || []).reduce((acc, r) => {
+      acc[r.emoji] = acc[r.emoji] || { count: 0, mine: false };
+      acc[r.emoji].count += 1;
+      if (String(r.user?._id || r.user?.id || r.user) === String(user?.id)) acc[r.emoji].mine = true;
+      return acc;
+    }, {})
+  );
 
   const canDeleteForAll = me && !deletedForEveryone && content?.messageType !== "offer";
   const jumpTo = (id) => {
@@ -392,13 +441,83 @@ const MessageCart = ({ message, onReply, onDelete, highlighted = false }) => {
           {gigRef && (gigRef.gigId || gigRef.title) && (
             <GigReferenceCard gigRef={gigRef} me={me} />
           )}
-          {renderMessageContent()}
+          {autoReply && !deletedForEveryone && (
+            <span className="text-[11px] uppercase tracking-wide text-gray-400">Automatic reply</span>
+          )}
+          {editing ? (
+            <div className="w-[280px] sm:w-[400px] max-w-full">
+              <textarea
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                rows={3}
+                maxLength={5000}
+                autoFocus
+                aria-label="Edit message"
+                className="w-full p-2 text-sm border border-gray-300 rounded-lg outline-none focus:border-emerald-500"
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") setEditing(false);
+                  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); saveEdit(); }
+                }}
+              />
+              <div className="flex justify-end gap-2 mt-1">
+                <button type="button" onClick={() => setEditing(false)} className="px-3 py-1 text-xs rounded border border-gray-200">Cancel</button>
+                <button type="button" onClick={saveEdit} disabled={saving} className="px-3 py-1 text-xs rounded bg-emerald-600 text-white disabled:opacity-50">Save</button>
+              </div>
+            </div>
+          ) : (
+            renderMessageContent()
+          )}
+          {translation !== null && (
+            <p className="max-w-[500px] text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-lg p-2">
+              <span className="block text-[11px] uppercase tracking-wide text-gray-400 mb-0.5">Translated</span>
+              {translation}
+            </p>
+          )}
+          {reactionGroups.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {reactionGroups.map(([emoji, g]) => (
+                <button
+                  key={emoji}
+                  type="button"
+                  onClick={() => react(emoji)}
+                  className={`px-1.5 py-0.5 rounded-full border text-xs ${g.mine ? "border-emerald-400 bg-emerald-50" : "border-gray-200 bg-white"}`}
+                  aria-label={`${emoji} ${g.count}${g.mine ? ", including you" : ""}`}
+                >
+                  {emoji} {g.count > 1 ? g.count : ""}
+                </button>
+              ))}
+            </div>
+          )}
           <div
             className={`relative flex ${
               me ? "justify-end" : "justify-start"
             } pt-1 items-center text-xs gap-2 text-gray-500`}
           >
-            <span>{formatTimestampMessage(createdAt)}</span>
+            <span>{formatTimestampMessage(createdAt)}{editedAt && !deletedForEveryone ? " · edited" : ""}</span>
+            {!deletedForEveryone && onReply && (
+              <button type="button" onClick={() => setReactOpen((v) => !v)} className="hover:text-emerald-700 underline-offset-2 hover:underline" aria-expanded={reactOpen}>
+                React
+              </button>
+            )}
+            {canEdit && !editing && (
+              <button type="button" onClick={() => { setDraft(content?.message || ""); setEditing(true); }} className="hover:text-emerald-700 underline-offset-2 hover:underline">
+                Edit
+              </button>
+            )}
+            {canTranslate && (
+              <button type="button" onClick={translate} disabled={translating} className="hover:text-emerald-700 underline-offset-2 hover:underline disabled:opacity-50">
+                {translation !== null ? "Original" : translating ? "Translating…" : "Translate"}
+              </button>
+            )}
+            {reactOpen && (
+              <div className={`absolute bottom-full mb-1 ${me ? "right-0" : "left-0"} z-20 flex gap-1 bg-white border border-gray-200 rounded-full shadow-lg px-2 py-1`} role="menu" aria-label="Reactions">
+                {REACTIONS.map((e) => (
+                  <button key={e} type="button" role="menuitem" onClick={() => react(e)} className="text-lg leading-none p-1 hover:scale-125 transition-transform" aria-label={`React ${e}`}>
+                    {e}
+                  </button>
+                ))}
+              </div>
+            )}
             {!deletedForEveryone && onReply && (
               <button type="button" onClick={() => onReply(message)} className="hover:text-emerald-700 underline-offset-2 hover:underline">
                 Reply

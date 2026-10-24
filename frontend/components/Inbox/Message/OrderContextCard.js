@@ -16,7 +16,8 @@ const TONE = {
 };
 
 export default function OrderContextCard({ chatId }) {
-  const { data: orders = [] } = useGetChatContextQuery(chatId, { skip: !chatId });
+  const { data } = useGetChatContextQuery(chatId, { skip: !chatId });
+  const orders = data?.orders || [];
   if (!orders.length) return null;
   const open = orders.filter((o) => OPEN.includes(o.status));
   const order = open[0] || orders[0];
