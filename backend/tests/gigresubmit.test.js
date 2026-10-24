@@ -21,7 +21,7 @@ after(async () => {
 
 test("seller resubmits a gig after changes were requested", async () => {
   admin = await login("admin@example.com", "Admin123!");
-  const seller = await login("thiago.ribeiro@example.com", "Seller123!");
+  const seller = await login("seller@example.com", "Seller123!");
   const mine = (await call("GET", "/gig/mine/stats", { token: seller.token })).data.gigs;
   const g = mine.find((x) => x.status === "active");
   assert.ok(g, "seller has an active gig");
