@@ -135,6 +135,7 @@ async function computeLevelOverview(userId) {
           },
     override: isOverride ? { reason: user.levelOverride?.reason || "", setAt: user.levelOverride?.setAt || null } : null,
     computedTierId: picked.tier.id,
+    tiers: LEVEL_TIERS.map(({ id, label, minOrders, minClients, minEarnings, minRating, minResponseRate, minSuccessScore, requiresApproval }) => ({ id, label, minOrders, minClients, minEarnings, minRating, minResponseRate, minSuccessScore, requiresApproval })),
     rawStats,
   };
 }

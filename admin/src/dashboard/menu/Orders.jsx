@@ -295,6 +295,7 @@ const TICKET_CATEGORIES = [
   { value: "billing", label: "Billing" },
   { value: "trust-safety", label: "Trust & safety" },
   { value: "account", label: "Account" },
+  { value: "ip", label: "Intellectual property" },
   { value: "other", label: "Other" },
 ];
 
