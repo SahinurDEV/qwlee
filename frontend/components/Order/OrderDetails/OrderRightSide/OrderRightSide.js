@@ -28,6 +28,7 @@ import DeliverNowModal from "./DeliveryModal";
 import ExtendDeliveryDateModal from "./ExtendDeliveryDateModal";
 import LeaveReviewModal from "./LeaveReviewModal";
 import useSiteConfig from "@/hooks/useSiteConfig";
+import BuyerReviewCard from "./BuyerReviewCard";
 import OpenDisputeModal from "./OpenDisputeModal";
 import TipCard from "./TipCard";
 import MilestonesCard from "./MilestonesCard";
@@ -295,6 +296,7 @@ export default function OrderActions({ order, orderId, isSeller }) {
       {!isSeller && status === "delivered" && !myReview && !reviewWindowOpen && (
         <p className="text-xs text-gray-500">The {reviewWindowDays}-day review window for this order has closed.</p>
       )}
+      {status === "delivered" && <BuyerReviewCard orderId={orderId} isSeller={isSeller} />}
       {!isSeller && myReview && (
         <section className="bg-white border border-gray-200 rounded-2xl p-5">
           <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
