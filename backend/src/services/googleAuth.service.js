@@ -158,6 +158,9 @@ const findOrCreateUser = async (claims) => {
     role: "buyer",
     isEmailVerified: true,
     googleId: claims.sub,
+    // The Google button sits under the 18+ / Terms notice.
+    termsAcceptedAt: new Date(),
+    termsVersion: "2026-10",
     image: claims.picture || "",
   });
   created.$locals.created = true;

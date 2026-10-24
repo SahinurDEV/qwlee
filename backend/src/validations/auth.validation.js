@@ -10,6 +10,8 @@ const register = {
     // "freelancer" later via POST /v1/users/become-seller. "admin" is
     // disallowed at the public registration endpoint regardless.
     role: Joi.string().valid("freelancer", "buyer").default("buyer"),
+    // "I am 18 or older and accept the Terms and Privacy Policy".
+    acceptTerms: Joi.boolean().valid(true).required().messages({ "any.only": "Please confirm you are 18 or older and accept the Terms", "any.required": "Please confirm you are 18 or older and accept the Terms" }),
     ref: Joi.string().max(16).allow(""),
     // Optional — when present it must pass the format check; if absent the
     // controller derives one from the email and ensures it's unique.

@@ -70,7 +70,7 @@ test("referrals: link, sign-up with ref creates the invitee's first-order coupon
   assert.ok(me.data.link.endsWith(`/sign-up?ref=${me.data.code}`));
   const before = (await call("GET", "/admin/coupons?source=referral", { token: admin.token })).data.results.length;
   const email = `ref${Date.now()}@example.com`;
-  const r = await call("POST", "/auth/register", { body: { email, password: "Passw0rd!x", fullName: "Ref Friend", ref: me.data.code } });
+  const r = await call("POST", "/auth/register", { body: { acceptTerms: true, email, password: "Passw0rd!x", fullName: "Ref Friend", ref: me.data.code } });
   assert.equal(r.status, 201, JSON.stringify(r.json));
   const after = (await call("GET", "/admin/coupons?source=referral", { token: admin.token })).data.results;
   assert.equal(after.length, before + 1);
@@ -90,7 +90,7 @@ test("welcome coupon: new accounts get one first-order code, referred accounts d
     (await call("GET", "/admin/coupons?limit=100", { token: admin.token })).data.results.filter((c) => String(c.onlyUser) === id);
 
   const email = `hello${Date.now()}@example.com`;
-  assert.equal((await call("POST", "/auth/register", { body: { email, password: "Passw0rd!x", fullName: "New Buyer" } })).status, 201);
+  assert.equal((await call("POST", "/auth/register", { body: { acceptTerms: true, email, password: "Passw0rd!x", fullName: "New Buyer" } })).status, 201);
   const mine = await couponsFor(await userId(email));
   assert.equal(mine.length, 1);
   assert.equal(mine[0].source, "welcome");
@@ -99,7 +99,7 @@ test("welcome coupon: new accounts get one first-order code, referred accounts d
   const buyer = await login("buyer@example.com", "Buyer123!");
   const ref = (await call("GET", "/growth/referrals/me", { token: buyer.token })).data.code;
   const email2 = `hello2${Date.now()}@example.com`;
-  assert.equal((await call("POST", "/auth/register", { body: { email: email2, password: "Passw0rd!x", fullName: "Ref Buyer", ref } })).status, 201);
+  assert.equal((await call("POST", "/auth/register", { body: { acceptTerms: true, email: email2, password: "Passw0rd!x", fullName: "Ref Buyer", ref } })).status, 201);
   const theirs = await couponsFor(await userId(email2));
   assert.deepEqual(theirs.map((c) => c.source), ["referral"]);
 
