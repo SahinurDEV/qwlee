@@ -77,7 +77,7 @@ async function refundTip(orderId, tipSessionId, reason = "") {
       { $set: { "tips.$.refund": { status: "processing", at: new Date(), reason: String(reason).slice(0, 300) } } }
     );
     if (!claimed.modifiedCount) return { error: "Tip refund already in progress", code: 409 };
-    await User.updateOne({ _id: order.freelancerId }, { $inc: { balance: -Number(tip.net || 0) } });
+    await require("./clearance.service").debit(order.freelancerId, Number(tip.net || 0), { ref: order._id, source: "tip" });
   }
   const isStripe = tip.provider === "stripe" && !!process.env.STRIPE_SECRET_KEY && !String(tipSessionId).startsWith("demo");
   let result;

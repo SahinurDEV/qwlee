@@ -162,7 +162,7 @@ async function pay(c, invId) {
   const feePercent = await feeFor(c.sellerId);
   const fee = round2((inv.amount * feePercent) / 100);
   const net = round2(inv.amount - fee);
-  await User.updateOne({ _id: c.sellerId }, { $inc: { balance: net } });
+  await require("./clearance.service").credit(c.sellerId, net, { source: "hourly", ref: c._id });
   await HourlyContract.updateOne({ _id: c._id, "invoices._id": inv._id }, { $set: { "invoices.$.status": "paid", "invoices.$.paidAt": new Date(), "invoices.$.feePercent": feePercent, "invoices.$.fee": fee, "invoices.$.net": net } });
   notify(c.sellerId, `Paid: $${net.toFixed(2)} for ${inv.hours} h on "${c.title}"`, c._id, "freelancer");
   return true;

@@ -10,6 +10,9 @@ router
 // Which payout methods are live (real provider) or demo.
 router.get("/methods", auth("common"), (req, res) =>
   res.json({ code: 200, message: "OK", data: { attributes: { bank: "manual", ...require("../../services/payouts.service").status() } } }));
+// Earnings still waiting out the clearance period.
+router.get("/clearance", auth("common"), require("../../utils/catchAsync")(async (req, res) =>
+  res.json({ code: 200, message: "Clearance", data: { attributes: await require("../../services/clearance.service").summary(req.user.id) } })));
 // Finance: batch approve, bank CSV export, bank statement reconciliation.
 const batch = require("../../services/payoutBatch.service");
 const catchAsync = require("../../utils/catchAsync");

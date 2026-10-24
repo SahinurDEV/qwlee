@@ -91,6 +91,9 @@ function defaults() {
     marketplace: {
       feePercent: Number(process.env.PLATFORM_FEE_PERCENT ?? 5),
       autoCompleteDays: Number(process.env.AUTO_COMPLETE_DAYS) || 3,
+      // Test stacks (TEST_MODE) credit at once so balance checks stay simple.
+      clearanceDays: Number(process.env.CLEARANCE_DAYS ?? (process.env.TEST_MODE === "true" ? 0 : 14)),
+      clearanceDaysFast: 7,
       demoPayments: process.env.DEMO_PAYMENTS === "true",
       requireGigApproval: false,
       secondApprovalOver: Number(process.env.SECOND_APPROVAL_OVER || 0),
@@ -133,6 +136,9 @@ function normalise(site = {}, base = defaults()) {
     marketplace: {
       feePercent: num(m.feePercent, 5, 0, 50),
       autoCompleteDays: Math.round(num(m.autoCompleteDays, 3, 1, 30)),
+      // Days before earnings can be withdrawn; Fast = Top Rated / Premium.
+      clearanceDays: Math.round(num(m.clearanceDays, 14, 0, 90)),
+      clearanceDaysFast: Math.round(num(m.clearanceDaysFast, 7, 0, 90)),
       demoPayments: bool(m.demoPayments, false),
       requireGigApproval: bool(m.requireGigApproval, false),
       // Refunds / payouts at or above this amount (USD) need a second
