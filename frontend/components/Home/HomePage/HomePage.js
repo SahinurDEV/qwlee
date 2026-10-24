@@ -10,6 +10,7 @@ import MostPopularCategories from "@/components/Home/MostPopularCategories/MostP
 import MostPopularFreelancers from "@/components/Home/MostPopularFreelancers/MostPopularFreelancers";
 import Testimonials from "@/components/Home/Testimonials/Testimonials";
 import TheLatestNewsAndBlog from "@/components/Home/TheLatestNewsAndBlog/TheLatestNewsAndBlog";
+import HowItWorks from "@/components/Home/HowItWorks/HowItWorks";
 import WhyChooseUs from "@/components/Home/WhyChooseUs/WhyChooseUs";
 import Reveal from "@/components/common/Reveal";
 
@@ -18,6 +19,7 @@ const SECTIONS = {
   recentlyViewed: RecentlyViewedGigs, // renders nothing for first-time visitors
   recommended: RecommendedGigs,
   categories: MostPopularCategories,
+  howItWorks: HowItWorks,
   freelancers: MostPopularFreelancers,
   whyUs: WhyChooseUs,
   testimonials: Testimonials,

@@ -11,6 +11,8 @@ test("homepage stats count real sellers, gigs and delivered orders", async () =>
   assert.ok(s.gigs > 0, "seed has gigs");
   assert.ok(s.orders > 0, "delivered orders are counted from payments");
   assert.ok(s.countries > 0);
+  assert.ok(s.reviews > 0, "review count for the trust strip");
+  assert.ok(s.avgRating >= 1 && s.avgRating <= 5);
 });
 
 const login = async (email, password) => {
