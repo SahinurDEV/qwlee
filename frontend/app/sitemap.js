@@ -3,7 +3,8 @@ import { apiGet, siteOrigin } from "@/lib/server";
 export const dynamic = "force-dynamic";
 
 const STATIC = ["", "/gig", "/services", "/hire-freelancers", "/requests", "/blogs",
-  "/about-us", "/contact-us", "/privacy-policy", "/terms-of-service", "/trust-safety"];
+  "/about-us", "/contact-us", "/privacy-policy", "/terms-of-service", "/trust-safety",
+  "/community-standards", "/refund-policy", "/payment-terms", "/intellectual-property"];
 
 export default async function sitemap() {
   const origin = await siteOrigin();
