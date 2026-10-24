@@ -84,7 +84,7 @@ const addMessage = catchAsync(async (req, res) => {
   // A reply must point at a message in the same conversation.
   let replyToId;
   if (replyTo) {
-    const { Message } = require("../models");
+    const { Messages: Message } = require("../models");
     const parent = require("mongoose").isValidObjectId(replyTo)
       ? await Message.findById(replyTo).select("chat").lean()
       : null;
