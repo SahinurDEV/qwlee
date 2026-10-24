@@ -3,10 +3,17 @@ import BlogCard from "@/components/Blogs/BlogCard";
 import Loading from "@/components/CustomCreate/Loading";
 import Breadcrumb from "@/components/Layout/Breadcrumb";
 import PrimaryLayout from "@/components/Layout/PrimaryLayout";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { useGetAllBlogsQuery } from "../redux/features/getAllBlogs";
 
+const TABS = [["", "All"], ["article", "Articles"], ["guide", "Guides"]];
+
 function Blogs() {
-  const { data, isLoading, isError, error } = useGetAllBlogsQuery();
+  const params = useSearchParams();
+  const kind = ["article", "guide"].includes(params.get("kind")) ? params.get("kind") : "";
+  const { data, isLoading, isError, error } = useGetAllBlogsQuery(kind || undefined);
   const blogsData = data?.data?.attributes?.results;
   let content = null;
   if (isLoading) {
@@ -41,10 +48,31 @@ function Blogs() {
           pathTitle={"Blog"}
           path={"/blogs"}
         />
-        <div className="container py-[100px]">{content}</div>
+        <div className="container py-10 md:py-16">
+          <div role="tablist" aria-label="Show" className="mb-6 inline-flex rounded-full bg-gray-100 p-1">
+            {TABS.map(([k, label]) => (
+              <Link
+                key={k || "all"}
+                role="tab"
+                aria-selected={kind === k}
+                href={k ? `/blogs?kind=${k}` : "/blogs"}
+                className={`px-4 py-1.5 rounded-full text-sm font-medium ${kind === k ? "bg-white text-emerald-700 shadow-sm" : "text-gray-600 hover:text-gray-900"}`}
+              >
+                {label}
+              </Link>
+            ))}
+          </div>
+          {content}
+        </div>
       </PrimaryLayout>
     </>
   );
 }
 
-export default Blogs;
+export default function BlogsPage() {
+  return (
+    <Suspense fallback={null}>
+      <Blogs />
+    </Suspense>
+  );
+}

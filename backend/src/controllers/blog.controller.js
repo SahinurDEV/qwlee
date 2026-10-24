@@ -9,7 +9,8 @@ const he = require("he");
 const createBlog = catchAsync(async (req, res) => {
   req.body.description = he.decode(req.body.description);
   const { title, author, tags, content, description } = req.body;
-  const blogData = { title, author, tags, content, description };
+  const kind = req.body.kind === "guide" ? "guide" : "article";
+  const blogData = { title, author, tags, content, description, kind };
 
   if (title) {
     blogData.slug = title.toLowerCase().split(" ").join("-");
@@ -49,6 +50,8 @@ const getBlog = catchAsync(async (req, res) => {
 
 const getBlogs = catchAsync(async (req, res) => {
   const filter = pick(req.query, ["title"]);
+  if (req.query.kind === "guide") filter.kind = "guide";
+  else if (req.query.kind === "article") filter.kind = { $ne: "guide" };
   const options = pick(req.query, ["sortBy", "limit", "page"]);
   const result = await blogService.queryBlogs(filter, options);
   res
@@ -65,6 +68,7 @@ const getBlogs = catchAsync(async (req, res) => {
 
 const updateBlog = catchAsync(async (req, res) => {
   req.body.description = he.decode(req.body.description);
+  if (req.body.kind !== undefined) req.body.kind = req.body.kind === "guide" ? "guide" : "article";
   const image = req.file?.cloudUrl;
   const blog = image
     ? await blogService.updateBlogById(req.params.blogId, req.body, image)
