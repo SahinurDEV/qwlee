@@ -12,6 +12,8 @@ const blogSchema = new mongoose.Schema(
       type: String,
       required: [true, "Description is must be Required"],
     },
+    // "guide" posts are how-tos listed under /guides and in the Help centre.
+    kind: { type: String, enum: ["article", "guide"], default: "article", index: true },
   },
   { timestamps: true }
 );

@@ -1,4 +1,4 @@
-import { Button, Descriptions, Form, Input, notification } from "antd";
+import { Select, Button, Descriptions, Form, Input, notification } from "antd";
 import JoditEditor from "jodit-react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { IoIosArrowBack } from "react-icons/io";
@@ -36,6 +36,7 @@ const Addblog = () => {
 
       formData.append("title", values?.title);
       formData.append("author", values?.author);
+      formData.append("kind", values?.kind || "article");
       formData.append("image", image);
       formData.append('description',description);
       formData.append('content', values?.content)
@@ -90,6 +91,7 @@ const Addblog = () => {
         layout="vertical"
         initialValues={{
           remember: true,
+          kind: "article",
           
         }}
         onFinish = {handleCreateBlog}
@@ -116,6 +118,14 @@ const Addblog = () => {
                 type="text"
                 className="w-full pl-4 h-14 borde mt-4 border-[#00BF63] rounded-md bg-[#E6F9EF]"
                 required
+              />
+            </Form.Item>
+          </div>
+          <div className="w-full">
+            <Form.Item name="kind" label={<span className="font-normal text-[18px] text-[#494949]">Type</span>}>
+              <Select
+                size="large"
+                options={[{ value: "article", label: "Article (blog)" }, { value: "guide", label: "Guide (how-to, shown in Help)" }]}
               />
             </Form.Item>
           </div>
