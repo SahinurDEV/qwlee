@@ -28,6 +28,7 @@ import { formatDate, formatMoney, timeAgo, truncate } from "../../utils/format";
 import getImageUrl from "../../utils/getImageUrl";
 
 import "react-responsive-modal/styles.css";
+import { frontendUrl } from "../../baseUrl";
 
 export default function UserListPage({ role }) {
   const navigate = useNavigate();
@@ -222,7 +223,7 @@ export default function UserListPage({ role }) {
             ))}
           {u.username ? (
             <a
-              href={`http://localhost:8000/${u.username}`}
+              href={`${frontendUrl}/${u.username}`}
               target="_blank"
               rel="noreferrer"
               className="text-xs font-medium text-ink-500 hover:text-ink-900 px-2 py-1 rounded-md hover:bg-ink-100"
