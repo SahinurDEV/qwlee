@@ -15,7 +15,7 @@ Full feature list: [docs/FEATURES.md](docs/FEATURES.md). Architecture and develo
 
 **qwlee – Full User Manual: Open-Source Freelance Marketplace (Buyer, Seller & Admin Walkthrough)**
 
-[![qwlee demo](https://img.youtube.com/vi/m91b9sDshw0/hqdefault.jpg)](https://youtu.be/m91b9sDshw0)
+[![qwlee demo](https://img.youtube.com/vi/m91b9sDshw0/maxresdefault.jpg)](https://youtu.be/m91b9sDshw0)
 
 <details>
 <summary>Chapters</summary>
