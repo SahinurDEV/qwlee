@@ -37,6 +37,43 @@ async function attach(newUser, refCode) {
   }
 }
 
+/**
+ * First-order welcome discount for a new account. Skipped when the
+ * account already got the referral welcome coupon or has ordered.
+ */
+async function grantWelcome(user) {
+  try {
+    const g = (await siteSettings.get()).growth;
+    if (!(g.welcomePercent > 0) || !user?._id) return null;
+    const has = await Coupon.exists({ onlyUser: user._id, firstOrderOnly: true, source: { $in: ["referral", "welcome"] } });
+    if (has || (await Payment.exists({ clientId: user._id }))) return null;
+    const c = await Coupon.create({
+      code: coupons.randomCode("HELLO"), type: "percent", value: g.welcomePercent, maxDiscount: 100,
+      maxUses: 1, perUserLimit: 1, onlyUser: user._id, firstOrderOnly: true, source: "welcome",
+      expiresAt: new Date(Date.now() + g.welcomeDays * 86400e3), note: "Welcome discount on the first order",
+    });
+    await require("./notification.service").addCustomNotification("buyer-notification", user._id, {
+      receiverId: user._id, role: "buyer", type: "welcome", viewStatus: false,
+      message: `Welcome to Qwlee! Here's ${g.welcomePercent}% off your first order: ${c.code}`,
+    }).catch(() => {});
+    return c;
+  } catch (e) {
+    logger.warn(`welcome coupon failed: ${e.message}`);
+    return null;
+  }
+}
+
+/** The signed-in user's unused first-order coupon, if any (for banners). */
+async function myWelcome(user) {
+  // Same rule as coupon.service: any order means it's no longer the first.
+  if (await Payment.exists({ clientId: user._id || user.id })) return null;
+  const c = await Coupon.findOne({
+    onlyUser: user._id || user.id, firstOrderOnly: true, active: true, uses: 0,
+    $or: [{ expiresAt: null }, { expiresAt: { $gt: new Date() } }],
+  }).sort({ value: -1 }).lean();
+  return c ? { code: c.code, type: c.type, value: c.value, expiresAt: c.expiresAt } : null;
+}
+
 /** Called when an order completes: reward the inviter once per invitee. */
 async function onOrderCompleted(order) {
   try {
@@ -86,4 +123,6 @@ async function summary(user) {
   };
 }
 
-module.exports = { codeFor, attach, onOrderCompleted, summary };
+module.exports = {
+  grantWelcome,
+  myWelcome, codeFor, attach, onOrderCompleted, summary };

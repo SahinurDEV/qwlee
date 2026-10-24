@@ -78,3 +78,33 @@ test("referrals: link, sign-up with ref creates the invitee's first-order coupon
   const again = await call("GET", "/growth/referrals/me", { token: buyer.token });
   assert.equal(again.data.invited, me.data.invited + 1);
 });
+
+test("welcome coupon: new accounts get one first-order code, referred accounts don't get a second", async () => {
+  const admin = await login("admin@example.com", "Admin123!");
+  const userId = async (email) => {
+    const r = await call("GET", `/admin/users?search=${encodeURIComponent(email)}`, { token: admin.token });
+    const u = (r.data.results || []).find((x) => x.email === email);
+    return String(u?.id || u?._id);
+  };
+  const couponsFor = async (id) =>
+    (await call("GET", "/admin/coupons?limit=100", { token: admin.token })).data.results.filter((c) => String(c.onlyUser) === id);
+
+  const email = `hello${Date.now()}@example.com`;
+  assert.equal((await call("POST", "/auth/register", { body: { email, password: "Passw0rd!x", fullName: "New Buyer" } })).status, 201);
+  const mine = await couponsFor(await userId(email));
+  assert.equal(mine.length, 1);
+  assert.equal(mine[0].source, "welcome");
+  assert.ok(mine[0].code.startsWith("HELLO") && mine[0].firstOrderOnly);
+
+  const buyer = await login("buyer@example.com", "Buyer123!");
+  const ref = (await call("GET", "/growth/referrals/me", { token: buyer.token })).data.code;
+  const email2 = `hello2${Date.now()}@example.com`;
+  assert.equal((await call("POST", "/auth/register", { body: { email: email2, password: "Passw0rd!x", fullName: "Ref Buyer", ref } })).status, 201);
+  const theirs = await couponsFor(await userId(email2));
+  assert.deepEqual(theirs.map((c) => c.source), ["referral"]);
+
+  // Existing buyers with orders see no welcome offer.
+  const w = await call("GET", "/growth/welcome/me", { token: buyer.token });
+  assert.equal(w.status, 200);
+  assert.equal(w.json.data.attributes, null);
+});

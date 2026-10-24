@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import PrimaryLayout from "@/components/Layout/PrimaryLayout";
+import WelcomeOffer from "@/components/Growth/WelcomeOffer";
 import HeroQwlee from "@/components/Home/HeroQwlee/HeroQwlee";
 import MarketplaceStats from "@/components/Home/HeroSection/MarketplaceStats";
 import RecentlyViewedGigs from "@/components/Home/RecentlyViewed/RecentlyViewedGigs";
@@ -65,6 +66,7 @@ export default function HomePage({ layout }) {
     <PrimaryLayout>
       <main>
         <HeroQwlee />
+        <WelcomeOffer />
         {sections
           .filter((s) => s.enabled)
           .map(({ key }) => {
