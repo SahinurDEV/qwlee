@@ -16,9 +16,9 @@ const { Gig, Payment, User } = require("../models");
 
 const DEFAULT_LEVEL_TIERS = [
   { id: "level0", label: "New seller", minOrders: 0, minClients: 0, minEarnings: 0, minRating: 0, minResponseRate: 0, minSuccessScore: 0, requiresApproval: false },
-  { id: "level1", label: "Level 1", minOrders: 5, minClients: 3, minEarnings: 400, minRating: 4.4, minResponseRate: 80, minSuccessScore: 0, requiresApproval: false },
-  { id: "level2", label: "Level 2", minOrders: 20, minClients: 10, minEarnings: 2000, minRating: 4.6, minResponseRate: 90, minSuccessScore: 0, requiresApproval: false },
-  { id: "topRated", label: "Top Rated", minOrders: 40, minClients: 20, minEarnings: 10000, minRating: 4.7, minResponseRate: 90, minSuccessScore: 0, requiresApproval: true },
+  { id: "level1", label: "Level 1", minOrders: 5, minClients: 3, minEarnings: 400, minRating: 4.4, minResponseRate: 80, minSuccessScore: 8, requiresApproval: false },
+  { id: "level2", label: "Level 2", minOrders: 20, minClients: 10, minEarnings: 2000, minRating: 4.6, minResponseRate: 90, minSuccessScore: 8, requiresApproval: false },
+  { id: "topRated", label: "Top Rated", minOrders: 40, minClients: 20, minEarnings: 10000, minRating: 4.7, minResponseRate: 90, minSuccessScore: 8, requiresApproval: true },
 ];
 
 // Fill fields older saved tiers don't have from the default with the same id.
@@ -27,7 +27,8 @@ function withDefaults(t) {
   return {
     ...t,
     minResponseRate: t.minResponseRate ?? d.minResponseRate ?? 0,
-    minSuccessScore: t.minSuccessScore ?? d.minSuccessScore ?? 0,
+    // Success Score is 1–10; values above 10 came from the old % field.
+    minSuccessScore: (t.minSuccessScore ?? d.minSuccessScore ?? 0) > 10 ? 0 : t.minSuccessScore ?? d.minSuccessScore ?? 0,
     requiresApproval: t.requiresApproval ?? d.requiresApproval ?? false,
   };
 }
@@ -50,7 +51,8 @@ function qualifies(stats, tier) {
     stats.earnings >= tier.minEarnings &&
     stats.rating >= tier.minRating &&
     stats.responseRate >= (tier.minResponseRate || 0) &&
-    (!tier.minSuccessScore || (stats.successScore ?? 0) >= tier.minSuccessScore)
+    // Success Score (1–10). No score yet (too few recent orders) does not block.
+    (!tier.minSuccessScore || stats.successScore == null || stats.successScore >= tier.minSuccessScore)
   );
 }
 
@@ -77,6 +79,7 @@ async function statsFor(oid, user) {
   ]);
   const rs = await require("./message.service").responseStats(oid).catch(() => ({}));
   const jobSuccess = await require("./jobSuccess.service").forSeller(oid).catch(() => null);
+  const success = await require("./successScore.service").forSeller(oid).catch(() => null);
   return {
     completedOrders: agg.completedOrders || 0,
     earnings: agg.earnings || 0,
@@ -85,7 +88,8 @@ async function statsFor(oid, user) {
     totalReviews: Number(user.review?.total || 0),
     // No incoming messages yet counts as 100%: nothing went unanswered.
     responseRate: rs?.rate ?? 100,
-    successScore: jobSuccess?.score ?? null,
+    successScore: success?.score ?? null,
+    success,
     jobSuccess,
   };
 }
@@ -107,10 +111,11 @@ async function computeLevelOverview(userId) {
   const currentIdx = LEVEL_TIERS.findIndex((t) => t.id === current.id);
   const atTop = currentIdx === LEVEL_TIERS.length - 1;
   const next = LEVEL_TIERS[Math.min(currentIdx + 1, LEVEL_TIERS.length - 1)];
-  const { jobSuccess, ...rawStats } = stats;
+  const { jobSuccess, success, ...rawStats } = stats;
 
   return {
     jobSuccess,
+    success,
     user: { name: user.fullName || user.username || "Seller", username: user.username || null },
     currentLevel: current,
     nextLevel: atTop || isOverride ? null : next,
@@ -130,7 +135,7 @@ async function computeLevelOverview(userId) {
             earnings: { value: stats.earnings, target: next.minEarnings },
             rating: { value: stats.rating, target: next.minRating },
             responseRate: { value: stats.responseRate, target: next.minResponseRate || 0 },
-            ...(next.minSuccessScore ? { successScore: { value: stats.successScore ?? 0, target: next.minSuccessScore } } : {}),
+            ...(next.minSuccessScore ? { successScore: { value: stats.successScore, target: next.minSuccessScore } } : {}),
             ...(next.requiresApproval ? { approval: { value: approved ? 1 : 0, target: 1 } } : {}),
           },
     override: isOverride ? { reason: user.levelOverride?.reason || "", setAt: user.levelOverride?.setAt || null } : null,
@@ -257,7 +262,7 @@ async function updateTiers(tiers) {
     minEarnings: Number(t.minEarnings) || 0,
     minRating: Number(t.minRating) || 0,
     minResponseRate: Math.min(100, Math.max(0, Number(t.minResponseRate) || 0)),
-    minSuccessScore: Math.min(100, Math.max(0, Number(t.minSuccessScore) || 0)),
+    minSuccessScore: Math.min(10, Math.max(0, Number(t.minSuccessScore) || 0)),
     requiresApproval: t.requiresApproval === true || t.requiresApproval === "true",
   }));
   for (const t of cleaned) {
@@ -323,6 +328,7 @@ async function listMyGigsWithStats(userId) {
   ];
   const counts = Object.fromEntries(STATUSES.map((s) => [s, 0]));
 
+  const scores = await require("./successScore.service").forSellerGigs(oid).catch(() => new Map());
   const decorated = gigs.map((g) => {
     const status = g.gigStatus || "active";
     if (counts[status] != null) counts[status] += 1;
@@ -338,6 +344,7 @@ async function listMyGigsWithStats(userId) {
       moderation: g.moderation || {},
       subscription: g.subscription || { enabled: false, discountPercent: 0 },
       createdAt: g.createdAt,
+      successScore: scores.get(String(g._id)) || null,
       stats: {
         impressions: g.stats?.impressions || 0,
         clicks: g.stats?.clicks || 0,

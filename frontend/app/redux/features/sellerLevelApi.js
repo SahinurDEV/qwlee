@@ -15,6 +15,10 @@ const sellerLevelApi = baseApi.injectEndpoints({
       transformResponse: (res) => res?.data?.attributes,
       providesTags: ["SingeUser"],
     }),
+    getGigSuccessScore: builder.query({
+      query: (gigId) => ({ url: `/gig/${gigId}/success-score`, method: "GET" }),
+      transformResponse: (res) => res?.data?.attributes,
+    }),
     getMyGigsStats: builder.query({
       query: () => ({
         url: "/gig/mine/stats",
@@ -41,6 +45,7 @@ const sellerLevelApi = baseApi.injectEndpoints({
 export const {
   useGetMyLevelOverviewQuery,
   useGetMyGigsStatsQuery,
+  useGetGigSuccessScoreQuery,
   useBumpGigImpressionMutation,
   useBumpGigClickMutation,
 } = sellerLevelApi;

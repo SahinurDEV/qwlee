@@ -93,6 +93,10 @@ function defaults() {
       autoCompleteDays: Number(process.env.AUTO_COMPLETE_DAYS) || 3,
       reviewWindowDays: 14,
       reviewExtensionDays: 5,
+      // Success Score (1–10): window, minimum orders and signal weights.
+      successScoreDays: 90,
+      successScoreMinOrders: 5,
+      successScoreWeights: { privateRating: 30, rating: 20, completion: 20, onTime: 20, noDisputes: 10 },
       // Reminder emails + in-app notices (0 / false = off).
       reviewReminderDays: 2,
       fundsClearedEmail: true,
@@ -167,6 +171,11 @@ function normalise(site = {}, base = defaults()) {
       reviewWindowDays: Math.round(num(m.reviewWindowDays, 14, 0, 365)),
       // Buyer can push auto-complete back once per delivery (0 = off).
       reviewExtensionDays: Math.round(num(m.reviewExtensionDays, 5, 0, 30)),
+      successScoreDays: Math.round(num(m.successScoreDays, 90, 7, 730)),
+      successScoreMinOrders: Math.round(num(m.successScoreMinOrders, 5, 1, 100)),
+      successScoreWeights: Object.fromEntries(
+        ["privateRating", "rating", "completion", "onTime", "noDisputes"].map((k) => [k, Math.round(num((m.successScoreWeights || {})[k], { privateRating: 30, rating: 20, completion: 20, onTime: 20, noDisputes: 10 }[k], 0, 100))])
+      ),
       // Remind the buyer this many days before the review window closes (0 = off).
       reviewReminderDays: Math.round(num(m.reviewReminderDays, 2, 0, 30)),
       fundsClearedEmail: m.fundsClearedEmail === undefined ? true : m.fundsClearedEmail === true || m.fundsClearedEmail === "true",

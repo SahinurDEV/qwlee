@@ -204,7 +204,7 @@ function TierEditor() {
                     <input type="number" min={0} max={100} aria-label="Minimum response rate" value={t.minResponseRate ?? 0} onChange={(e) => patch(i, "minResponseRate", Number(e.target.value) || 0)} className="w-20 px-2 py-1.5 rounded border border-ink-200 text-sm text-right outline-none focus:border-primary-400" />
                   </td>
                   <td className="px-3 py-2 text-right">
-                    <input type="number" min={0} max={100} aria-label="Minimum success score" title="Job Success Score %, 0 = not required" value={t.minSuccessScore ?? 0} onChange={(e) => patch(i, "minSuccessScore", Number(e.target.value) || 0)} className="w-20 px-2 py-1.5 rounded border border-ink-200 text-sm text-right outline-none focus:border-primary-400" />
+                    <input type="number" min={0} max={10} aria-label="Minimum success score" title="Success Score 1–10, 0 = not required. Sellers without a score yet are not held back." value={t.minSuccessScore ?? 0} onChange={(e) => patch(i, "minSuccessScore", Number(e.target.value) || 0)} className="w-20 px-2 py-1.5 rounded border border-ink-200 text-sm text-right outline-none focus:border-primary-400" />
                   </td>
                   <td className="px-3 py-2 text-center">
                     <input type="checkbox" aria-label="Requires admin approval" checked={!!t.requiresApproval} onChange={(e) => patch(i, "requiresApproval", e.target.checked)} />
@@ -306,19 +306,20 @@ function SellersTable() {
               <th className="text-right px-3 py-2 font-semibold">Clients</th>
               <th className="text-right px-3 py-2 font-semibold">Earnings</th>
               <th className="text-right px-3 py-2 font-semibold">Rating</th>
+              <th className="text-right px-3 py-2 font-semibold" title="Success Score 1–10">Success</th>
               <th className="px-3 py-2"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-ink-100">
             {isFetching && visible.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-3 py-8 text-center text-ink-500">
+                <td colSpan={9} className="px-3 py-8 text-center text-ink-500">
                   Loading…
                 </td>
               </tr>
             ) : visible.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-3 py-8 text-center text-ink-500">
+                <td colSpan={9} className="px-3 py-8 text-center text-ink-500">
                   No sellers match this view.
                 </td>
               </tr>
@@ -376,6 +377,9 @@ function SellersTable() {
                         {" "}
                         ({s.reviews || 0})
                       </span>
+                    </td>
+                    <td className="px-3 py-3 text-right tabular-nums" title={s.stats?.success ? `${s.stats.success.orders} orders in ${s.stats.success.windowDays} days` : ""}>
+                      {s.stats?.successScore != null ? `${s.stats.successScore}/10` : "—"}
                     </td>
                     <td className="px-3 py-3 text-right whitespace-nowrap">
                       {s.topRated?.eligible && s.topRated.status !== "approved" ? (
