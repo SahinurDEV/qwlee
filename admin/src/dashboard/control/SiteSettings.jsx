@@ -126,6 +126,8 @@ export default function SiteSettings() {
               <div className="grid grid-cols-2 gap-3 mt-3">
                 <Field label="Invitee discount (%)"><input type="number" min={0} max={50} className={input} value={s.growth.refereePercent} onChange={(e) => set("growth", { refereePercent: e.target.value })} /></Field>
                 <Field label="Inviter reward ($)"><input type="number" min={0} className={input} value={s.growth.referrerReward} onChange={(e) => set("growth", { referrerReward: e.target.value })} /></Field>
+                <Field label="New-account first-order discount (%, 0 = off)"><input type="number" min={0} max={50} className={input} value={s.growth.welcomePercent ?? 10} onChange={(e) => set("growth", { welcomePercent: e.target.value })} /></Field>
+                <Field label="Welcome discount valid for (days)"><input type="number" min={1} max={365} className={input} value={s.growth.welcomeDays ?? 30} onChange={(e) => set("growth", { welcomeDays: e.target.value })} /></Field>
               </div>
             </Card>
           ) : null}
