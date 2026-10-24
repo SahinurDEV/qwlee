@@ -551,6 +551,17 @@ const STATUS_OPTIONS = [
   { v: "denied", label: "Denied", icon: IoCloseCircleOutline, tone: "rose" },
 ];
 
+// Common reasons for denying or sending back a gig (clicking one fills the note).
+const DENY_REASONS = [
+  "The title or description doesn't clearly say what the buyer gets.",
+  "Images are low quality, misleading or not your own work.",
+  "The service is not allowed under our community standards.",
+  "The gig is in the wrong category.",
+  "Prices or packages are unclear or don't match the description.",
+  "The gig asks buyers to contact or pay you outside qwlee.",
+  "It copies another seller's gig or uses content you don't own.",
+];
+
 function ModerateGigModal({ gig, onClose }) {
   const [status, setStatus] = useState(gig?.gigStatus || "active");
   const [reason, setReason] = useState(gig?.moderation?.reason || "");
@@ -647,6 +658,15 @@ function ModerateGigModal({ gig, onClose }) {
             <label className="block text-xs font-semibold uppercase tracking-wide text-ink-500 mb-1">
               Reviewer notes {reasonRequired && <span className="text-rose-500">*</span>}
             </label>
+            {reasonRequired ? (
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {DENY_REASONS.map((r) => (
+                  <button key={r} type="button" onClick={() => setReason((x) => (x.includes(r) ? x : (x ? x + " " : "") + r).slice(0, 500))} className="text-xs px-2 py-1 rounded-full border border-ink-200 hover:bg-ink-50 text-left">
+                    {r}
+                  </button>
+                ))}
+              </div>
+            ) : null}
             <textarea
               rows={4}
               value={reason}

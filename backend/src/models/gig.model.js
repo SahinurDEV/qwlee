@@ -108,6 +108,7 @@ const gigSchema = mongoose.Schema(
         default: null,
       },
       reviewedAt: { type: Date, default: null },
+      resubmittedAt: { type: Date, default: null },
     },
     isDeleted: {
       type: Boolean,
