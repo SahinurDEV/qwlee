@@ -15,6 +15,8 @@ router
     imgbbUpload(),
     messageController.addMessage
   );
+router.get("/search", auth("withOutAdmin"), messageController.searchMessages);
+
 router
   .route("/get-messages")
   .get(auth("withOutAdmin"), messageController.getMessages);

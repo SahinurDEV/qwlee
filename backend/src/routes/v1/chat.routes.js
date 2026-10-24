@@ -6,6 +6,8 @@ const router = express.Router();
 
 router.post("/add-chat", auth("withOutAdmin"), chatController.addChat);
 router.get("/get-chat", auth("withOutAdmin"), chatController.getChats);
+router.post("/:chatId/report", auth("withOutAdmin"), chatController.reportChat);
+router.get("/:chatId/context", auth("withOutAdmin"), chatController.chatContext);
 //check status in the body
 router
   .route("/:chatId")

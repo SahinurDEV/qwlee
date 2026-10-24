@@ -37,7 +37,17 @@ import {
   useAddMessageMutation,
   useGetChatQuery,
   useGetMessagesQuery,
+  useDeleteMessageMutation,
+  useChatActionMutation,
+  useReportChatMutation,
+  useLazySearchMessagesQuery,
 } from "@/app/redux/features/inbox/inboxApi";
+import ChatMenu from "./ChatMenu";
+import ReportModal from "./ReportModal";
+import OrderContextCard from "./OrderContextCard";
+import { replySnippet } from "./MessageCart";
+import { contactWarnings } from "@/utils/contactWarning";
+import { confirmModal } from "@/components/common/confirm";
 import { useGetAllGigUserQuery } from "@/app/redux/features/getAllGigForUserApi";
 import { useGetGigDetailsQuery } from "@/app/redux/features/getGigDetailsApi";
 import { useSocket } from "@/components/Context/SocketProvider";
@@ -81,6 +91,15 @@ export default function Message() {
   const typingStopTimer = useRef(null);
   const lastTypingEmit = useRef(0);
   const peerTypingTimer = useRef(null);
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQ, setSearchQ] = useState("");
+  const [highlightId, setHighlightId] = useState(null);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [deleteMessage] = useDeleteMessageMutation();
+  const [chatAction] = useChatActionMutation();
+  const [reportChat, { isLoading: reporting }] = useReportChatMutation();
+  const [runSearch, { data: searchResults = [], isFetching: searching }] = useLazySearchMessagesQuery();
 
   // Hydrate the mute flag client-side (localStorage is undefined on SSR).
   useEffect(() => setMutedState(isMuted()), []);
@@ -101,6 +120,12 @@ export default function Message() {
   const myGigs = myGigsData?.data?.attributes?.results;
 
   const counterparty = participant?.participants?.[0] || {};
+  const myId = String(user?.id || "");
+  const inList = (list) => (list || []).map((x) => String(x?._id || x?.id || x)).includes(myId);
+  const pinned = inList(participant?.pinnedBy);
+  const archived = inList(participant?.archivedBy);
+  const blockedByMe = inList(participant?.blockedBy);
+  const blocked = (participant?.blockedBy || []).length > 0 || participant?.status === "blocked";
   const {
     id: receiverId,
     fullName,
@@ -164,9 +189,17 @@ export default function Message() {
       setMessages((prev) => prev.map((m) => ((m.sender?._id || m.sender?.id || m.sender) === user?.id ? { ...m, readed: true } : m)));
     };
     socket.on("messages-read", onRead);
+    // Edits, deletes and reactions from either side.
+    const onUpdated = (m) => {
+      const id = String(m?._id || m?.id || "");
+      if (!id) return;
+      setMessages((prev) => prev.map((x) => (String(x._id || x.id) === id ? { ...x, ...m } : x)));
+    };
+    socket.on("message-updated", onUpdated);
     return () => {
       socket.off("new-message", handler);
       socket.off("messages-read", onRead);
+      socket.off("message-updated", onUpdated);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [socket, user?.id, chatId]);
@@ -311,9 +344,20 @@ export default function Message() {
     e.preventDefault();
     const text = composer.trim();
     if (!text && attachments.length === 0) return;
+    const warn = contactWarnings(text);
+    if (warn.length) {
+      const ok = await confirmModal({
+        title: "Keep your conversation on Qwlee",
+        description: `This message seems to include ${warn.join(", ")}. Sharing contact details or paying outside Qwlee breaks our Terms and removes your payment protection. Send it anyway?`,
+        confirmText: "Send anyway",
+        cancelText: "Edit message",
+      });
+      if (!ok) return;
+    }
     const formData = new FormData();
     formData.append("receiver", receiverId);
     if (text) formData.append("message", text);
+    if (replyingTo) formData.append("replyTo", replyingTo._id || replyingTo.id);
     attachments.forEach((f) => formData.append("files", f));
     const res = await addMessage(formData);
     if (res?.error) {
@@ -322,6 +366,7 @@ export default function Message() {
     }
     setComposer("");
     setAttachments([]);
+    setReplyingTo(null);
     // We just sent — don't leave a stale "is typing" hanging on the
     // other end.
     if (socket && receiverId) {
@@ -396,6 +441,65 @@ export default function Message() {
     return () => clearInterval(t);
   }, []);
 
+  async function handleChatAction(action) {
+    if (action === "block") {
+      const ok = await confirmModal({
+        title: `Block ${fullName || "this member"}?`,
+        description: "Neither of you will be able to send messages in this conversation until you unblock it.",
+        confirmText: "Block",
+        danger: true,
+      });
+      if (!ok) return;
+    }
+    const res = await chatAction({ chatId, action });
+    if (res?.error) return toast.error(res.error?.data?.message || "Something went wrong");
+    toast.success(res.data?.message || "Done");
+  }
+
+  async function handleReport(values) {
+    const res = await reportChat({ chatId, ...values });
+    if (res?.error) return toast.error(res.error?.data?.message || "Could not send the report");
+    toast.success("Thanks. Our team will review this conversation.");
+    setReportOpen(false);
+  }
+
+  async function handleDelete(m, scope) {
+    const id = m._id || m.id;
+    const res = await deleteMessage({ id, scope });
+    if (res?.error) return toast.error(res.error?.data?.message || "Could not delete");
+    if (scope === "me") {
+      setMessages((prev) => prev.filter((x) => String(x._id || x.id) !== String(id)));
+    } else {
+      setMessages((prev) =>
+        prev.map((x) =>
+          String(x._id || x.id) === String(id)
+            ? { ...x, deletedForEveryone: true, content: { messageType: "text", message: "", files: [] } }
+            : x
+        )
+      );
+    }
+  }
+
+  function startReply(m) {
+    setReplyingTo(m);
+    requestAnimationFrame(() => composerRef.current?.focus());
+  }
+
+  function submitSearch(e) {
+    e.preventDefault();
+    const q = searchQ.trim();
+    if (q.length < 2) return toast.error("Type at least 2 characters");
+    runSearch({ q, chatId });
+  }
+
+  function jumpToMessage(id) {
+    setHighlightId(String(id));
+    const el = document.getElementById(`msg-${id}`);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    else toast.message("That message is further back in the conversation.");
+    setTimeout(() => setHighlightId(null), 2500);
+  }
+
   let content;
   if (isFetching && messages.length === 0) {
     content = (
@@ -432,7 +536,12 @@ export default function Message() {
     messages.forEach((m, i) => { if (senderOf(m) === String(user?.id)) lastMine = i; });
     content = messages.map((m, i) => (
       <div key={m._id || m.id || i} ref={i === messages.length - 1 ? lastMessageRef : null}>
-        <MessageCart message={m} />
+        <MessageCart
+          message={m}
+          onReply={blocked ? undefined : startReply}
+          onDelete={handleDelete}
+          highlighted={highlightId === String(m._id || m.id)}
+        />
         {i === lastMine ? (
           <p className="text-right text-xs text-gray-400 -mt-1 mb-2 pr-1" aria-live="polite">{m.readed ? "Seen" : "Sent"}</p>
         ) : null}
@@ -511,8 +620,51 @@ export default function Message() {
               <IoNotificationsOutline className="text-xl" />
             )}
           </button>
+          <ChatMenu
+            pinned={pinned}
+            archived={archived}
+            blockedByMe={blockedByMe}
+            onAction={handleChatAction}
+            onSearch={() => setSearchOpen((v) => !v)}
+            onReport={() => setReportOpen(true)}
+          />
         </div>
       </header>
+
+      <OrderContextCard chatId={chatId} />
+
+      {searchOpen && (
+        <div className="px-3 md:px-4 py-2 border-b border-gray-100 bg-white">
+          <form onSubmit={submitSearch} className="flex items-center gap-2">
+            <input
+              autoFocus
+              value={searchQ}
+              onChange={(e) => setSearchQ(e.target.value)}
+              placeholder="Search this conversation…"
+              aria-label="Search this conversation"
+              className="flex-1 min-w-0 border border-gray-200 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-emerald-500"
+            />
+            <button type="submit" className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-sm">Search</button>
+            <button type="button" onClick={() => { setSearchOpen(false); setSearchQ(""); }} className="p-1.5 text-gray-500" aria-label="Close search">
+              <FaXmark />
+            </button>
+          </form>
+          {searching ? (
+            <p className="text-xs text-gray-500 mt-2">Searching…</p>
+          ) : searchResults.length ? (
+            <ul className="mt-2 max-h-40 overflow-y-auto divide-y divide-gray-100">
+              {searchResults.map((r) => (
+                <li key={r.id || r._id}>
+                  <button type="button" onClick={() => jumpToMessage(r.id || r._id)} className="w-full text-left py-1.5 text-sm hover:bg-gray-50">
+                    <span className="text-xs text-gray-400 mr-2">{moment(r.createdAt).format("MMM D, h:mm A")}</span>
+                    <span className="text-gray-800">{(r.content?.message || "").slice(0, 120)}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      )}
 
       {/* Reference banner */}
       {refGig && (
@@ -536,11 +688,35 @@ export default function Message() {
           {content}
         </div>
 
-        {/* Composer */}
+        {blocked ? (
+          <div className="bg-white border-t border-gray-100 p-4 text-sm text-gray-600 flex flex-wrap items-center justify-between gap-2">
+            <span>
+              {blockedByMe
+                ? "You blocked this conversation. Unblock it to send messages."
+                : "You can't reply to this conversation."}
+            </span>
+            {blockedByMe && (
+              <button type="button" onClick={() => handleChatAction("unblock")} className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm hover:bg-gray-50">
+                Unblock
+              </button>
+            )}
+          </div>
+        ) : (
         <form
           onSubmit={handleSubmit}
           className="bg-white border-t border-gray-100"
         >
+          {replyingTo && (
+            <div className="flex items-center gap-2 px-3 pt-2 text-xs text-gray-600">
+              <div className="flex-1 min-w-0 border-l-4 border-emerald-400 bg-gray-50 rounded px-2 py-1">
+                <span className="font-semibold">Replying to {String(replyingTo.sender?._id || replyingTo.sender?.id || replyingTo.sender) === myId ? "yourself" : fullName || "them"}</span>
+                <span className="block truncate">{replySnippet(replyingTo)}</span>
+              </div>
+              <button type="button" onClick={() => setReplyingTo(null)} className="p-1 text-gray-500" aria-label="Cancel reply">
+                <FaXmark />
+              </button>
+            </div>
+          )}
           <textarea
             ref={composerRef}
             value={composer}
@@ -654,7 +830,16 @@ export default function Message() {
             </button>
           </div>
         </form>
+        )}
       </div>
+
+      <ReportModal
+        open={reportOpen}
+        name={fullName}
+        submitting={reporting}
+        onClose={() => setReportOpen(false)}
+        onSubmit={handleReport}
+      />
 
       <AllGigsModal
         isOpen={isAllGigsModalOpen}

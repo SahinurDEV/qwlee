@@ -18,7 +18,9 @@ import Image from "next/image";
 import { useParams } from "next/navigation";
 import { IoSearch } from "react-icons/io5";
 
-import { useGetChatsQuery } from "@/app/redux/features/inbox/inboxApi";
+import { useGetChatsQuery, useLazySearchMessagesQuery } from "@/app/redux/features/inbox/inboxApi";
+import Link from "next/link";
+import moment from "moment";
 import { useSocket } from "@/components/Context/SocketProvider";
 import useUser from "@/hooks/useUser";
 import ChatCart from "./ChatCart";
@@ -37,9 +39,19 @@ function lastTime(entry) {
 export default function Chat() {
   const [chats, setChats] = useState([]);
   const [query, setQuery] = useState("");
-  const { data, isFetching, isError } = useGetChatsQuery({
-    refetchOnMountOrArgChange: true,
-  });
+  const [showArchived, setShowArchived] = useState(false);
+  const { data, isFetching, isError } = useGetChatsQuery(
+    { archived: showArchived },
+    { refetchOnMountOrArgChange: true }
+  );
+  // Message search across all conversations (debounced, 2+ characters).
+  const [runSearch, { data: hits = [], isFetching: searching }] = useLazySearchMessagesQuery();
+  useEffect(() => {
+    const q = query.trim();
+    if (q.length < 2) return;
+    const t = setTimeout(() => runSearch({ q }), 350);
+    return () => clearTimeout(t);
+  }, [query, runSearch]);
   const { socket } = useSocket();
   const user = useUser();
   // The chat currently open in the right pane; we clear its unread count
@@ -163,7 +175,10 @@ export default function Chat() {
           return name.includes(q) || username.includes(q);
         })
       : withMessages;
-    return [...filtered].sort((a, b) => lastTime(b) - lastTime(a));
+    return [...filtered].sort((a, b) => {
+      if (!!a.pinned !== !!b.pinned) return a.pinned ? -1 : 1;
+      return lastTime(b) - lastTime(a);
+    });
   }, [chats, query]);
 
   let content = null;
@@ -181,12 +196,12 @@ export default function Chat() {
         Something went wrong
       </h3>
     );
-  } else if (visible.length === 0) {
+  } else if (visible.length === 0 && !(query.trim().length >= 2 && hits.length)) {
     content = (
       <div className="w-full h-full flex flex-col justify-center items-center">
         <Image width={120} height={120} src={noChat} alt="No Chat" />
         <h1 className="text-xl font-bold mt-4">
-          {query ? "No matches" : "No conversations found"}
+          {query ? "No matches" : showArchived ? "No archived conversations" : "No conversations found"}
         </h1>
       </div>
     );
@@ -217,14 +232,56 @@ export default function Chat() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="w-full bg-transparent outline-none px-2 text-gray-800"
-            placeholder="Search by name…"
-            aria-label="Search conversations"
+            placeholder="Search names and messages…"
+            aria-label="Search conversations and messages"
           />
+        </div>
+        <div className="flex gap-2 mt-3 text-sm" role="tablist">
+          {[[false, "Inbox"], [true, "Archived"]].map(([val, label]) => (
+            <button
+              key={label}
+              type="button"
+              role="tab"
+              aria-selected={showArchived === val}
+              onClick={() => setShowArchived(val)}
+              className={`px-3 py-1 rounded-full border ${showArchived === val ? "bg-emerald-600 text-white border-emerald-600" : "bg-white text-gray-600 border-gray-200"}`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
       </div>
 
       <div className="w-full h-[calc(100vh-200px)] md:h-[calc(100vh-290px)] overflow-y-scroll py-5 space-y-2 flex-grow">
         {content}
+        {query.trim().length >= 2 && (
+          <div className="px-4 pt-2">
+            <h2 className="text-xs font-semibold uppercase text-gray-500 mb-1">Messages</h2>
+            {searching ? (
+              <p className="text-sm text-gray-500">Searching…</p>
+            ) : hits.length ? (
+              <ul className="divide-y divide-gray-100">
+                {hits.map((h) => {
+                  const mine = String(h.sender?.id || h.sender?._id) === String(user?.id || user?._id);
+                  const other = mine ? h.receiver : h.sender;
+                  return (
+                    <li key={h.id || h._id}>
+                      <Link href={`/inbox/${h.chat}`} className="block py-2 hover:bg-gray-50 rounded">
+                        <div className="flex justify-between text-xs text-gray-500">
+                          <span className="font-medium text-gray-700 truncate">{other?.fullName || "Conversation"}</span>
+                          <span className="shrink-0">{moment(h.createdAt).format("MMM D")}</span>
+                        </div>
+                        <p className="text-sm text-gray-800 truncate">{mine ? "You: " : ""}{h.content?.message}</p>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p className="text-sm text-gray-500">No messages match.</p>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

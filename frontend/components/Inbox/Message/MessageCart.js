@@ -16,10 +16,28 @@ import { useCreateBuyerOrderMutation } from "@/app/redux/features/order/buyerOrd
 import { toast } from "sonner";
 import ImageWithFallback from "@/components/common/ImageWithFallback";
 import { confirmModal } from "@/components/common/confirm";
+import { useState } from "react";
 
-const MessageCart = ({ message }) => {
+const fileLabel = (c) => {
+  const t = c?.messageType;
+  if (t === "image") return "Photo";
+  if (t === "audio") return "Voice note";
+  if (t === "offer") return "Custom offer";
+  if (c?.files?.length) return "Attachment";
+  return "";
+};
+
+// Short preview of the message being replied to.
+export function replySnippet(m) {
+  if (!m) return "";
+  if (m.deletedForEveryone) return "Message deleted";
+  return (m.content?.message || "").slice(0, 120) || fileLabel(m.content) || "Message";
+}
+
+const MessageCart = ({ message, onReply, onDelete, highlighted = false }) => {
   const user = useUser();
-  const { id: messageId, content, chat, sender, createdAt } = message || {};
+  const { id: messageId, content, chat, sender, createdAt, replyTo, deletedForEveryone } = message || {};
+  const [menuOpen, setMenuOpen] = useState(false);
   const { data: receiver } = useGetChatQuery(chat);
   const me = user?.id === sender?.id;
   const [createOrder] = useCreateBuyerOrderMutation();
@@ -79,6 +97,33 @@ const MessageCart = ({ message }) => {
   };
 
   const renderMessageContent = () => {
+    if (deletedForEveryone) {
+      return (
+        <p className="max-w-[500px] border border-dashed border-gray-300 text-gray-400 italic p-3 rounded-[18px] text-sm">
+          {me ? "You deleted this message" : "This message was deleted"}
+        </p>
+      );
+    }
+    if (content.messageType === "audio" || content.messageType === "application" || content.messageType === "video") {
+      return (
+        <div className="space-y-2 max-w-[500px]">
+          {content.message ? (
+            <p className={`w-fit ${me ? "bg-primary text-white" : "bg-white"} border-[1px] border-secondary p-3 rounded-[18px] text-sm`}>
+              {content.message}
+            </p>
+          ) : null}
+          {(content.files || []).map((f, i) =>
+            f.fileType === "audio" || content.messageType === "audio" ? (
+              <audio key={i} controls preload="metadata" src={imgUrl(f.path)} className="w-[260px] max-w-full" aria-label="Voice note" />
+            ) : (
+              <a key={i} href={imgUrl(f.path)} target="_blank" rel="noreferrer" className="block underline text-sm text-emerald-700 break-all">
+                Download attachment
+              </a>
+            )
+          )}
+        </div>
+      );
+    }
     if (content.messageType === "text") {
       // Video-call invite: bubble carries a magnifier-style card with a
       // Join button. We sniff the marker we wrote in Message.js
@@ -123,7 +168,7 @@ const MessageCart = ({ message }) => {
         <p
           className={`max-w-[500px] ${
             me ? "bg-primary text-white" : "bg-white"
-          } border-[1px] border-secondary p-3 rounded-[18px] text-sm ${
+          } border-[1px] border-secondary p-3 rounded-[18px] text-sm break-words whitespace-pre-wrap ${
             me ? "rounded-br-none" : "rounded-bl-none"
           }`}
           style={{ minWidth: "50px" }}
@@ -306,12 +351,19 @@ const MessageCart = ({ message }) => {
 
   const gigRef = content?.gigReference;
 
+  const canDeleteForAll = me && !deletedForEveryone && content?.messageType !== "offer";
+  const jumpTo = (id) => {
+    const el = typeof document !== "undefined" && document.getElementById(`msg-${id}`);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
   return (
     <>
       <div
-        className={`flex items-end gap-3 my-5 ${
-          me ? "flex-row-reverse mr-5" : "ml-5"
-        }`}
+        id={`msg-${messageId}`}
+        className={`flex items-end gap-3 my-5 rounded-xl transition-colors ${
+          me ? "flex-row-reverse mr-2 sm:mr-5" : "ml-2 sm:ml-5"
+        } ${highlighted ? "bg-amber-50" : ""}`}
       >
         <Image
           width={35}
@@ -322,18 +374,54 @@ const MessageCart = ({ message }) => {
           )}
           alt={(me ? user?.fullName : receiver?.participants?.[0]?.fullName) || "Profile photo"}
         />
-        <div className={`flex flex-col gap-2 ${me ? "items-end" : "items-start"}`}>
+        <div className={`flex flex-col gap-2 min-w-0 max-w-[80%] ${me ? "items-end" : "items-start"}`}>
+          {replyTo && (replyTo.id || replyTo._id) && (
+            <button
+              type="button"
+              onClick={() => jumpTo(replyTo.id || replyTo._id)}
+              className="max-w-[500px] text-left text-xs border-l-4 border-emerald-400 bg-gray-100 rounded-md px-2 py-1 text-gray-600 hover:bg-gray-200"
+            >
+              <span className="font-semibold text-gray-700">
+                {String(replyTo.sender?.id || replyTo.sender?._id || replyTo.sender) === String(user?.id)
+                  ? "You"
+                  : replyTo.sender?.fullName || "Them"}
+              </span>
+              <span className="block truncate">{replySnippet(replyTo)}</span>
+            </button>
+          )}
           {gigRef && (gigRef.gigId || gigRef.title) && (
             <GigReferenceCard gigRef={gigRef} me={me} />
           )}
           {renderMessageContent()}
-          <p
-            className={`flex ${
+          <div
+            className={`relative flex ${
               me ? "justify-end" : "justify-start"
-            } pt-1 items-center text-xs gap-1 text-gray-500`}
+            } pt-1 items-center text-xs gap-2 text-gray-500`}
           >
             <span>{formatTimestampMessage(createdAt)}</span>
-          </p>
+            {!deletedForEveryone && onReply && (
+              <button type="button" onClick={() => onReply(message)} className="hover:text-emerald-700 underline-offset-2 hover:underline">
+                Reply
+              </button>
+            )}
+            {onDelete && (
+              <button type="button" onClick={() => setMenuOpen((v) => !v)} className="hover:text-rose-600 underline-offset-2 hover:underline" aria-expanded={menuOpen}>
+                Delete
+              </button>
+            )}
+            {menuOpen && (
+              <div className={`absolute top-full mt-1 ${me ? "right-0" : "left-0"} z-20 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-1`} role="menu">
+                <button type="button" role="menuitem" className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50" onClick={() => { setMenuOpen(false); onDelete(message, "me"); }}>
+                  Delete for me
+                </button>
+                {canDeleteForAll && (
+                  <button type="button" role="menuitem" className="w-full text-left px-3 py-2 text-sm text-rose-600 hover:bg-gray-50" onClick={() => { setMenuOpen(false); onDelete(message, "everyone"); }}>
+                    Delete for everyone
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </>
