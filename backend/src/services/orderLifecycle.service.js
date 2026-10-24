@@ -454,6 +454,7 @@ const runHousekeeping = async ({ trigger = "timer" } = {}) => {
     return late.modifiedCount || 0;
   }, trigger);
   await track("lateOrders", () => lateOrders(now), trigger);
+  await track("reviewReminders", () => reviewReminders(now), trigger);
   const autoCancelled = await track("autoCancel", () => require("./cancellation.service").autoAcceptExpired(), trigger);
   const subscriptions = await track("subscriptions", () => require("./subscription.service").billDue(), trigger);
   const announcements = await track("announcements", () => require("./announcements.service").sendDue(), trigger);
@@ -462,6 +463,41 @@ const runHousekeeping = async ({ trigger = "timer" } = {}) => {
   const kpiEmail = await track("kpiEmail", () => require("./kpi.service").maybeSendWeekly(), trigger);
   return { kpiEmail, autoCompleted, markedLate, autoCancelled, subscriptions, bansLifted, announcements };
 };
+
+/**
+ * Remind the buyer once, reviewReminderDays before the review window
+ * closes, if they have not reviewed. reviewReminderAt dedupes.
+ */
+async function reviewReminders(now = new Date()) {
+  const m = (await require("./siteSettings.service").get()).marketplace;
+  const win = Number(m.reviewWindowDays) || 0;
+  const before = Number(m.reviewReminderDays) || 0;
+  if (!win || !before) return 0;
+  const day = 86400e3;
+  const { User, Gig, Reviews } = require("../models");
+  const lead = Math.min(before, win);
+  const due = await Payment.find({
+    status: { $in: ["delivered", "completed"] },
+    reviewReminderAt: null,
+    completedAt: { $gt: new Date(now - win * day), $lte: new Date(now - (win - lead) * day) },
+  }).limit(200);
+  let n = 0;
+  for (const o of due) {
+    const set = await Payment.updateOne({ _id: o._id, reviewReminderAt: null }, { $set: { reviewReminderAt: now } });
+    if (!set.modifiedCount) continue;
+    if (await Reviews.exists({ orderId: o._id, userId: o.clientId })) continue;
+    n++;
+    const daysLeft = Math.max(1, Math.ceil((new Date(o.completedAt).getTime() + win * day - now) / day));
+    const [buyer, gig] = await Promise.all([User.findById(o.clientId), o.gigId ? Gig.findById(o.gigId).select("title").lean() : null]);
+    if (!buyer) continue;
+    const gigTitle = gig?.title || "your order";
+    try {
+      await require("./notification.service").addCustomNotification("buyer-notification", buyer._id, { receiverId: buyer._id, message: `${daysLeft === 1 ? "1 day" : `${daysLeft} days`} left to review "${gigTitle}"`, linkId: o._id, role: "buyer", type: "order", viewStatus: false });
+    } catch { /* best effort */ }
+    if (buyer.email) require("./email.service").sendReviewWindowClosing(buyer.email, { recipientName: buyer.fullName, gigTitle, orderId: String(o._id), daysLeft }).catch(() => {});
+  }
+  return n;
+}
 
 /**
  * Late orders: remind both sides once at lateReminderDays past due and

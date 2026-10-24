@@ -93,6 +93,9 @@ function defaults() {
       autoCompleteDays: Number(process.env.AUTO_COMPLETE_DAYS) || 3,
       reviewWindowDays: 14,
       reviewExtensionDays: 5,
+      // Reminder emails + in-app notices (0 / false = off).
+      reviewReminderDays: 2,
+      fundsClearedEmail: true,
       // Test stacks (TEST_MODE) credit at once so balance checks stay simple.
       clearanceDays: Number(process.env.CLEARANCE_DAYS ?? (process.env.TEST_MODE === "true" ? 0 : 14)),
       clearanceDaysFast: 7,
@@ -164,6 +167,9 @@ function normalise(site = {}, base = defaults()) {
       reviewWindowDays: Math.round(num(m.reviewWindowDays, 14, 0, 365)),
       // Buyer can push auto-complete back once per delivery (0 = off).
       reviewExtensionDays: Math.round(num(m.reviewExtensionDays, 5, 0, 30)),
+      // Remind the buyer this many days before the review window closes (0 = off).
+      reviewReminderDays: Math.round(num(m.reviewReminderDays, 2, 0, 30)),
+      fundsClearedEmail: m.fundsClearedEmail === undefined ? true : m.fundsClearedEmail === true || m.fundsClearedEmail === "true",
       // Days before earnings can be withdrawn; Fast = Top Rated / Premium.
       clearanceDays: Math.round(num(m.clearanceDays, 14, 0, 90)),
       clearanceDaysFast: Math.round(num(m.clearanceDaysFast, 7, 0, 90)),
