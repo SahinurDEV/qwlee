@@ -70,6 +70,14 @@ const ordersSchema = mongoose.Schema(
       respondBy: { type: Date, default: null },
       respondedAt: { type: Date, default: null },
     },
+    // Buyer's "ask for an update" (orderRequests.service). One open at a time.
+    updateRequest: {
+      status: { type: String, enum: ["none", "pending", "answered"], default: "none" },
+      note: { type: String, default: "" },
+      reply: { type: String, default: "" },
+      requestedAt: { type: Date, default: null },
+      answeredAt: { type: Date, default: null },
+    },
     extensionRequest: {
       newDeliveryDate: { type: Date, default: null },
       reason: { type: String, default: "" },

@@ -31,6 +31,7 @@ async function load(orderId, userId) {
 async function request(orderId, userId, reason) {
   const { order, isBuyer } = await load(orderId, userId);
   if (!OPEN.includes(order.status)) throw new ApiError(httpStatus.CONFLICT, `Order is ${order.status}`);
+  require("./orderRequests.service").assertNoOpenRequest(order, "cancellation");
   const text = String(reason || "").trim();
   if (text.length < 5) throw new ApiError(httpStatus.BAD_REQUEST, "Tell the other side why (at least 5 characters)");
   const r = await Payment.updateOne(

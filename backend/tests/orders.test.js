@@ -86,6 +86,21 @@ test("full lifecycle: requirements, delivery, revision, accept, single payout", 
   assert.equal(req.status, 200, JSON.stringify(req.json));
   assert.equal(req.data.requirementsStatus, "submitted");
 
+  // Ask for an update: buyer only, one open at a time; seller answers.
+  assert.equal((await call("POST", `/orders/${id}/update-request`, { token: seller.token, body: {} })).status, 403);
+  const up = await call("POST", `/orders/${id}/update-request`, { token: buyer.token, body: { note: "How is it going?" } });
+  assert.equal(up.status, 200, JSON.stringify(up.json));
+  assert.equal(up.data.updateRequest.status, "pending");
+  assert.equal((await call("POST", `/orders/${id}/update-request`, { token: buyer.token, body: {} })).status, 409);
+  const ans = await call("PATCH", `/orders/${id}/update-request`, { token: seller.token, body: { reply: "Halfway there, delivering tomorrow" } });
+  assert.equal(ans.status, 200, JSON.stringify(ans.json));
+  assert.equal(ans.data.updateRequest.status, "answered");
+  // A pending cancellation blocks a second kind of request.
+  assert.equal((await call("POST", `/orders/${id}/cancellation`, { token: buyer.token, body: { reason: "Changed my mind" } })).status, 200);
+  const blocked = await call("POST", `/orders/${id}/update-request`, { token: buyer.token, body: {} });
+  assert.equal(blocked.status, 409);
+  assert.equal((await call("PATCH", `/orders/${id}/cancellation`, { token: buyer.token, body: { action: "withdraw" } })).status, 200);
+
   // Only the seller can deliver.
   const deliver = async (u) => {
     const form = new FormData();
