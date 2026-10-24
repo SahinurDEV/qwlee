@@ -71,12 +71,17 @@ async function debit(userId, amount, { ref = "", source } = {}) {
 async function releaseDue(now = new Date()) {
   const due = await Clearance.find({ status: "pending", availableAt: { $lte: now } }).limit(500);
   let n = 0;
+  const sendEmail = (await siteSettings.get()).marketplace.fundsClearedEmail !== false;
   for (const r of due) {
     const claimed = await Clearance.updateOne({ _id: r._id, status: "pending" }, { $set: { status: "released", releasedAt: now } });
     if (!claimed.modifiedCount) continue;
     await User.updateOne({ _id: r.userId }, { $inc: { balance: r.amount, pendingBalance: -r.amount } });
     n += 1;
     await Notification.create({ receiverId: r.userId, message: `$${r.amount.toFixed(2)} cleared and is ready to withdraw`, linkId: "earnings", role: "freelancer" }).catch(() => null);
+    if (sendEmail) {
+      const u = await User.findById(r.userId, "email fullName").lean().catch(() => null);
+      if (u?.email) require("./email.service").sendFundsCleared(u.email, { recipientName: u.fullName, amount: r.amount }).catch((e) => logger.warn(`funds cleared email: ${e.message}`));
+    }
   }
   return n;
 }
