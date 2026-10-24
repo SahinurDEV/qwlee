@@ -262,7 +262,7 @@ const completeOrder = async (order, { reason = "accepted", fromStatuses = OPEN }
     { new: true }
   );
   if (!swapped) throw new ApiError(httpStatus.CONFLICT, "Order cannot be completed in its current state");
-  await User.updateOne({ _id: order.freelancerId }, { $inc: { balance: net } });
+  await require("./clearance.service").credit(order.freelancerId, net, { source: "order", ref: order._id });
   require("./referral.service").onOrderCompleted(swapped).catch(() => {});
   require("./gigStats.service").recomputeLater(swapped.gigId);
   return swapped;
@@ -301,7 +301,7 @@ const recordTip = async (orderId, amount, { provider, sessionId }) => {
     { new: true }
   );
   if (!updated) return null;
-  await User.updateOne({ _id: updated.freelancerId }, { $inc: { balance: net } });
+  await require("./clearance.service").credit(updated.freelancerId, net, { source: "tip", ref: orderId });
   return updated;
 };
 
@@ -403,6 +403,7 @@ const runHousekeeping = async ({ trigger = "timer" } = {}) => {
   }, trigger);
   await track("contests", () => require("./contest.service").housekeeping(now), trigger);
   await track("sellerPlans", () => require("./sellerPlan.service").renewDue(now), trigger);
+  await track("clearance", () => require("./clearance.service").releaseDue(now), trigger);
   const markedLate = await track("markLate", async () => {
     const late = await Payment.updateMany(
       { status: "active", deliveryDate: { $lt: now }, "delivery.state": { $ne: "submitted" }, requirementsStatus: { $ne: "pending" } },

@@ -260,9 +260,7 @@ const cancelOrder = async (orderId, { reason = "", adminId } = {}) => {
     // settlement snapshot existed) used the old fixed 5% fee.
     const credited = order.sellerEarning != null ? order.sellerEarning : amount * 0.95;
     if (credited > 0) {
-      await User.findByIdAndUpdate(order.freelancerId, {
-        $inc: { balance: -credited },
-      });
+      await require("./clearance.service").debit(order.freelancerId, credited, { ref: order._id, source: "order" });
     }
   }
 
