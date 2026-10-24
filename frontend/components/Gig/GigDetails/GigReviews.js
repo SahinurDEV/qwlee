@@ -17,6 +17,9 @@ const summaryApi = baseApi.injectEndpoints({
   }),
 });
 
+// Shared with the gig header so both show the same numbers.
+export const useGigReviewSummary = (gigId) => summaryApi.useGetReviewSummaryQuery(gigId, { skip: !gigId });
+
 export default function GigReviews({ id, sellerRating = 0, sellerReviewTotal = 0 }) {
   const { t } = useI18n();
   const [star, setStar] = useState(0);
@@ -35,13 +38,13 @@ export default function GigReviews({ id, sellerRating = 0, sellerReviewTotal = 0
     .filter(([k]) => summary?.breakdown?.[k] != null);
   // Totals come from the server-side summary so they don't change with
   // the filters below.
-  const total = summary?.count ?? sellerReviewTotal ?? 0;
+  const total = summary?.count ?? 0;
   const buckets = [5, 4, 3, 2, 1].map((n) => {
     const count = summary?.histogram?.[n] || 0;
     const pct = total > 0 ? Math.round((count / total) * 100) : 0;
     return { n, count, pct };
   });
-  const avg = summary?.average ?? sellerRating;
+  const avg = summary?.average ?? 0;
 
   return (
     <div>

@@ -52,6 +52,8 @@ const ordersSchema = mongoose.Schema(
     deliveryDate: {
       type: Date,
     },
+    // Set when the "order is very late" reminder went out (housekeeping).
+    lateReminderAt: { type: Date, default: null },
     // Seller-initiated delivery-date extension. Fiverr-style: seller
     // requests a new date with a reason → buyer accepts (date moves,
     // status reset to active) or declines (request marked declined,
@@ -67,6 +69,14 @@ const ordersSchema = mongoose.Schema(
       requestedAt: { type: Date, default: null },
       respondBy: { type: Date, default: null },
       respondedAt: { type: Date, default: null },
+    },
+    // Buyer's "ask for an update" (orderRequests.service). One open at a time.
+    updateRequest: {
+      status: { type: String, enum: ["none", "pending", "answered"], default: "none" },
+      note: { type: String, default: "" },
+      reply: { type: String, default: "" },
+      requestedAt: { type: Date, default: null },
+      answeredAt: { type: Date, default: null },
     },
     extensionRequest: {
       newDeliveryDate: { type: Date, default: null },
@@ -119,6 +129,8 @@ const ordersSchema = mongoose.Schema(
       count: { type: Number, default: 0 },
       lastDeliveredAt: { type: Date, default: null },
       autoCompleteAt: { type: Date, default: null },
+      // Buyer used their one "more time to review" extension on this delivery.
+      reviewExtendedAt: { type: Date, default: null },
     },
     revisions: [{ reason: String, requestedAt: Date, _id: false }],
     completedAt: { type: Date, default: null },

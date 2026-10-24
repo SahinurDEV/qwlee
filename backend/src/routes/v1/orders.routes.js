@@ -45,10 +45,22 @@ router
   router.patch("/:orderId/cancellation", auth("withOutAdmin"), catchAsync(async (req, res) =>
     send(res, await cancellation.respond(req.params.orderId, req.user.id, req.body?.action), "Cancellation updated")));
 }
+// Ask for an update: buyer POSTs, seller PATCHes {reply}.
+{
+  const reqs = require("../../services/orderRequests.service");
+  const catchAsync = require("../../utils/catchAsync");
+  const send = (res, data, message) => res.json({ code: 200, message, data: { attributes: data } });
+  router.post("/:orderId/update-request", auth("withOutAdmin"), catchAsync(async (req, res) =>
+    send(res, await reqs.askForUpdate(req.params.orderId, req.user.id, req.body?.note), "Update requested")));
+  router.patch("/:orderId/update-request", auth("withOutAdmin"), catchAsync(async (req, res) =>
+    send(res, await reqs.answerUpdate(req.params.orderId, req.user.id, req.body?.reply), "Update sent")));
+}
 router.post("/quote", auth("withOutAdmin"), ordersController.orderQuote);
 router.post("/:orderId/requirements", auth("withOutAdmin"), ordersController.submitRequirements);
 router.post("/:orderId/revision", auth("withOutAdmin"), ordersController.requestRevision);
 router.post("/:orderId/accept", auth("withOutAdmin"), ordersController.acceptDelivery);
+router.post("/:orderId/extend-review", auth("withOutAdmin"), require("../../utils/catchAsync")(async (req, res) =>
+  res.json({ code: 200, message: "Review time extended", data: { attributes: await require("../../services/orderLifecycle.service").extendReview(req.params.orderId, req.user.id) } })));
 // Milestone payments: the buyer releases one milestone's share of escrow.
 router.post("/:orderId/milestones/:index/release", auth("withOutAdmin"), require("../../utils/catchAsync")(async (req, res) => {
   const order = await require("../../services/milestones.service").release(req.params.orderId, req.user.id, req.params.index);

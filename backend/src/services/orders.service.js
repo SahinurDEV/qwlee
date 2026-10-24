@@ -201,6 +201,14 @@ const orderModify = async (paymentId, body, userId, opts = {}) => {
     // Fiverr rules: the seller may cancel, the buyer may cancel a late
     // order; otherwise the buyer asks and the seller agrees.
     throw new ApiError(httpStatus.CONFLICT, "Ask the seller to agree: send a cancellation request instead.");
+  } else if (isBuyer && prevStatus === "late" && !opts.mutual) {
+    // A late order becomes cancellable by the buyer once it is "very late".
+    const hours = (await require("./siteSettings.service").get()).marketplace.veryLateHours;
+    const due = order.deliveryDate ? new Date(order.deliveryDate).getTime() : 0;
+    if (order.delivery?.state === "submitted") throw new ApiError(httpStatus.CONFLICT, "The seller has delivered. Review the delivery or ask for a revision.");
+    if (due && Date.now() < due + hours * 3600e3) {
+      throw new ApiError(httpStatus.CONFLICT, `You can cancel this order yourself once it is ${hours} hours past the due date. Until then, send a cancellation request.`);
+    }
   }
   if (!OPEN.includes(prevStatus)) {
     throw new ApiError(
@@ -262,6 +270,7 @@ const requestExtension = async (orderId, sellerId, { newDeliveryDate, reason }) 
       "The new delivery date must be after the original date"
     );
   }
+  require("./orderRequests.service").assertNoOpenRequest(order, "extension");
   if (order.extensionRequest?.status === "pending") {
     throw new ApiError(
       httpStatus.BAD_REQUEST,

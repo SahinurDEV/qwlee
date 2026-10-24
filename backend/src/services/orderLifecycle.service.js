@@ -367,6 +367,7 @@ const recordDelivery = async (orderId, userId) => {
     count: (order.delivery?.count || 0) + 1,
     lastDeliveredAt: now,
     autoCompleteAt: new Date(now.getTime() + (await autoCompleteDays()) * 86400000),
+    reviewExtendedAt: null,
   };
   await order.save();
   return order;
@@ -386,6 +387,28 @@ const requestRevision = async (orderId, userId, reason) => {
   order.revisions = [...(order.revisions || []), { reason: String(reason || "").slice(0, 2000), requestedAt: new Date() }];
   await order.save();
   return order;
+};
+
+/** Buyer asks for more time to review a delivery (once per delivery). */
+const extendReview = async (orderId, userId) => {
+  const { order, isBuyer } = await loadParty(orderId, userId);
+  if (!isBuyer) throw new ApiError(httpStatus.FORBIDDEN, "Only the buyer can extend the review time");
+  if (!OPEN.includes(order.status) || order.delivery?.state !== "submitted") throw new ApiError(httpStatus.CONFLICT, "There is no delivery waiting for review");
+  const days = (await require("./siteSettings.service").get()).marketplace.reviewExtensionDays;
+  if (!days) throw new ApiError(httpStatus.CONFLICT, "Review extensions are turned off");
+  const base = order.delivery.autoCompleteAt ? new Date(order.delivery.autoCompleteAt) : new Date();
+  const next = new Date(base.getTime() + days * 86400000);
+  const r = await Payment.updateOne(
+    { _id: order._id, "delivery.state": "submitted", "delivery.reviewExtendedAt": null },
+    { $set: { "delivery.autoCompleteAt": next, "delivery.reviewExtendedAt": new Date() } }
+  );
+  if (!r.modifiedCount) throw new ApiError(httpStatus.CONFLICT, "You already extended the review time for this delivery");
+  try {
+    await require("./notification.service").addCustomNotification("freelancer-notification", order.freelancerId, {
+      receiverId: order.freelancerId, message: `The buyer asked for ${days} more days to review your delivery.`, linkId: order._id, role: "freelancer", type: "order", viewStatus: false,
+    });
+  } catch { /* best effort */ }
+  return Payment.findById(order._id);
 };
 
 const acceptDelivery = async (orderId, userId) => {
@@ -428,6 +451,7 @@ const runHousekeeping = async ({ trigger = "timer" } = {}) => {
     );
     return late.modifiedCount || 0;
   }, trigger);
+  await track("lateOrders", () => lateOrders(now), trigger);
   const autoCancelled = await track("autoCancel", () => require("./cancellation.service").autoAcceptExpired(), trigger);
   const subscriptions = await track("subscriptions", () => require("./subscription.service").billDue(), trigger);
   const announcements = await track("announcements", () => require("./announcements.service").sendDue(), trigger);
@@ -436,6 +460,51 @@ const runHousekeeping = async ({ trigger = "timer" } = {}) => {
   const kpiEmail = await track("kpiEmail", () => require("./kpi.service").maybeSendWeekly(), trigger);
   return { kpiEmail, autoCompleted, markedLate, autoCancelled, subscriptions, bansLifted, announcements };
 };
+
+/**
+ * Late orders: remind both sides once at lateReminderDays past due and
+ * cancel (with a full refund) at lateAutoCancelDays. 0 turns auto-cancel off.
+ */
+async function lateOrders(now = new Date()) {
+  const m = (await require("./siteSettings.service").get()).marketplace;
+  const day = 86400e3;
+  const email = require("./email.service");
+  const { User } = require("../models");
+  let n = 0;
+  const reminders = await Payment.find({ status: "late", "delivery.state": { $ne: "submitted" }, lateReminderAt: null, deliveryDate: { $lt: new Date(now - m.lateReminderDays * day) } }).limit(100);
+  for (const o of reminders) {
+    const set = await Payment.updateOne({ _id: o._id, lateReminderAt: null }, { $set: { lateReminderAt: now } });
+    if (!set.modifiedCount) continue;
+    n++;
+    const daysLate = Math.floor((now - new Date(o.deliveryDate)) / day);
+    const left = m.lateAutoCancelDays ? Math.max(0, m.lateAutoCancelDays - daysLate) : 0;
+    const [buyer, seller] = await Promise.all([User.findById(o.clientId), User.findById(o.freelancerId)]);
+    const gig = o.gigId ? await require("../models").Gig.findById(o.gigId).select("title").lean() : null;
+    const gigTitle = gig?.title || "your order";
+    for (const [u, role] of [[buyer, "buyer"], [seller, "freelancer"]]) {
+      if (!u) continue;
+      const msg = role === "buyer"
+        ? `Your order is ${daysLate} days late. You can cancel it for a full refund from the order page${left ? `, or it is cancelled automatically in ${left} days` : ""}.`
+        : `An order is ${daysLate} days late. Deliver now${left ? ` — it is cancelled automatically in ${left} days` : ""}.`;
+      try {
+        await require("./notification.service").addCustomNotification(`${role}-notification`, u._id, { receiverId: u._id, message: msg, linkId: o._id, role, type: "order", viewStatus: false });
+      } catch { /* best effort */ }
+      if (u.email && email.sendLateOrderReminder) email.sendLateOrderReminder(u.email, { recipientName: u.fullName, gigTitle, orderId: String(o._id), daysLate, cancelInDays: left, role }).catch(() => {});
+    }
+  }
+  if (m.lateAutoCancelDays > 0) {
+    const due = await Payment.find({ status: "late", "delivery.state": { $ne: "submitted" }, deliveryDate: { $lt: new Date(now - m.lateAutoCancelDays * day) } }).limit(50);
+    for (const o of due) {
+      try {
+        await require("./orders.service").orderModify(o._id, { status: "cancelled", reason: `Cancelled automatically: no delivery ${m.lateAutoCancelDays} days after the due date.` }, String(o.freelancerId), { system: true });
+        n++;
+      } catch (e) {
+        logger.warn(`late auto-cancel ${o._id} skipped: ${e.message}`);
+      }
+    }
+  }
+  return n;
+}
 
 let timer = null;
 const startHousekeeping = (intervalMs = Number(process.env.ORDER_HOUSEKEEPING_MS) || 10 * 60 * 1000) => {
@@ -456,7 +525,9 @@ module.exports = {
   recordDelivery,
   requestRevision,
   acceptDelivery,
+  extendReview,
   runHousekeeping,
   startHousekeeping,
+  lateOrders,
   revisionsFromPackage,
 };

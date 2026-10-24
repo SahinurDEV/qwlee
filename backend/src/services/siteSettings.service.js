@@ -91,10 +91,16 @@ function defaults() {
     marketplace: {
       feePercent: Number(process.env.PLATFORM_FEE_PERCENT ?? 5),
       autoCompleteDays: Number(process.env.AUTO_COMPLETE_DAYS) || 3,
+      reviewExtensionDays: 5,
       // Test stacks (TEST_MODE) credit at once so balance checks stay simple.
       clearanceDays: Number(process.env.CLEARANCE_DAYS ?? (process.env.TEST_MODE === "true" ? 0 : 14)),
       clearanceDaysFast: 7,
       buyerFeePercent: 5.5,
+      // Late orders: buyer may cancel once this many hours past due ("very
+      // late"); reminder at lateReminderDays; auto-cancel at lateAutoCancelDays.
+      veryLateHours: 24,
+      lateReminderDays: 15,
+      lateAutoCancelDays: 30,
       smallOrderFee: 3.5,
       smallOrderUnder: 200,
       withdrawMinBank: 20,
@@ -148,9 +154,14 @@ function normalise(site = {}, base = defaults()) {
     marketplace: {
       feePercent: num(m.feePercent, 5, 0, 50),
       autoCompleteDays: Math.round(num(m.autoCompleteDays, 3, 1, 30)),
+      // Buyer can push auto-complete back once per delivery (0 = off).
+      reviewExtensionDays: Math.round(num(m.reviewExtensionDays, 5, 0, 30)),
       // Days before earnings can be withdrawn; Fast = Top Rated / Premium.
       clearanceDays: Math.round(num(m.clearanceDays, 14, 0, 90)),
       clearanceDaysFast: Math.round(num(m.clearanceDaysFast, 7, 0, 90)),
+      veryLateHours: Math.round(num(m.veryLateHours, 24, 0, 720)),
+      lateReminderDays: Math.round(num(m.lateReminderDays, 15, 1, 180)),
+      lateAutoCancelDays: Math.round(num(m.lateAutoCancelDays, 30, 0, 365)),
       // Buyer service fee on every payment (orders, extras, tips) plus a
       // flat small-order fee on orders below smallOrderUnder.
       buyerFeePercent: num(m.buyerFeePercent, 5.5, 0, 30),
@@ -259,6 +270,7 @@ async function getPublic() {
     seo: s.seo,
     features: s.features,
     demoPayments: s.marketplace.demoPayments,
+    orderRules: { veryLateHours: s.marketplace.veryLateHours, lateAutoCancelDays: s.marketplace.lateAutoCancelDays },
     // Public money rules (shown at checkout, earnings and policy pages).
     policy: {
       buyerFeePercent: s.marketplace.buyerFeePercent,
@@ -267,6 +279,7 @@ async function getPublic() {
       clearanceDays: s.marketplace.clearanceDays,
       clearanceDaysFast: s.marketplace.clearanceDaysFast,
       autoCompleteDays: s.marketplace.autoCompleteDays,
+      reviewExtensionDays: s.marketplace.reviewExtensionDays,
       withdrawMin: { bank: s.marketplace.withdrawMinBank, paypal: s.marketplace.withdrawMinPaypal, payoneer: s.marketplace.withdrawMinPayoneer },
       withdrawMax: s.marketplace.withdrawMax,
       payoutChangeHoldHours: s.marketplace.payoutChangeHoldHours,
