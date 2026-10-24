@@ -87,9 +87,7 @@ const getMessages = async (chatId, options, userId) => {
 const getMessage = async (messageId, userId) => {
   try {
     const message = await Message.findById(messageId);
-    if (!message) {
-      throw new ApiError(httpStatus.NOT_FOUND, "Message not found");
-    }
+    assertParty(message, userId);
 
     if (message.deletedBy.map(String).includes(String(userId))) {
       throw new ApiError(httpStatus.FORBIDDEN, "This message has been deleted");
