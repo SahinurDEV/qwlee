@@ -40,7 +40,7 @@ export default function TipCard({ order, orderId }) {
       )}
       {open && (
         <>
-          <p className="text-xs text-gray-500 mt-1">Happy with the work? Tips go to the seller (between $5 and ${max}).</p>
+          <p className="text-xs text-gray-500 mt-1">Happy with the work? Tips go to the seller (between $5 and ${max}). A service fee is added at payment.</p>
           <div className="flex gap-2 mt-3">
             {presets.map((v) => (
               <button key={v} disabled={isLoading} onClick={() => send(v)} className="flex-1 py-2 rounded-lg border border-gray-300 text-sm font-medium hover:border-emerald-500">
