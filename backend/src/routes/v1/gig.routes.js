@@ -50,6 +50,16 @@ router.get(
 // Atomic $inc so concurrent views don't lose count. Kept open (no
 // auth) since anonymous visitors browse gigs.
 const impressionController = require("../../controllers/gigImpression.controller");
+// Related gigs for the gig page (public).
+router.get("/:gigId/related", async (req, res, next) => {
+  try {
+    const data = await require("../../services/gigRelated.service").related(req.params.gigId);
+    if (!data) return res.status(404).json({ code: 404, message: "Gig not found" });
+    res.json({ code: 200, message: "Related gigs", data: { attributes: data } });
+  } catch (e) {
+    next(e);
+  }
+});
 router.post("/:gigId/impression", impressionController.bumpImpression);
 router.post("/:gigId/click", impressionController.bumpClick);
 router

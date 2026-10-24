@@ -10,6 +10,7 @@
 // Loading + 404 states are handled here so the children can assume the
 // gig exists. Everything below this component is purely presentational.
 
+import RelatedGigs from "./RelatedGigs";
 import Link from "next/link";
 import { IoStar, IoChevronForward } from "react-icons/io5";
 
@@ -177,6 +178,8 @@ export default function GigDetails({ slug }) {
           </div>
         </aside>
       </div>
+
+      <RelatedGigs gigId={result._id} sellerName={seller.fullName} />
 
       {/* Phones: the package picker sits below the reviews, so keep a
           sticky bar that jumps straight to it (Fiverr does the same). */}
