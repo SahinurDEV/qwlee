@@ -123,3 +123,8 @@ Object.assign(PHRASES, {
   "Custom price range": R("Rango de precio", "Fourchette de prix", "কাস্টম দামের পরিসর"),
   "results": R("resultados", "résultats", "ফলাফল"),
 });
+
+Object.assign(PHRASES, {
+  "Dark mode": R("Modo oscuro", "Mode sombre", "ডার্ক মোড"),
+  "Light mode": R("Modo claro", "Mode clair", "লাইট মোড"),
+});

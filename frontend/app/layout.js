@@ -87,7 +87,9 @@ export async function generateMetadata() {
 }
 
 export default async function RootLayout({ children }) {
-  const lang = normaliseLang((await cookies()).get(LANG_COOKIE)?.value);
+  const jar = await cookies();
+  const lang = normaliseLang(jar.get(LANG_COOKIE)?.value);
+  const dark = jar.get("qwlee_theme")?.value === "dark";
   const site = await siteSettings();
   if (site?.maintenance?.enabled) {
     return (
@@ -99,7 +101,7 @@ export default async function RootLayout({ children }) {
     );
   }
   return (
-    <html lang={lang}>
+    <html lang={lang} className={dark ? "dark" : undefined}>
       <body>
         <I18nProvider lang={lang}>
         <Providers>

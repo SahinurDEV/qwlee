@@ -215,3 +215,41 @@ li.ant-menu-item.ant-menu-item-only-child {
 .privacy-content img, .rich-text img { max-width: 100%; height: auto; }
 .privacy-content :is(pre,table), .rich-text :is(pre,table) { display: block; max-width: 100%; overflow-x: auto; }
 .privacy-content a, .rich-text a { color: #047857; text-decoration: underline; }
+
+/* ---- Dark mode ----------------------------------------------------------
+   html.dark is set from the qwlee_theme cookie. Components are written with
+   light Tailwind utilities, so the common ones are remapped here instead of
+   adding dark: variants to every file. */
+html.dark { color-scheme: dark; }
+html.dark body { background: #0b1220; color: #e5e7eb; }
+html.dark .bg-white, html.dark .bg-white\/90, html.dark .bg-white\/95, html.dark .bg-white\/80 { background-color: #111a2b !important; }
+html.dark .bg-gray-50, html.dark .bg-slate-50 { background-color: #0f1729 !important; }
+html.dark .bg-gray-100, html.dark .bg-slate-100 { background-color: #1a2438 !important; }
+html.dark .bg-gray-200 { background-color: #243049 !important; }
+html.dark .hover\:bg-gray-50:hover, html.dark .hover\:bg-gray-100:hover { background-color: #1f2a40 !important; }
+html.dark .bg-emerald-50, html.dark .bg-green-50 { background-color: rgba(16,185,129,.12) !important; }
+html.dark .bg-amber-50, html.dark .bg-yellow-50 { background-color: rgba(245,158,11,.12) !important; }
+html.dark .bg-red-50, html.dark .bg-rose-50 { background-color: rgba(239,68,68,.12) !important; }
+html.dark .bg-blue-50, html.dark .bg-sky-50, html.dark .bg-cyan-50, html.dark .bg-indigo-50 { background-color: rgba(59,130,246,.12) !important; }
+html.dark .text-gray-900, html.dark .text-slate-900, html.dark .text-black { color: #f3f4f6 !important; }
+html.dark .text-gray-800, html.dark .text-slate-800 { color: #e5e7eb !important; }
+html.dark .text-gray-700, html.dark .text-slate-700 { color: #d1d5db !important; }
+html.dark .text-gray-600, html.dark .text-slate-600 { color: #b6bcc8 !important; }
+html.dark .text-gray-500 { color: #9aa3b2 !important; }
+html.dark .hover\:text-gray-900:hover { color: #fff !important; }
+html.dark .text-emerald-700, html.dark .text-emerald-800, html.dark .text-green-700 { color: #34d399 !important; }
+html.dark .border-gray-100, html.dark .border-gray-200, html.dark .border-gray-300, html.dark .border-slate-200, html.dark .divide-gray-100 > * + *, html.dark .divide-gray-200 > * + * { border-color: #26324a !important; }
+html.dark input, html.dark textarea, html.dark select { background-color: #0f1729; color: #e5e7eb; border-color: #33415c; }
+html.dark input::placeholder, html.dark textarea::placeholder { color: #7b8496; }
+html.dark .shadow-sm, html.dark .shadow, html.dark .shadow-md, html.dark .shadow-lg, html.dark .shadow-xl { --tw-shadow-color: rgba(0,0,0,.5); }
+/* antd pieces used on public pages */
+html.dark .ant-select-selector, html.dark .ant-input, html.dark .ant-input-affix-wrapper, html.dark .ant-picker,
+html.dark .ant-select-dropdown, html.dark .ant-dropdown-menu, html.dark .ant-modal-content, html.dark .ant-modal-header,
+html.dark .ant-drawer-content, html.dark .ant-popover-inner, html.dark .ant-pagination-item, html.dark .ant-card, html.dark .ant-table {
+  background-color: #111a2b !important; color: #e5e7eb !important; border-color: #33415c !important;
+}
+html.dark .ant-select-item, html.dark .ant-dropdown-menu-item, html.dark .ant-modal-title, html.dark .ant-select-selection-item,
+html.dark .ant-pagination-item a, html.dark .ant-table-cell, html.dark .ant-drawer-title, html.dark .ant-card-head-title { color: #e5e7eb !important; }
+html.dark .ant-select-item-option-active, html.dark .ant-select-item-option-selected, html.dark .ant-dropdown-menu-item:hover { background-color: #1f2a40 !important; }
+html.dark .ant-table-thead > tr > th { background-color: #0f1729 !important; }
+html.dark img { opacity: .95; }
