@@ -87,6 +87,9 @@ const userSchema = mongoose.Schema(
     // Trust & safety restriction (trust.service): active, reason, since,
     // until, by. Restricted accounts can only finish existing work.
     restriction: { type: Object, default: {}, private: true },
+    // Sign-up consent: 18+ and Terms/Privacy accepted (version + time).
+    termsAcceptedAt: { type: Date, default: null },
+    termsVersion: { type: String, default: "" },
     balance: {
       type: Number,
       required: false,

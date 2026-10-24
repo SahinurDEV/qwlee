@@ -35,7 +35,9 @@ async function issueRefund(orderOrId) {
   // Milestones already released to the seller are not refunded.
   const paid = Number(order.escrow?.amount ?? order.price ?? 0);
   const released = Number(order.escrow?.releasedGross || 0);
-  const refundable = Math.max(0, Math.round((paid - released) * 100) / 100);
+  // Nothing released yet: the buyer gets the service fee back too.
+  const fee = released > 0 ? 0 : Number(order.escrow?.serviceFee || 0);
+  const refundable = Math.max(0, Math.round((paid + fee - released) * 100) / 100);
   if (released > 0 && refundable === 0) {
     const none = { provider: "none", id: "", status: "succeeded", amount: 0, at: new Date() };
     await Payment.updateOne({ _id: order._id }, { $set: { "escrow.refund": none } });

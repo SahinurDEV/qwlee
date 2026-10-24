@@ -85,6 +85,8 @@ const ordersSchema = mongoose.Schema(
     escrow: {
       status: { type: String, enum: ["held", "released", "refunded"], default: undefined },
       platformFunded: { type: Number, default: 0 },
+      // Buyer service fee paid on top of `amount` (kept by the platform).
+      serviceFee: { type: Number, default: 0 },
       amount: { type: Number },
       provider: { type: String },
       heldAt: { type: Date },

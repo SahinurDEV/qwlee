@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Form, Input } from "antd";
+import { Checkbox, Form, Input } from "antd";
 import Link from "next/link";
 import { registerUser } from "@/actions/registerUser";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -108,6 +108,7 @@ function SignUp() {
       // failed; the user can edit it later via profile settings.
       location: ip.locationLabel || "",
       ...(/^[a-f0-9]{8}$/.test(refParam) ? { ref: refParam } : {}),
+      acceptTerms: !!values.acceptTerms,
     };
     try {
       const res = await registerUser(newUser);
@@ -179,6 +180,11 @@ function SignUp() {
       }
     >
       <GoogleSignInButton label="Sign up with Google" />
+      <p className="text-xs text-gray-500 text-center -mt-1 mb-3">
+        By continuing with Google you confirm you are 18 or older and accept our{" "}
+        <Link href="/terms-of-service" className="underline">Terms</Link> and{" "}
+        <Link href="/privacy-policy" className="underline">Privacy Policy</Link>.
+      </p>
       <Form onFinish={handleSubmit} autoComplete="on" layout="vertical">
         <div className="flex gap-3 flex-col md:flex-row">
           <Form.Item
@@ -272,6 +278,19 @@ function SignUp() {
             Auto-detected from your connection. You can change it later in profile settings.
           </p>
         </div>
+
+        <Form.Item
+          name="acceptTerms"
+          valuePropName="checked"
+          rules={[{ validator: (_, v) => (v ? Promise.resolve() : Promise.reject(new Error("Please confirm to continue"))) }]}
+        >
+          <Checkbox className="text-sm">
+            I am 18 or older and I accept the{" "}
+            <Link href="/terms-of-service" className="text-emerald-700 underline" target="_blank">Terms of Service</Link>,{" "}
+            <Link href="/privacy-policy" className="text-emerald-700 underline" target="_blank">Privacy Policy</Link> and{" "}
+            <Link href="/community-standards" className="text-emerald-700 underline" target="_blank">Community Standards</Link>.
+          </Checkbox>
+        </Form.Item>
 
         <Button name={"Create account"} />
       </Form>

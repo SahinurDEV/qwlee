@@ -31,7 +31,7 @@ const checkoutBody = (req) => ({
 const orderQuote = catchAsync(async (req, res) => {
   const quote = await orderLifecycle.quoteCheckout(checkoutBody(req));
   res.status(httpStatus.OK).json(
-    response({ message: "Quote", status: "OK", statusCode: httpStatus.OK, data: { items: quote.items, total: quote.total, discount: quote.discount, charge: quote.charge, couponCode: quote.couponCode || null, couponDescription: quote.couponDescription || null, deliveryDays: quote.deliveryDays } })
+    response({ message: "Quote", status: "OK", statusCode: httpStatus.OK, data: { items: quote.items, total: quote.total, discount: quote.discount, charge: quote.charge, serviceFee: quote.serviceFee, smallOrderFee: quote.smallOrderFee, payable: quote.payable, couponCode: quote.couponCode || null, couponDescription: quote.couponDescription || null, deliveryDays: quote.deliveryDays } })
   );
 });
 
@@ -60,7 +60,7 @@ const orderCreate = catchAsync(async (req, res) => {
           unit_amount: Math.round(item.price * 100),
         },
         quantity: item.quantity,
-      })),
+      })).concat(quote.serviceFee > 0 ? [{ price_data: { currency: "usd", product_data: { name: "Service fee" }, unit_amount: Math.round(quote.serviceFee * 100) }, quantity: 1 }] : []),
       // Only identifiers travel through Stripe; the webhook re-quotes.
       metadata: {
         buyerId: String(req.user.id),
@@ -101,14 +101,14 @@ const orderCreate = catchAsync(async (req, res) => {
 
 const orderTip = catchAsync(async (req, res) => {
   await require("../services/siteSettings.service").assertFeature("tips", "Tipping");
-  const { order, amount } = await orderLifecycle.quoteTip(req.params.orderId, req.user.id, Number(req.body?.amount));
+  const { order, amount, serviceFee } = await orderLifecycle.quoteTip(req.params.orderId, req.user.id, Number(req.body?.amount));
   const frontend = process.env.FRONTEND_URL || "http://localhost:8000";
   if (process.env.STRIPE_SECRET_KEY) {
     const stripeClient = require("stripe")(process.env.STRIPE_SECRET_KEY);
     const session = await stripeClient.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
-      line_items: [{ price_data: { currency: "usd", product_data: { name: `Tip for order ${order._id}` }, unit_amount: Math.round(amount * 100) }, quantity: 1 }],
+      line_items: [{ price_data: { currency: "usd", product_data: { name: `Tip for order ${order._id}` }, unit_amount: Math.round(amount * 100) }, quantity: 1 }].concat(serviceFee > 0 ? [{ price_data: { currency: "usd", product_data: { name: "Service fee" }, unit_amount: Math.round(serviceFee * 100) }, quantity: 1 }] : []),
       metadata: { kind: "tip", orderId: String(order._id), buyerId: String(req.user.id), amount: String(amount) },
       success_url: `${frontend}/order/${order._id}?tipped=1`,
       cancel_url: `${frontend}/order/${order._id}`,
@@ -183,8 +183,8 @@ const orderPlaced = async (req, res) => {
         const session = await stripe.checkout.sessions.retrieve(data.id);
         const md = session.metadata || {};
         if (md.kind === "tip") {
-          const { amount } = await orderLifecycle.quoteTip(md.orderId, md.buyerId, Number(md.amount));
-          if (Math.round(amount * 100) !== Number(session.amount_total)) throw new Error(`Tip amount mismatch for ${session.id}`);
+          const { amount, payable } = await orderLifecycle.quoteTip(md.orderId, md.buyerId, Number(md.amount));
+          if (Math.round(payable * 100) !== Number(session.amount_total)) throw new Error(`Tip amount mismatch for ${session.id}`);
           await orderLifecycle.recordTip(md.orderId, amount, { provider: "stripe", sessionId: session.id });
           break;
         }
@@ -198,7 +198,7 @@ const orderPlaced = async (req, res) => {
           requestOfferId: md.requestOfferId || undefined,
           couponCode: md.couponCode || undefined,
         });
-        if (Math.round(quote.charge * 100) !== Number(session.amount_total)) {
+        if (Math.round(quote.payable * 100) !== Number(session.amount_total)) {
           throw new Error(`Amount mismatch for session ${session.id}`);
         }
         const order = await orderLifecycle.createOrderFromQuote(quote, {

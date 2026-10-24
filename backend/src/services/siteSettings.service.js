@@ -94,6 +94,9 @@ function defaults() {
       // Test stacks (TEST_MODE) credit at once so balance checks stay simple.
       clearanceDays: Number(process.env.CLEARANCE_DAYS ?? (process.env.TEST_MODE === "true" ? 0 : 14)),
       clearanceDaysFast: 7,
+      buyerFeePercent: 5.5,
+      smallOrderFee: 3.5,
+      smallOrderUnder: 200,
       demoPayments: process.env.DEMO_PAYMENTS === "true",
       requireGigApproval: false,
       secondApprovalOver: Number(process.env.SECOND_APPROVAL_OVER || 0),
@@ -141,6 +144,11 @@ function normalise(site = {}, base = defaults()) {
       // Days before earnings can be withdrawn; Fast = Top Rated / Premium.
       clearanceDays: Math.round(num(m.clearanceDays, 14, 0, 90)),
       clearanceDaysFast: Math.round(num(m.clearanceDaysFast, 7, 0, 90)),
+      // Buyer service fee on every payment (orders, extras, tips) plus a
+      // flat small-order fee on orders below smallOrderUnder.
+      buyerFeePercent: num(m.buyerFeePercent, 5.5, 0, 30),
+      smallOrderFee: num(m.smallOrderFee, 3.5, 0, 100),
+      smallOrderUnder: num(m.smallOrderUnder, 200, 0, 100000),
       demoPayments: bool(m.demoPayments, false),
       requireGigApproval: bool(m.requireGigApproval, false),
       // Refunds / payouts at or above this amount (USD) need a second
