@@ -8,6 +8,7 @@
 
 import { notFound } from "next/navigation";
 import { base } from "@/lib/constant";
+import { siteOrigin } from "@/lib/server";
 import PrimaryLayout from "@/components/Layout/PrimaryLayout";
 import UsernameProfile from "@/components/Profile/Public/UsernameProfile";
 
@@ -59,9 +60,28 @@ export default async function UsernameProfilePage({ params }) {
   const { username } = await params;
   const user = await fetchProfile(username);
   if (!user) notFound();
+  const origin = await siteOrigin();
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ProfilePage",
+    mainEntity: {
+      "@type": "Person",
+      name: user.fullName,
+      alternateName: `@${user.username}`,
+      url: `${origin}/${user.username}`,
+      ...(user.image ? { image: user.image } : {}),
+      ...(user.intro ? { description: user.intro } : {}),
+      ...(user.location ? { address: { "@type": "PostalAddress", addressLocality: user.location } } : {}),
+      ...(Array.isArray(user.skills) && user.skills.length
+        ? { knowsAbout: user.skills.map((s) => (typeof s === "string" ? s : s?.text || s?.name)).filter(Boolean) }
+        : {}),
+      ...(Array.isArray(user.languages) && user.languages.length ? { knowsLanguage: user.languages.map((l) => l.name) } : {}),
+    },
+  };
 
   return (
     <PrimaryLayout>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
       <UsernameProfile user={user} />
     </PrimaryLayout>
   );
