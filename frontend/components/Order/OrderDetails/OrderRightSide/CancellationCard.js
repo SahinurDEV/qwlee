@@ -1,10 +1,12 @@
 "use client";
 // Mutual cancellation on the order page. Either side asks with a reason;
 // the other side accepts or declines; the asker can withdraw. A buyer can
-// cancel a late order straight away, and a seller can always cancel.
+// cancel a "very late" order (admin-set hours past due), and a seller can
+// always cancel. Very late orders are cancelled automatically after N days.
 import { useState } from "react";
 import moment from "moment";
 import { toast } from "sonner";
+import useSiteConfig from "@/hooks/useSiteConfig";
 import {
   useRequestCancellationMutation,
   useRespondCancellationMutation,
@@ -21,7 +23,14 @@ export default function CancellationCard({ order, orderId, isSeller }) {
   const me = isSeller ? "seller" : "buyer";
   const pending = cr.status === "pending";
   const mine = pending && cr.byRole === me;
-  const canCancelNow = isSeller || order?.status === "late";
+  const rules = useSiteConfig()?.orderRules || {};
+  const veryLateHours = rules.veryLateHours ?? 24;
+  const dueAt = order?.deliveryDate ? new Date(order.deliveryDate).getTime() : 0;
+  const delivered = order?.delivery?.state === "submitted";
+  const late = order?.status === "late" && !delivered;
+  const veryLateAt = dueAt + veryLateHours * 3600e3;
+  const veryLate = late && (!dueAt || Date.now() >= veryLateAt);
+  const canCancelNow = isSeller || veryLate;
 
   const err = (r, fallback) => toast.error(r.error?.data?.message || fallback);
   const submit = async () => {
@@ -77,9 +86,15 @@ export default function CancellationCard({ order, orderId, isSeller }) {
           <button type="button" onClick={() => setOpen(true)} className="w-full px-4 py-2 rounded-lg border border-rose-200 text-rose-600 text-sm font-medium hover:bg-rose-50">
             Request cancellation
           </button>
+          {late && !isSeller && !veryLate ? (
+            <p className="text-xs text-gray-600">This order is late. You can cancel it yourself from {moment(veryLateAt).format("D MMM, HH:mm")}{rules.lateAutoCancelDays ? `; it is cancelled automatically ${rules.lateAutoCancelDays} days after the due date` : ""}.</p>
+          ) : null}
+          {late && veryLate && !isSeller && rules.lateAutoCancelDays && dueAt ? (
+            <p className="text-xs text-gray-600">Very late. If nothing is delivered it is cancelled automatically on {moment(dueAt + rules.lateAutoCancelDays * 86400e3).format("D MMM")}.</p>
+          ) : null}
           {canCancelNow ? (
             <button type="button" onClick={cancelNow} className="w-full px-4 py-2 rounded-lg text-rose-700 text-xs hover:underline">
-              {isSeller ? "Cancel the order myself" : "Order is late: cancel now"}
+              {isSeller ? "Cancel the order myself" : "Order is very late: cancel now"}
             </button>
           ) : null}
         </>
