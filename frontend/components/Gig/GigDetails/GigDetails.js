@@ -23,7 +23,7 @@ import GigPackagePicker from "./GigPackagePicker";
 import AwayBanner from "@/components/common/AwayBanner";
 import { GigFaq, GigVideo } from "./GigFaqVideo";
 import AboutCard from "./AboutCard";
-import GigReviews from "./GigReviews";
+import GigReviews, { useGigReviewSummary } from "./GigReviews";
 import GigLoveReact from "./GigLoveReact";
 import { useEffect } from "react";
 import useRecentlyViewed from "@/hooks/useRecentlyViewed";
@@ -33,6 +33,7 @@ export default function GigDetails({ slug }) {
   const { data, isLoading, isError } = useGetGigDetailsQuery(slug);
   const result = data?.data?.attributes?.results?.[0];
 
+  const { data: gigSummary } = useGigReviewSummary(result?._id);
   const { record } = useRecentlyViewed();
   useEffect(() => {
     if (result?._id || result?.id) record(result);
@@ -61,8 +62,10 @@ export default function GigDetails({ slug }) {
 
   const seller = result.userId || {};
   const category = result.categoriesId || {};
-  const reviewTotal = seller?.review?.total || 0;
-  const reviewRating = Number(seller?.review?.rating || 0);
+  // This gig's own reviews (same summary the Reviews section shows), not
+  // the seller's total across all gigs.
+  const reviewTotal = gigSummary?.count || 0;
+  const reviewRating = Number(gigSummary?.average || 0);
 
   return (
     <div className="container mx-auto px-4 py-6 md:py-10">
