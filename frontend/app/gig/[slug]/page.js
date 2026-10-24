@@ -3,7 +3,7 @@
 import { notFound } from "next/navigation";
 import GigDetails from "@/components/Gig/GigDetails/GigDetails";
 import PrimaryLayout from "@/components/Layout/PrimaryLayout";
-import { apiGet } from "@/lib/server";
+import { apiGet, siteOrigin } from "@/lib/server";
 
 async function loadGig(slug) {
   const r = await apiGet(`/gig?slug=${encodeURIComponent(slug)}`);
@@ -43,9 +43,13 @@ export default async function Page({ params }) {
         "@type": "Product",
         name: gig.title,
         image: gig.images?.slice(0, 3),
-        offers: { "@type": "Offer", priceCurrency: "USD", price: gig.price },
-        ...(gig.rating && gig.reviewsCount
-          ? { aggregateRating: { "@type": "AggregateRating", ratingValue: gig.rating, reviewCount: gig.reviewsCount } }
+        description: String(gig.description || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 300) || undefined,
+        url: `${await siteOrigin()}/gig/${gig.slug || slug}`,
+        ...(gig.categoriesId?.name ? { category: gig.categoriesId.name } : {}),
+        ...(gig.userId?.fullName ? { brand: { "@type": "Person", name: gig.userId.fullName } } : {}),
+        offers: { "@type": "Offer", priceCurrency: "USD", price: gig.price, availability: "https://schema.org/InStock" },
+        ...(gig.rating?.avg > 0 && gig.rating?.count > 0
+          ? { aggregateRating: { "@type": "AggregateRating", ratingValue: Math.round(gig.rating.avg * 10) / 10, reviewCount: gig.rating.count } }
           : {}),
       }
     : null;
