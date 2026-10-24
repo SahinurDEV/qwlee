@@ -27,6 +27,15 @@ test("gig page related rows", async () => {
     assert.equal(g.userId.password, undefined);
     assert.equal(g.userId.email, undefined);
   }
+  // Also viewed: never this gig, never repeats the seller row, no dupes.
+  assert.ok(Array.isArray(r.data.alsoViewed));
+  assert.ok(["views", "similar"].includes(r.data.alsoViewedSource));
+  const seen = new Set([id, ...r.data.moreFromSeller.map((g) => String(g._id || g.id))]);
+  for (const g of r.data.alsoViewed) {
+    const gid = String(g._id || g.id);
+    assert.ok(!seen.has(gid), "no duplicates");
+    seen.add(gid);
+  }
   assert.equal((await get("/gig/000000000000000000000000/related")).status, 404);
   assert.equal((await get("/gig/nope/related")).status, 404);
 });
