@@ -8,7 +8,8 @@ import { useState } from "react";
 import moment from "moment";
 import { toast } from "sonner";
 import { IoLockClosedOutline, IoDocumentTextOutline } from "react-icons/io5";
-import { useSubmitOrderRequirementsMutation } from "@/app/redux/features/order/buyerOrderApi";
+import { useSubmitOrderRequirementsMutation, useExtendOrderReviewMutation } from "@/app/redux/features/order/buyerOrderApi";
+import useSiteConfig from "@/hooks/useSiteConfig";
 
 export default function RequirementsCard({ order, orderId, isSeller }) {
   const questions = order?.data?.requirementQuestions || [];
@@ -16,6 +17,14 @@ export default function RequirementsCard({ order, orderId, isSeller }) {
   const status = order?.requirementsStatus;
   const [values, setValues] = useState(() => questions.map(() => ""));
   const [submit, { isLoading }] = useSubmitOrderRequirementsMutation();
+  const [extendReview, { isLoading: extending }] = useExtendOrderReviewMutation();
+  const reviewDays = useSiteConfig()?.policy?.reviewExtensionDays ?? 5;
+  const canExtend = !isSeller && order?.delivery?.state === "submitted" && !order?.delivery?.reviewExtendedAt && reviewDays > 0;
+  async function onExtend() {
+    const res = await extendReview({ orderId });
+    if (res.error) toast.error(res.error?.data?.message || "Could not extend");
+    else toast.success(`You have ${reviewDays} more days to review`);
+  }
 
   const escrow = order?.escrow;
   const autoCompleteAt = order?.delivery?.state === "submitted" ? order?.delivery?.autoCompleteAt : null;
@@ -40,6 +49,11 @@ export default function RequirementsCard({ order, orderId, isSeller }) {
             {escrow.status === "refunded" && "Payment refunded to the buyer."}
             {autoCompleteAt &&
               ` If the buyer does not respond, the order completes automatically on ${moment(autoCompleteAt).format("D MMM YYYY, HH:mm")}.`}
+            {canExtend ? (
+              <button type="button" disabled={extending} onClick={onExtend} className="ml-1 text-emerald-700 underline font-medium disabled:opacity-50">
+                Need more time? Add {reviewDays} days
+              </button>
+            ) : null}
           </span>
         </div>
       )}

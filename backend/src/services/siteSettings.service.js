@@ -91,6 +91,7 @@ function defaults() {
     marketplace: {
       feePercent: Number(process.env.PLATFORM_FEE_PERCENT ?? 5),
       autoCompleteDays: Number(process.env.AUTO_COMPLETE_DAYS) || 3,
+      reviewExtensionDays: 5,
       // Test stacks (TEST_MODE) credit at once so balance checks stay simple.
       clearanceDays: Number(process.env.CLEARANCE_DAYS ?? (process.env.TEST_MODE === "true" ? 0 : 14)),
       clearanceDaysFast: 7,
@@ -151,6 +152,8 @@ function normalise(site = {}, base = defaults()) {
     marketplace: {
       feePercent: num(m.feePercent, 5, 0, 50),
       autoCompleteDays: Math.round(num(m.autoCompleteDays, 3, 1, 30)),
+      // Buyer can push auto-complete back once per delivery (0 = off).
+      reviewExtensionDays: Math.round(num(m.reviewExtensionDays, 5, 0, 30)),
       // Days before earnings can be withdrawn; Fast = Top Rated / Premium.
       clearanceDays: Math.round(num(m.clearanceDays, 14, 0, 90)),
       clearanceDaysFast: Math.round(num(m.clearanceDaysFast, 7, 0, 90)),
@@ -273,6 +276,7 @@ async function getPublic() {
       clearanceDays: s.marketplace.clearanceDays,
       clearanceDaysFast: s.marketplace.clearanceDaysFast,
       autoCompleteDays: s.marketplace.autoCompleteDays,
+      reviewExtensionDays: s.marketplace.reviewExtensionDays,
       withdrawMin: { bank: s.marketplace.withdrawMinBank, paypal: s.marketplace.withdrawMinPaypal, payoneer: s.marketplace.withdrawMinPayoneer },
       withdrawMax: s.marketplace.withdrawMax,
       payoutChangeHoldHours: s.marketplace.payoutChangeHoldHours,

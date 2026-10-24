@@ -129,6 +129,8 @@ const ordersSchema = mongoose.Schema(
       count: { type: Number, default: 0 },
       lastDeliveredAt: { type: Date, default: null },
       autoCompleteAt: { type: Date, default: null },
+      // Buyer used their one "more time to review" extension on this delivery.
+      reviewExtendedAt: { type: Date, default: null },
     },
     revisions: [{ reason: String, requestedAt: Date, _id: false }],
     completedAt: { type: Date, default: null },
