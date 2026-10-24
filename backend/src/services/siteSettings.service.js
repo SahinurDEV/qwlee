@@ -102,6 +102,11 @@ function defaults() {
       lateAutoCancelDays: 30,
       smallOrderFee: 3.5,
       smallOrderUnder: 200,
+      withdrawMinBank: 20,
+      withdrawMinPaypal: 1,
+      withdrawMinPayoneer: 10,
+      withdrawMax: 10000,
+      payoutChangeHoldHours: process.env.TEST_MODE === "true" ? 0 : 24,
       demoPayments: process.env.DEMO_PAYMENTS === "true",
       requireGigApproval: false,
       secondApprovalOver: Number(process.env.SECOND_APPROVAL_OVER || 0),
@@ -115,7 +120,7 @@ function defaults() {
     features: { signups: true, buyerRequests: true, tips: true, googleLogin: true },
     security: { requireAdmin2fa: false, adminIpAllowlist: [] },
     growth: { referrals: true, refereePercent: 10, referrerReward: 10, welcomePercent: 10, welcomeDays: 30 },
-    moderation: { blockedWords: [], flaggedWords: [], flagContactInfo: true, riskOrderAmount: 500 },
+    moderation: { blockedWords: [], flaggedWords: [], flagContactInfo: true, maskContactBeforeOrder: true, riskOrderAmount: 500 },
     maintenance: { enabled: false, message: "", until: "" },
   };
 }
@@ -155,6 +160,13 @@ function normalise(site = {}, base = defaults()) {
       buyerFeePercent: num(m.buyerFeePercent, 5.5, 0, 30),
       smallOrderFee: num(m.smallOrderFee, 3.5, 0, 100),
       smallOrderUnder: num(m.smallOrderUnder, 200, 0, 100000),
+      // Withdrawal minimums per method, a max per request, and a wait
+      // after payout details change (Fiverr holds 24h).
+      withdrawMinBank: num(m.withdrawMinBank, 20, 0, 10000),
+      withdrawMinPaypal: num(m.withdrawMinPaypal, 1, 0, 10000),
+      withdrawMinPayoneer: num(m.withdrawMinPayoneer, 10, 0, 10000),
+      withdrawMax: num(m.withdrawMax, 10000, 1, 1000000),
+      payoutChangeHoldHours: Math.round(num(m.payoutChangeHoldHours, 24, 0, 720)),
       demoPayments: bool(m.demoPayments, false),
       requireGigApproval: bool(m.requireGigApproval, false),
       // Refunds / payouts at or above this amount (USD) need a second
@@ -200,6 +212,7 @@ function normalise(site = {}, base = defaults()) {
       blockedWords: words(mod.blockedWords),
       flaggedWords: words(mod.flaggedWords),
       flagContactInfo: bool(mod.flagContactInfo, true),
+      maskContactBeforeOrder: bool(mod.maskContactBeforeOrder, true),
       riskOrderAmount: num(mod.riskOrderAmount, 500, 0, 1000000),
     },
     // Maintenance mode: the marketplace shows a maintenance page and the
@@ -242,6 +255,18 @@ async function getPublic() {
     features: s.features,
     demoPayments: s.marketplace.demoPayments,
     orderRules: { veryLateHours: s.marketplace.veryLateHours, lateAutoCancelDays: s.marketplace.lateAutoCancelDays },
+    // Public money rules (shown at checkout, earnings and policy pages).
+    policy: {
+      buyerFeePercent: s.marketplace.buyerFeePercent,
+      smallOrderFee: s.marketplace.smallOrderFee,
+      smallOrderUnder: s.marketplace.smallOrderUnder,
+      clearanceDays: s.marketplace.clearanceDays,
+      clearanceDaysFast: s.marketplace.clearanceDaysFast,
+      autoCompleteDays: s.marketplace.autoCompleteDays,
+      withdrawMin: { bank: s.marketplace.withdrawMinBank, paypal: s.marketplace.withdrawMinPaypal, payoneer: s.marketplace.withdrawMinPayoneer },
+      withdrawMax: s.marketplace.withdrawMax,
+      payoutChangeHoldHours: s.marketplace.payoutChangeHoldHours,
+    },
     growth: s.growth,
     maintenance: s.maintenance,
   };

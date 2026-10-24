@@ -12,27 +12,36 @@ const createWithdrawal = async (userId, body) => {
     throw new ApiError(httpStatus.NOT_FOUND, "User not found");
   }
 
-  if (body.withdrawalAmount < 20) {
-    throw new ApiError(
-      httpStatus.BAD_REQUEST,
-      "Minimum withdrawal amount is 20"
-    );
-  }
-  if (body.withdrawalAmount > 10000) {
-    throw new ApiError(
-      httpStatus.BAD_REQUEST,
-      "Maximum withdrawal amount is 10000"
-    );
-  }
-
   const method = body.method || "bank";
   if (!["bank", "paypal", "payoneer"].includes(method)) throw new ApiError(httpStatus.BAD_REQUEST, "Unknown payout method");
+  const m = (await require("./siteSettings.service").get()).marketplace;
+  const min = { bank: m.withdrawMinBank, paypal: m.withdrawMinPaypal, payoneer: m.withdrawMinPayoneer }[method];
+  const label = { bank: "bank transfer", paypal: "PayPal", payoneer: "Payoneer" }[method];
+  if (Number(body.withdrawalAmount) < min) {
+    throw new ApiError(httpStatus.BAD_REQUEST, `Minimum withdrawal by ${label} is $${min}`);
+  }
+  if (Number(body.withdrawalAmount) > m.withdrawMax) {
+    throw new ApiError(httpStatus.BAD_REQUEST, `Maximum withdrawal is $${m.withdrawMax}`);
+  }
   const account = String(body.payoutAccount || "").trim();
   if (method === "bank" && (!body.bankName || !body.accountNumber || !body.accountType)) {
     throw new ApiError(httpStatus.BAD_REQUEST, "bankName, accountNumber and accountType are required");
   }
   if (method === "paypal" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(account)) throw new ApiError(httpStatus.BAD_REQUEST, "Enter your PayPal email");
   if (method === "payoneer" && !/^[A-Za-z0-9_-]{3,64}$/.test(account)) throw new ApiError(httpStatus.BAD_REQUEST, "Enter your Payoneer payee id");
+  // Changed payout details: wait payoutChangeHoldHours before paying out.
+  const fingerprint = method === "bank" ? `bank:${String(body.bankName).trim()}:${String(body.accountNumber).trim()}` : `${method}:${account.toLowerCase()}`;
+  const saved = user.payoutDetails || {};
+  const holdMs = Number(m.payoutChangeHoldHours || 0) * 3600000;
+  if (saved.fingerprint !== fingerprint) {
+    await User.updateOne({ _id: userId }, { $set: { payoutDetails: { fingerprint, changedAt: new Date() } } });
+    if (saved.fingerprint && holdMs > 0) {
+      throw new ApiError(httpStatus.BAD_REQUEST, `New payout details saved. For your security you can withdraw to them after ${m.payoutChangeHoldHours} hours.`);
+    }
+  } else if (holdMs > 0 && saved.changedAt && Date.now() - new Date(saved.changedAt).getTime() < holdMs) {
+    const left = Math.ceil((holdMs - (Date.now() - new Date(saved.changedAt).getTime())) / 3600000);
+    throw new ApiError(httpStatus.BAD_REQUEST, `Your payout details changed recently. You can withdraw in about ${left} hour${left === 1 ? "" : "s"}.`);
+  }
   const amount = Number(body.withdrawalAmount);
   if (!Number.isFinite(amount)) throw new ApiError(httpStatus.BAD_REQUEST, "Invalid amount");
   // Atomic debit so two parallel requests can't overdraw the balance.

@@ -6,9 +6,27 @@ import PageHeader from "../../common/PageHeader";
 import Card from "../../common/Card";
 import Button from "../../common/Button";
 import StatusPill from "../../common/StatusPill";
-import { useAdminQuery, qs } from "../../utils/adminApi";
+import { useAdminQuery, qs, adminFetch } from "../../utils/adminApi";
+import toast from "react-hot-toast";
 import { timeAgo } from "../../utils/format";
-import { Empty, ErrorNote, Pager, Tabs, Td, Th, act } from "./ui";
+import { Empty, ErrorNote, Pager, Tabs, Td, Th, act, promptText } from "./ui";
+
+// Issue a policy warning to the flagged user, then mark the flag actioned.
+async function warnFromFlag(f, done) {
+  const uid = f.userId?.id || f.userId?._id || f.userId;
+  if (!uid) return;
+  const note = await promptText({ title: "Warn this user", description: "They get a notification and email. Repeated warnings restrict the account.", placeholder: "Note shown to the user (optional)" });
+  if (note === null) return;
+  const reason = f.reasons.some((r) => String(r).startsWith("contact:")) ? "off_platform" : "other";
+  try {
+    const r = await adminFetch(`/admin/users/${uid}/warnings`, { method: "POST", body: { reason, note, source: "risk-flag" } });
+    await adminFetch(`/admin/risk-flags/${f.id}`, { method: "PATCH", body: { status: "actioned", reason: "Warning issued" } });
+    toast.success(r?.escalation ? `Warning issued — account ${r.escalation}` : "Warning issued");
+    done();
+  } catch (e) {
+    toast.error(e.message);
+  }
+}
 
 const TABS = [
   { v: "open", label: "Open" },
@@ -68,6 +86,7 @@ export default function RiskFlags() {
                       {f.status === "open" ? (
                         <div className="flex gap-2 justify-end">
                           <Button size="sm" variant="secondary" onClick={() => review(f, "dismissed", "Dismiss flag")}>Dismiss</Button>
+                          {f.userId ? <Button size="sm" variant="secondary" onClick={() => warnFromFlag(f, reload)}>Warn user</Button> : null}
                           <Button size="sm" variant="danger" onClick={() => review(f, "actioned", "Mark as actioned")}>Actioned</Button>
                         </div>
                       ) : <Button size="sm" variant="ghost" onClick={() => review(f, "open", "Reopen flag?")}>Reopen</Button>}
