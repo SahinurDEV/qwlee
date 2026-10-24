@@ -1,5 +1,5 @@
   
-import { Button, Form, Input, notification } from "antd";
+import { Select, Button, Form, Input, notification } from "antd";
 import JoditEditor from "jodit-react";
 import React, { useEffect, useRef, useState } from "react";
 import { IoIosArrowBack } from "react-icons/io";
@@ -11,7 +11,7 @@ const EditBlog = () => {
   const [updateBlog, { isLoading, error }] = useUpdateBlogMutation();
   const data = useLoaderData();
   const singleData = data.data.attributes;
-  const { title, image, content, author, description, _id } = singleData;
+  const { title, image, content, author, description, _id, kind } = singleData;
 
   const [descriptionEdit, setDescriptionEdit] = useState(description);
   const [updateImage, setUpdateImage] = useState(null);
@@ -28,6 +28,7 @@ const EditBlog = () => {
     const formData = new FormData();
     formData.append("title", values.title);
     formData.append("author", values.author);
+      formData.append("kind", values?.kind || "article");
     formData.append("description", descriptionEdit);
     formData.append("content", values.content);
     if (updateImage) {
@@ -70,6 +71,7 @@ const EditBlog = () => {
         initialValues={{
           title: title,
           author: author,
+          kind: kind || "article",
           content: content,
         }}
         onFinish={handleUpdateBlog}
@@ -86,6 +88,14 @@ const EditBlog = () => {
                 placeholder="Blog title"
                 type="text"
                 className="w-full pl-4 h-14 borde mt-4 border-[#00BF63] rounded-md bg-[#E6F9EF]"
+              />
+            </Form.Item>
+          </div>
+          <div className="w-full">
+            <Form.Item name="kind" label={<span className="font-normal text-[18px] text-[#494949]">Type</span>}>
+              <Select
+                size="large"
+                options={[{ value: "article", label: "Article (blog)" }, { value: "guide", label: "Guide (how-to, shown in Help)" }]}
               />
             </Form.Item>
           </div>
