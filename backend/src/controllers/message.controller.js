@@ -67,6 +67,14 @@ const addMessage = catchAsync(async (req, res) => {
     }
   }
 
+  // Nobody can write into a blocked conversation.
+  if (chatInfo.status === "blocked" || (chatInfo.blockedBy || []).length) {
+    throw new ApiError(
+      httpStatus.FORBIDDEN,
+      "This conversation is blocked. Unblock it to send messages."
+    );
+  }
+
   // Reset deletedBy field if the chat was deleted by users
   if (chatInfo.deletedBy.length > 0) {
     chatInfo.deletedBy = [];
@@ -192,7 +200,9 @@ const updateMessageStatus = catchAsync(async (req, res) => {
 
   const updatedMessage = await messageService.updateMessageStatus(
     messageId,
-    status
+    status,
+    undefined,
+    req.user.id
   );
 
   if (!updatedMessage) {

@@ -2,7 +2,8 @@ const httpStatus = require("http-status");
 const pick = require("../utils/pick");
 const ApiError = require("../utils/ApiError");
 const catchAsync = require("../utils/catchAsync");
-const { blocklistService, chatService } = require("../services");
+const { chatService } = require("../services");
+const { assertChatMember } = require("../utils/access");
 const response = require("../config/response");
 
 const addChat = catchAsync(async (req, res) => {
@@ -35,7 +36,8 @@ const addChat = catchAsync(async (req, res) => {
 const getChats = catchAsync(async (req, res) => {
   const receiver = req.user.id;
   const options = pick(req.query, ["createdAt", "limit", "page"]);
-  const filter = { participants: { $in: [req.user.id] }, status: "accepted" };
+  // Blocked chats stay in the list so the blocker can unblock them.
+  const filter = { participants: { $in: [req.user.id] } };
   const chatResult = await chatService.getChats(filter, options, receiver);
 
   res.status(httpStatus.OK).json(
@@ -64,23 +66,29 @@ const getChat = catchAsync(async (req, res) => {
   );
 });
 
+// Block or unblock a conversation. Only its participants may do this.
+// Body: { action: "block" | "unblock" } (legacy: { status: "blocked" }).
 const updateChat = catchAsync(async (req, res) => {
+  await assertChatMember(req.params.chatId, req.user.id);
   const chat = await chatService.getChatById(req.params.chatId);
   if (!chat) {
     throw new ApiError(httpStatus.NOT_FOUND, "Chat not found");
   }
-  const { status } = req.body;
-  if (status && status !== chat.status && status === "blocked") {
-    chat.status = status;
+  const me = String(req.user.id);
+  let action = req.body?.action;
+  if (!action && req.body?.status === "blocked") action = "block";
+  if (!action && req.body?.status === "accepted") action = "unblock";
+  if (!["block", "unblock"].includes(action)) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "action must be block or unblock");
   }
+  const list = (chat.blockedBy || []).map(String).filter((id) => id !== me);
+  if (action === "block") list.push(me);
+  chat.blockedBy = list;
+  chat.status = list.length ? "blocked" : "accepted";
   await chat.save();
-  const profileId = chat.participants.filter(
-    (participant) => participant != req.user.id
-  );
-  await blocklistService.blocked({ profileId: profileId }, req.user.id);
   res.status(httpStatus.OK).json(
     response({
-      message: "Chat updated successfully",
+      message: action === "block" ? "Conversation blocked" : "Conversation unblocked",
       status: "OK",
       statusCode: httpStatus.OK,
       data: chat,

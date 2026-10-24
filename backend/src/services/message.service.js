@@ -5,6 +5,16 @@ const Payment = require("../models/payment.model");
 const { addCustomNotification } = require("./notification.service");
 const { User } = require("../models");
 
+// Throws 404 unless the user sent or received the message.
+const assertParty = (message, userId) => {
+  if (
+    !message ||
+    ![String(message.sender), String(message.receiver)].includes(String(userId))
+  ) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Message not found");
+  }
+};
+
 const addMessage = async (messageBody) => {
   try {
     return await Message.create(messageBody);
@@ -77,22 +87,36 @@ const getMessages = async (chatId, options, userId) => {
 const getMessage = async (messageId, userId) => {
   try {
     const message = await Message.findById(messageId);
-    if (!message) {
-      throw new ApiError(httpStatus.NOT_FOUND, "Message not found");
-    }
+    assertParty(message, userId);
 
-    if (message.deletedBy.includes(userId)) {
+    if (message.deletedBy.map(String).includes(String(userId))) {
       throw new ApiError(httpStatus.FORBIDDEN, "This message has been deleted");
     }
 
     return message;
   } catch (err) {
-    console.error("Error fetching message:", err.message);
+    if (err instanceof ApiError) throw err;
     throw new ApiError(httpStatus.BAD_REQUEST, err.message);
   }
 };
 
-const updateMessageStatus = async (messageId, newStatus, orderId) => {
+const updateMessageStatus = async (messageId, newStatus, orderId, userId) => {
+  // Called from the API (userId set): only the buyer the offer was sent
+  // to may decline it. Offers become "accepted" only by paying for them
+  // (orderLifecycle), never through this endpoint.
+  if (userId !== undefined) {
+    const existing = await Message.findById(messageId);
+    assertParty(existing, userId);
+    if (newStatus !== "rejected") {
+      throw new ApiError(httpStatus.FORBIDDEN, "Offers are accepted by placing the order");
+    }
+    if (String(existing.receiver) !== String(userId)) {
+      throw new ApiError(httpStatus.FORBIDDEN, "Only the buyer can decline this offer");
+    }
+    if (existing.content?.offerDetails?.status !== "pending") {
+      throw new ApiError(httpStatus.BAD_REQUEST, "This offer is no longer pending");
+    }
+  }
   try {
     // Validate the new status
     const validStatuses = ["pending", "accepted", "rejected"];
@@ -162,8 +186,9 @@ const cancelAndWithdrawOfferMessage = async (messageId, userId) => {
   const user = await User.findById(userId);
   try {
     const message = await Message.findById(messageId);
-    if (!message) {
-      throw new ApiError(httpStatus.NOT_FOUND, "Message not found");
+    assertParty(message, userId);
+    if (!message.content?.offerDetails || message.content.offerDetails.status !== "pending") {
+      throw new ApiError(httpStatus.BAD_REQUEST, "This offer is no longer pending");
     }
     message.content.offerDetails.status = "rejected";
     await message.save();
@@ -186,26 +211,19 @@ const cancelAndWithdrawOfferMessage = async (messageId, userId) => {
     }
     return message;
   } catch (err) {
-    console.error(
-      "Error cancelling and withdrawing offer message:",
-      err.message
-    );
+    if (err instanceof ApiError) throw err;
     throw new ApiError(httpStatus.BAD_REQUEST, err.message);
   }
 };
 
 const deleteMessage = async (messageId, userId) => {
-  console.log("messageId", messageId, userId);
   const message = await Message.findById(messageId);
-  console.log("message", message);
-  if (!message) {
-    throw new ApiError(httpStatus.NOT_FOUND, "Chat not found");
-  }
+  assertParty(message, userId);
 
   //  if(message.sender != userId){
   //    throw new ApiError(httpStatus.BAD_REQUEST, "This is not your message");
   //  }
-  if (message.deletedBy.includes(userId)) {
+  if (message.deletedBy.map(String).includes(String(userId))) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
       "User has already been deleted from this chat"
