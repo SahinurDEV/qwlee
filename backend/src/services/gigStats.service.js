@@ -25,4 +25,22 @@ async function recomputeAll() {
   return n;
 }
 
-module.exports = { recompute, recomputeLater, recomputeAll };
+/**
+ * qwlee's Choice: in each category, the active gig with the most completed
+ * orders among those with at least choiceMinReviews reviews averaging
+ * choiceMinRating or more. One per category; recomputed by housekeeping.
+ */
+async function chooseChoice() {
+  const m = (await require("./siteSettings.service").get()).marketplace;
+  const rows = await Gig.aggregate([
+    { $match: { gigStatus: "active", isDeleted: { $ne: true }, "rating.count": { $gte: m.choiceMinReviews }, "rating.avg": { $gte: m.choiceMinRating } } },
+    { $sort: { ordersCompleted: -1, "rating.avg": -1, "rating.count": -1 } },
+    { $group: { _id: "$categoriesId", gig: { $first: "$_id" } } },
+  ]);
+  const ids = rows.map((r) => r.gig);
+  await Gig.updateMany({ choice: true, _id: { $nin: ids } }, { $set: { choice: false } });
+  if (ids.length) await Gig.updateMany({ _id: { $in: ids } }, { $set: { choice: true } });
+  return ids.length;
+}
+
+module.exports = { recompute, recomputeLater, recomputeAll, chooseChoice };

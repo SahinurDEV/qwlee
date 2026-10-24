@@ -110,6 +110,11 @@ function defaults() {
       payoutChangeHoldHours: process.env.TEST_MODE === "true" ? 0 : 24,
       demoPayments: process.env.DEMO_PAYMENTS === "true",
       requireGigApproval: false,
+      // Lowest seller level that can buy promoted (sponsored) placements.
+      adsMinLevel: process.env.TEST_MODE === "true" ? "new" : "level1",
+      // qwlee's Choice: minimum reviews and rating to be eligible.
+      choiceMinReviews: 5,
+      choiceMinRating: 4.7,
       // Max live gigs per seller level (0 = no limit). Off on test stacks.
       gigCaps: process.env.TEST_MODE === "true" ? { new: 0, level1: 0, level2: 0, topRated: 0 } : { new: 4, level1: 10, level2: 10, topRated: 30 },
       secondApprovalOver: Number(process.env.SECOND_APPROVAL_OVER || 0),
@@ -176,6 +181,9 @@ function normalise(site = {}, base = defaults()) {
       payoutChangeHoldHours: Math.round(num(m.payoutChangeHoldHours, 24, 0, 720)),
       demoPayments: bool(m.demoPayments, false),
       requireGigApproval: bool(m.requireGigApproval, false),
+      adsMinLevel: ["new", "level1", "level2", "topRated"].includes(m.adsMinLevel) ? m.adsMinLevel : base.marketplace.adsMinLevel,
+      choiceMinReviews: Math.round(num(m.choiceMinReviews, 5, 1, 1000)),
+      choiceMinRating: num(m.choiceMinRating, 4.7, 1, 5),
       gigCaps: Object.fromEntries(["new", "level1", "level2", "topRated"].map((k) => [k, Math.round(num(m.gigCaps?.[k], base.marketplace.gigCaps[k], 0, 500))])),
       // Refunds / payouts at or above this amount (USD) need a second
       // admin's approval. 0 = off.
