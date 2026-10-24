@@ -11,6 +11,42 @@ An open-source, Fiverr-style freelance services marketplace: sellers publish gig
 
 Full feature list: [docs/FEATURES.md](docs/FEATURES.md). Architecture and developer guides: [docs/](docs/).
 
+## Demo video
+
+**qwlee – Full User Manual: Open-Source Freelance Marketplace (Buyer, Seller & Admin Walkthrough)**
+
+[![qwlee demo](https://img.youtube.com/vi/m91b9sDshw0/hqdefault.jpg)](https://youtu.be/m91b9sDshw0)
+
+<details>
+<summary>Chapters</summary>
+
+- 0:00 Title
+- 0:06 Intro and home page
+- 0:45 Browsing, search and gig pages
+- 2:18 Sign up and sign in
+- 2:50 Buyer: ordering and checkout
+- 3:14 Buyer: orders
+- 4:18 Buyer: reviews
+- 4:45 Buyer: messages
+- 5:13 Buyer: wallet, history and lists
+- 6:05 Seller: dashboard
+- 6:22 Seller: creating a gig
+- 6:48 Seller: levels and Success Score
+- 7:33 Seller: analytics
+- 7:43 Seller: orders and delivery
+- 7:57 Seller: earnings and withdrawals
+- 8:21 Seller: chat tools and growth
+- 8:44 Policies
+- 9:25 Admin: overview
+- 9:44 Admin: users and sellers
+- 10:11 Admin: gigs and moderation
+- 10:54 Admin: orders and money
+- 11:28 Admin: content and communication
+- 11:57 Admin: settings and operations
+- 12:45 Wrap-up
+
+</details>
+
 ## Quick start (Docker)
 
 Requires Docker with Compose v2.
