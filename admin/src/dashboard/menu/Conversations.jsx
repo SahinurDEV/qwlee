@@ -5,7 +5,9 @@
 // left renders the full thread on the right. No composer — moderation
 // is observation-only.
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { frontendUrl } from "../../baseUrl";
 import { Modal as RModal } from "react-responsive-modal";
 import { IoSearch, IoImageOutline } from "react-icons/io5";
 
@@ -43,7 +45,10 @@ function previewOf(msg) {
 }
 
 export default function Conversations() {
-  const [tab, setTab] = useState("direct");
+  // Deep links: ?chat=<chatId> or ?a=<userId>&b=<userId> open a direct
+  // conversation; ?tab=order&order=<orderId> opens an order chat.
+  const [params] = useSearchParams();
+  const [tab, setTab] = useState(params.get("tab") === "order" ? "order" : "direct");
   const [search, setSearch] = useState("");
 
   return (
@@ -87,18 +92,24 @@ export default function Conversations() {
       </div>
 
       {tab === "direct" ? (
-        <DirectMessages search={search} />
+        <DirectMessages search={search} initialChat={params.get("chat")} pair={[params.get("a"), params.get("b")]} />
       ) : (
-        <OrderChats search={search} />
+        <OrderChats search={search} initialOrder={params.get("order")} />
       )}
     </div>
   );
 }
 
-function DirectMessages({ search }) {
+function DirectMessages({ search, initialChat, pair = [] }) {
   const { data, isFetching } = useGetDirectChatsQuery({ search });
   const rows = data?.results || [];
-  const [activeId, setActiveId] = useState(null);
+  const [activeId, setActiveId] = useState(initialChat || null);
+  useEffect(() => {
+    if (activeId || !pair[0] || !pair[1] || !rows.length) return;
+    const ids = (r) => (r.chat.participants || []).map((p) => String(p._id || p.id || p));
+    const hit = rows.find((r) => ids(r).includes(String(pair[0])) && ids(r).includes(String(pair[1])));
+    if (hit) setActiveId(hit.chat._id || hit.chat.id);
+  }, [rows, pair[0], pair[1], activeId]);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
@@ -192,10 +203,10 @@ function DirectThread({ chatId }) {
   );
 }
 
-function OrderChats({ search }) {
+function OrderChats({ search, initialOrder }) {
   const { data, isFetching } = useGetOrderChatsQuery({ search });
   const rows = data?.results || [];
-  const [activeId, setActiveId] = useState(null);
+  const [activeId, setActiveId] = useState(initialOrder || null);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
@@ -300,7 +311,7 @@ function OrderThread({ orderId }) {
         <div className="flex items-center gap-2">
           <StatusPill status={(order?.status || "active").toLowerCase()} />
           <a
-            href={`http://localhost:8000/order/${orderId}`}
+            href={`${frontendUrl}/order/${orderId}`}
             target="_blank"
             rel="noreferrer"
             className="text-xs font-medium text-primary-700 hover:text-primary-800"

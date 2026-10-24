@@ -5,6 +5,7 @@
 // the four resolution options from the PRD §5.10.
 
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
   IoFlagOutline,
@@ -259,6 +260,22 @@ export default function Disputes() {
                       ${Number(dispute.orderId.price).toFixed(2)}
                     </div>
                   ) : null}
+                  <div className="mt-1 flex flex-col items-end gap-0.5">
+                    <Link
+                      className="text-primary-700 underline"
+                      to={`/dashboard/conversations?tab=order&order=${dispute?.orderId?._id || dispute?.orderId}`}
+                    >
+                      Order chat
+                    </Link>
+                    {dispute?.orderId?.clientId && dispute?.orderId?.freelancerId ? (
+                      <Link
+                        className="text-primary-700 underline"
+                        to={`/dashboard/conversations?a=${dispute.orderId.clientId?._id || dispute.orderId.clientId}&b=${dispute.orderId.freelancerId?._id || dispute.orderId.freelancerId}`}
+                      >
+                        Direct messages
+                      </Link>
+                    ) : null}
+                  </div>
                 </div>
               </div>
 
