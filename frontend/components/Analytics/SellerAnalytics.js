@@ -25,6 +25,8 @@ function delta(cur, prev) {
 // so the line is to scale (daily keys YYYY-MM-DD, monthly YYYY-MM).
 function fillSeries(series, days) {
   if (!series.length) return series;
+  // Weekly buckets (YYYY-Www) are shown as returned.
+  if (![7, 10].includes(series[0].period.length)) return series;
   const byKey = new Map(series.map((s) => [s.period, s]));
   const monthly = series[0].period.length === 7;
   const out = [];
@@ -68,7 +70,7 @@ export default function SellerAnalytics() {
   const t = data?.totals;
   const points = fillSeries(data?.series || [], days).map((s) => ({
     label: s.period,
-    short: s.period.length > 7 ? s.period.slice(5) : s.period,
+    short: s.period.length === 10 ? s.period.slice(5) : s.period.includes("W") ? s.period.slice(5) : s.period,
     value: metric === "earnings" ? Number(s.earnings || 0) : Number(s.orders || 0),
     note: metric === "earnings" ? `${s.orders} orders` : money(s.earnings),
   }));
