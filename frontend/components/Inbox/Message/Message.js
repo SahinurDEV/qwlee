@@ -655,21 +655,21 @@ export default function Message() {
           <div className="text-sm md:text-base font-semibold text-gray-900 truncate">
             {fullName || "Member"}
           </div>
-          <div className="flex items-center gap-2 text-xs text-gray-500">
+          <div className="flex items-center gap-2 text-xs text-gray-500 min-w-0 whitespace-nowrap overflow-hidden">
             {activityLabel && (
               <span
-                className={
+                className={`shrink-0 ${
                   activityLabel.tone === "active"
                     ? "text-emerald-600 font-medium"
                     : activityLabel.tone === "recent"
                     ? "text-gray-700"
                     : "text-gray-500"
-                }
+                }`}
               >
                 {activityLabel.text}
               </span>
             )}
-            {location && <span className="text-gray-400">· {location}</span>}
+            {location && <span className="hidden sm:inline text-gray-400 truncate">· {location}</span>}
             {responseLabel && <span className="text-gray-400 truncate">· {responseLabel}</span>}
             <span className="hidden md:inline-flex items-center gap-1 text-gray-400">
               <IoTimeOutline /> {localTime ? `${localTime} local` : ""}
