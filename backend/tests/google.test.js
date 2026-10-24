@@ -112,7 +112,7 @@ test("google sign-in: unverified Google email refused; existing account linked",
   // Pre-registered but unverified account: Google owner takes it over and
   // the squatter's password stops working.
   const email = `squat-${Date.now()}@example.com`;
-  await fetch(`${API}/v1/auth/register`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email, password: "Squat123!x", fullName: "Squatter" }) });
+  await fetch(`${API}/v1/auth/register`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ acceptTerms: true, email, password: "Squat123!x", fullName: "Squatter" }) });
   const taken = await exchange((await callback(await start(), `${email}|sq-${Date.now()}|1`)).searchParams.get("code"));
   assert.equal(taken.status, 200);
   const pw = await fetch(`${API}/v1/auth/login`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email, password: "Squat123!x" }) });

@@ -19,7 +19,7 @@ const login = async (email, password) => {
 
 const fresh = async (tag) => {
   const email = `gdpr-${tag}-${Date.now()}@example.com`;
-  const r = await call("POST", "/auth/register", { body: { email, password: "Passw0rd!x", fullName: `Gdpr ${tag}`, role: "buyer" } });
+  const r = await call("POST", "/auth/register", { body: { acceptTerms: true, email, password: "Passw0rd!x", fullName: `Gdpr ${tag}`, role: "buyer" } });
   assert.equal(r.status, 201, JSON.stringify(r.json));
   const MP = (process.env.MAILPIT_URL || "http://localhost:8025").replace(/\/+$/, "");
   let code;

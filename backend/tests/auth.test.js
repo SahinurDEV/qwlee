@@ -72,7 +72,7 @@ test("password reset: email delivered, code works once, wrong guesses lock it", 
 
 test("login does not reveal whether an email exists or is unverified", async () => {
   const email = `enum-${Date.now()}@example.com`;
-  const reg = await post("/auth/register", { email, password: "Passw0rd!x", fullName: "Enum Test" });
+  const reg = await post("/auth/register", { acceptTerms: true, email, password: "Passw0rd!x", fullName: "Enum Test" });
   assert.ok([200, 201].includes(reg.status), `register ${reg.status}`);
   const unknown = await post("/auth/login", { email: `nobody-${Date.now()}@example.com`, password: "Wrong123!x" });
   const unverifiedWrong = await post("/auth/login", { email, password: "Wrong123!x" });
@@ -83,4 +83,14 @@ test("login does not reveal whether an email exists or is unverified", async () 
   }
   const unverifiedRight = await post("/auth/login", { email, password: "Passw0rd!x" });
   assert.equal(unverifiedRight.status, 400, "correct password still learns it needs verification");
+});
+
+test("sign-up requires 18+ and Terms consent", async () => {
+  const email = `consent-${Date.now()}@example.com`;
+  const no = await post("/auth/register", { email, password: "Passw0rd!x", fullName: "No Consent" });
+  assert.equal(no.status, 400);
+  const off = await post("/auth/register", { acceptTerms: false, email, password: "Passw0rd!x", fullName: "No Consent" });
+  assert.equal(off.status, 400);
+  const yes = await post("/auth/register", { acceptTerms: true, email, password: "Passw0rd!x", fullName: "Consent Ok" });
+  assert.ok([200, 201].includes(yes.status), `register ${yes.status}`);
 });
