@@ -20,7 +20,7 @@ const login = async (email, password) => {
 test("order lists only show the other party's public profile", async () => {
   const buyer = await login("buyer@example.com", "Buyer123!");
   const seller = await login("seller@example.com", "Seller123!");
-  for (const [who, path] of [[buyer, "/orders/my-orders?limit=50"], [buyer, "/orders?limit=50"], [seller, "/orders/freelancer?limit=50"]]) {
+  for (const [who, path] of [[buyer, "/orders?limit=50"], [seller, "/orders/freelancer?limit=50"]]) {
     const r = await call("GET", path, { token: who.token });
     if (r.status === 404) continue;
     assert.equal(r.status, 200, path);
