@@ -3,7 +3,10 @@ const { baseApi } = require("../../api/baseApi");
 const freelancerOrderApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getFreelancerAllOrder: builder.query({
-      query: ({ status, limit = 100, page = 1 } = {}) => {
+      query: (arg = {}) => {
+        // Accept either a status string ("active") or { status, limit, page }.
+        const { status, limit = 100, page = 1 } =
+          typeof arg === "string" ? { status: arg } : arg || {};
         const params = new URLSearchParams();
         if (status) params.append("status", status);
         if (limit) params.append("limit", limit);
