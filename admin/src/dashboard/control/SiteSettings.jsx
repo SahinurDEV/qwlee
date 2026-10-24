@@ -58,6 +58,20 @@ export default function SiteSettings() {
             <Field label="Second approval over ($)" hint="Refunds and payouts of this amount or more need a second admin. 0 = off."><input type="number" min={0} className={input} value={s.marketplace.secondApprovalOver ?? 0} onChange={(e) => set("marketplace", { secondApprovalOver: e.target.value })} /></Field>
             <Toggle label="Require gig approval" hint="New gigs start as 'pending' until a moderator approves them." checked={s.marketplace.requireGigApproval} onChange={(v) => set("marketplace", { requireGigApproval: v })} />
           </Card>
+          <Card title="Trust & safety" subtitle="Warnings and restrictions">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Field label="Warnings expire after (days)"><input type="number" min={1} className={input} value={s.trust?.warningExpiryDays ?? 90} onChange={(e) => set("trust", { warningExpiryDays: e.target.value })} /></Field>
+              <Field label="Escalate at N warnings for the same reason" hint="0 = off."><input type="number" min={0} max={20} className={input} value={s.trust?.suspendAfterSameReason ?? 2} onChange={(e) => set("trust", { suspendAfterSameReason: e.target.value })} /></Field>
+              <Field label="Escalate at N active warnings in total" hint="0 = off."><input type="number" min={0} max={20} className={input} value={s.trust?.suspendAfterTotal ?? 3} onChange={(e) => set("trust", { suspendAfterTotal: e.target.value })} /></Field>
+              <Field label="Escalation" hint="Restrict first (finish work, then suspended) or suspend at once.">
+                <select className={input} value={s.trust?.escalateTo ?? "restrict"} onChange={(e) => set("trust", { escalateTo: e.target.value })}>
+                  <option value="restrict">Restrict</option>
+                  <option value="suspend">Suspend</option>
+                </select>
+              </Field>
+              <Field label="Restriction length (days)" hint="After this the account is suspended."><input type="number" min={1} max={365} className={input} value={s.trust?.restrictionDays ?? 60} onChange={(e) => set("trust", { restrictionDays: e.target.value })} /></Field>
+            </div>
+          </Card>
           <Card title="Admin security" subtitle="Applies to every admin account">
             <Toggle label="Require two-factor for admins" hint="Admins without it can only open My security until they turn it on. Turn it on for yourself first." checked={!!s.security?.requireAdmin2fa} onChange={(v) => set("security", { requireAdmin2fa: v })} />
             <Field label="Admin IP allowlist" hint="One IP or IPv4 range (CIDR) per line, e.g. 203.0.113.7 or 10.0.0.0/8. Empty = any network. Must include your current address.">

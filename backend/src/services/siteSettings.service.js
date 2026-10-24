@@ -117,6 +117,7 @@ function defaults() {
     growth: { referrals: true, refereePercent: 10, referrerReward: 10, welcomePercent: 10, welcomeDays: 30 },
     moderation: { blockedWords: [], flaggedWords: [], flagContactInfo: true, maskContactBeforeOrder: true, riskOrderAmount: 500 },
     maintenance: { enabled: false, message: "", until: "" },
+    trust: { warningExpiryDays: 90, suspendAfterSameReason: 2, suspendAfterTotal: 3, escalateTo: "restrict", restrictionDays: 60 },
   };
 }
 
@@ -133,6 +134,7 @@ function normalise(site = {}, base = defaults()) {
   const g = { ...base.growth, ...(site.growth || {}) };
   const mod = { ...base.moderation, ...(site.moderation || {}) };
   const mt = { ...base.maintenance, ...(site.maintenance || {}) };
+  const tr = { ...base.trust, ...(site.trust || {}) };
   const until = str(mt.until, 40);
   if (until && Number.isNaN(Date.parse(until))) throw new ApiError(httpStatus.BAD_REQUEST, "Maintenance end time must be a date");
   const words = (v) => [...new Set((Array.isArray(v) ? v : String(v || "").split(/[\n,]+/)).map((x) => String(x).trim().toLowerCase().slice(0, 60)).filter(Boolean))].slice(0, 300);
@@ -210,6 +212,14 @@ function normalise(site = {}, base = defaults()) {
     // Maintenance mode: the marketplace shows a maintenance page and the
     // API answers 503 for everyone but admins (see middlewares/maintenance).
     maintenance: { enabled: bool(mt.enabled, false), message: str(mt.message, 300), until: until ? new Date(until).toISOString() : "" },
+    trust: {
+      warningExpiryDays: Math.round(num(tr.warningExpiryDays, 90, 1, 3650)),
+      // 0 turns a rule off.
+      suspendAfterSameReason: Math.round(num(tr.suspendAfterSameReason, 2, 0, 20)),
+      suspendAfterTotal: Math.round(num(tr.suspendAfterTotal, 3, 0, 20)),
+      escalateTo: tr.escalateTo === "suspend" ? "suspend" : "restrict",
+      restrictionDays: Math.round(num(tr.restrictionDays, 60, 1, 365)),
+    },
   };
 }
 
@@ -260,6 +270,7 @@ async function getPublic() {
     },
     growth: s.growth,
     maintenance: s.maintenance,
+    trustRules: { warningExpiryDays: s.trust.warningExpiryDays, restrictionDays: s.trust.restrictionDays },
   };
 }
 
