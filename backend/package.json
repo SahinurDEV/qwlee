@@ -12,7 +12,7 @@
     "seed:gigs": "node seeders/index.js --only=users,categories,gigs",
     "seed:legacy": "node src/utils/seeder.js",
     "pm2": "pm2 start src/index.js --env production",
-    "test": "node --test --test-concurrency=1 tests/*.test.js",
+    "test": "node --import ./tests/guard.mjs --test --test-concurrency=1 tests/*.test.js",
     "cleanup:uploads": "node scripts/cleanup-uploads.js"
   },
   "author": "Sahinur Islam",
