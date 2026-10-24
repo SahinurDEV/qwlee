@@ -1,7 +1,7 @@
 "use client";
 // Gig video (YouTube / Vimeo / direct file) and FAQ accordion.
 
-const embedUrl = (url) => {
+export const embedUrl = (url) => {
   if (!url) return null;
   try {
     const u = new URL(url);
