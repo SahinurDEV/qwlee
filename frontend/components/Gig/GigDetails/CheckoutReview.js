@@ -97,14 +97,17 @@ export default function CheckoutReview({ open, onClose, onConfirm, onApplyCoupon
                     </tr>
                   ) : null}
                   <tr>
-                    <td className="py-2 text-gray-700">Service fee</td>
-                    <td className="py-2 text-right text-gray-900">$0</td>
+                    <td className="py-2 text-gray-700">
+                      Service fee
+                      {quote?.smallOrderFee > 0 ? <div className="text-xs text-gray-500">Includes ${Number(quote.smallOrderFee).toFixed(2)} small order fee</div> : null}
+                    </td>
+                    <td className="py-2 text-right text-gray-900">${Number(quote?.serviceFee || 0).toFixed(2)}</td>
                   </tr>
                 </tbody>
                 <tfoot>
                   <tr>
                     <td className="pt-3 font-semibold text-gray-900">Total</td>
-                    <td className="pt-3 text-right text-xl font-bold text-gray-900">${Number(quote?.charge ?? quote?.total ?? 0).toLocaleString()}<UsdNote usd={quote?.charge ?? quote?.total ?? 0} /></td>
+                    <td className="pt-3 text-right text-xl font-bold text-gray-900">${Number(quote?.payable ?? quote?.charge ?? quote?.total ?? 0).toLocaleString()}<UsdNote usd={quote?.payable ?? quote?.charge ?? quote?.total ?? 0} /></td>
                   </tr>
                 </tfoot>
               </table>
@@ -160,7 +163,7 @@ export default function CheckoutReview({ open, onClose, onConfirm, onApplyCoupon
             disabled={!agree || loading || confirming || !!error}
             className="w-full px-4 py-3 rounded-xl bg-emerald-600 text-white font-semibold text-sm hover:bg-emerald-700 disabled:opacity-50"
           >
-            {confirming ? "Processing…" : `Confirm and pay $${Number(quote?.charge ?? quote?.total ?? 0).toLocaleString()}`}
+            {confirming ? "Processing…" : `Confirm and pay $${Number(quote?.payable ?? quote?.charge ?? quote?.total ?? 0).toLocaleString()}`}
           </button>
         </div>
       </div>
