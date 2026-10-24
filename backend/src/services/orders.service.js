@@ -1,4 +1,8 @@
 const orderLifecycle = require("./orderLifecycle.service");
+// Buyer and seller on an order only see each other's public profile
+// (no email, balance, plan or payout details).
+const { PUBLIC_USER_SELECT } = require("../utils/publicUser");
+const PARTY_SELECT = PUBLIC_USER_SELECT;
 const appConfigService = require("./appConfig.service");
 const httpStatus = require("http-status");
 const mongoose = require("mongoose");
@@ -49,12 +53,8 @@ const getOrders = async (filter, options, userId) => {
     {
       path: "gigId",
     },
-    {
-      path: "freelancerId",
-    },
-    {
-      path: "clientId",
-    },
+    { path: "freelancerId", select: PARTY_SELECT },
+    { path: "clientId", select: PARTY_SELECT },
   ];
 
   // Retrieve the paginated orders
@@ -64,9 +64,11 @@ const getOrders = async (filter, options, userId) => {
 };
 
 const getOrderById = async (orderId) => {
-  const order = await Payment.findById(orderId).populate(
-    "gigId freelancerId clientId"
-  );
+  const order = await Payment.findById(orderId).populate([
+    { path: "gigId" },
+    { path: "freelancerId", select: PARTY_SELECT },
+    { path: "clientId", select: PARTY_SELECT },
+  ]);
   if (!order) throw new ApiError(httpStatus.NOT_FOUND, "Order not found");
   return order;
 };
@@ -76,12 +78,8 @@ const freelancerOrdersList = async (filter, options, userId) => {
     {
       path: "gigId",
     },
-    {
-      path: "freelancerId",
-    },
-    {
-      path: "clientId",
-    },
+    { path: "freelancerId", select: PARTY_SELECT },
+    { path: "clientId", select: PARTY_SELECT },
   ];
 
   // Retrieve the paginated orders
@@ -100,12 +98,8 @@ const getMyOrders = async (filter, options, userId) => {
     {
       path: "gigId",
     },
-    {
-      path: "freelancerId",
-    },
-    {
-      path: "clientId",
-    },
+    { path: "freelancerId", select: PARTY_SELECT },
+    { path: "clientId", select: PARTY_SELECT },
   ];
 
   filter.clientId = userId;
