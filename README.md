@@ -241,13 +241,13 @@ cd backend  && npm run seed   # optional demo data
 
 ## Tests
 
-With a seeded stack running:
-
 ```sh
-scripts/test-live.sh
+scripts/test-isolated.sh
 ```
 
-The script snapshots the database first and restores it when the tests finish, so running the suite against a demo or live stack leaves no test orders, edits or users behind. The tests run inside a temporary backend container, so you don't need `npm install` on the host (set `TEST_ON_HOST=true` to use your own Node instead). Image checks fetch seed and upload files from the API under test, so they pass even when the public URL in `.env` is offline. Set `API_URL` to point it at another URL. `cd backend && npm test` runs the same tests without the snapshot (fine for a throwaway database, as in CI).
+This starts a separate, throw-away stack (`docker-compose.test.yml`, project `qwlee-test`) with its own in-memory database, mail catcher and ports (API on 17171), seeds it, runs the API tests and removes it. Your live or demo database is never touched. `KEEP=1` leaves the test stack running.
+
+The tests refuse to run unless the API's `/health` reports `testMode: true` (set `TEST_MODE=true` on the backend, as the test stack and CI do), so `npm test` cannot write into a real database by accident. Set `ALLOW_NON_TEST_API=true` only if you really mean to.
 
 ## Contributing
 

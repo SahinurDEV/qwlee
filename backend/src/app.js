@@ -5,7 +5,6 @@ const compression = require("compression");
 const cors = require("cors");
 const passport = require("passport");
 const httpStatus = require("http-status");
-const status = require("express-status-monitor");
 const config = require("./config/config");
 const morgan = require("./config/morgan");
 const { jwtStrategy } = require("./config/passport");
@@ -127,9 +126,6 @@ if (config.env === "production") {
   app.use("/v1/auth", authLimiter);
 }
 
-// Express Monitor
-app.use(status());
-
 // Maintenance mode gate (503 for non-admins while on).
 app.use(require("./middlewares/maintenance"));
 
@@ -146,7 +142,12 @@ app.get("/health", (req, res) => {
     req.headers["x-real-ip"] ||
     req.headers["x-forwarded-for"] ||
     req.connection.remoteAddress;
-  res.send({ message: "Qwlee API health check", userIP });
+  res.send({
+    message: "Qwlee API health check",
+    userIP,
+    // Lets the test-suite confirm it is talking to a throw-away instance.
+    ...(process.env.TEST_MODE === "true" ? { testMode: true } : {}),
+  });
 });
 
 // send back a 404 error for any unknown api request
