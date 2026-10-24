@@ -128,7 +128,7 @@ function defaults() {
     features: { signups: true, buyerRequests: true, tips: true, googleLogin: true },
     security: { requireAdmin2fa: false, adminIpAllowlist: [] },
     growth: { referrals: true, refereePercent: 10, referrerReward: 10, welcomePercent: 10, welcomeDays: 30 },
-    moderation: { blockedWords: [], flaggedWords: [], flagContactInfo: true, maskContactBeforeOrder: true, riskOrderAmount: 500 },
+    moderation: { blockedWords: [], flaggedWords: [], flagContactInfo: true, maskContactBeforeOrder: true, riskOrderAmount: 500, newChatsPerDay: process.env.TEST_MODE === "true" ? 0 : 10 },
     maintenance: { enabled: false, message: "", until: "" },
     trust: { warningExpiryDays: 90, suspendAfterSameReason: 2, suspendAfterTotal: 3, escalateTo: "restrict", restrictionDays: 60 },
   };
@@ -229,6 +229,7 @@ function normalise(site = {}, base = defaults()) {
       flaggedWords: words(mod.flaggedWords),
       flagContactInfo: bool(mod.flagContactInfo, true),
       maskContactBeforeOrder: bool(mod.maskContactBeforeOrder, true),
+      newChatsPerDay: Math.round(num(mod.newChatsPerDay, base.moderation.newChatsPerDay, 0, 1000)),
       riskOrderAmount: num(mod.riskOrderAmount, 500, 0, 1000000),
     },
     // Maintenance mode: the marketplace shows a maintenance page and the

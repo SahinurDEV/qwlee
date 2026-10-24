@@ -23,11 +23,22 @@ after(async () => {
   for (const id of warningIds) await call("DELETE", `/admin/warnings/${id}`, { token: admin.token });
 });
 
+// Every public gig of a user, across pages (the list is capped per page).
+const liveGigsOf = async (userId) => {
+  const out = [];
+  for (let page = 1; page <= 20; page++) {
+    const r = (await call("GET", `/gig?limit=100&page=${page}`)).data;
+    out.push(...r.results.filter((g) => idOf(g.userId) === userId));
+    if (page >= (r.totalPages || 1)) break;
+  }
+  return out;
+};
+
 test("two warnings for the same reason restrict the account", async () => {
   admin = await login("admin@example.com", "Admin123!");
   seller = await login("daniel.park@example.com", "Seller123!");
   const buyer = await login("buyer@example.com", "Buyer123!");
-  const gigsBefore = (await call("GET", "/gig?limit=200")).data.results.filter((g) => idOf(g.userId) === seller.user.id);
+  const gigsBefore = (await liveGigsOf(seller.user.id));
   assert.ok(gigsBefore.length > 0, "seller has live gigs");
 
   const bad = await call("POST", `/admin/users/${seller.user.id}/warnings`, { token: admin.token, body: { reason: "nope" } });
@@ -47,7 +58,7 @@ test("two warnings for the same reason restrict the account", async () => {
   assert.ok(standing.data.restriction?.until, "restricted");
 
   // Gigs are hidden and new orders refused.
-  const live = (await call("GET", "/gig?limit=200")).data.results.filter((g) => idOf(g.userId) === seller.user.id);
+  const live = (await liveGigsOf(seller.user.id));
   assert.equal(live.length, 0);
   const g = gigsBefore[0];
   const q = await call("POST", "/orders/quote", { token: buyer.token, body: { gigId: idOf(g), packageName: g.package[0].name } });
@@ -55,6 +66,6 @@ test("two warnings for the same reason restrict the account", async () => {
 
   // Lifting puts the gigs back.
   assert.equal((await call("DELETE", `/admin/users/${seller.user.id}/restrict`, { token: admin.token })).status, 200);
-  const back = (await call("GET", "/gig?limit=200")).data.results.filter((x) => idOf(x.userId) === seller.user.id);
+  const back = (await liveGigsOf(seller.user.id));
   assert.equal(back.length, gigsBefore.length);
 });
