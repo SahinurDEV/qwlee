@@ -105,6 +105,15 @@ const adminLevelController = require("../../controllers/adminLevel.controller");
 router.get("/seller-levels", auth("admin"), adminLevelController.listSellerLevels);
 router.get("/seller-levels/tiers", auth("admin"), adminLevelController.getTiers);
 router.patch("/seller-levels/tiers", auth("admin"), adminLevelController.updateTiers);
+// Top Rated needs approval: {action: approve | decline | reset}.
+router.post("/seller-levels/:userId/top-rated", auth("admin"), require("../../utils/catchAsync")(async (req, res) => {
+  try {
+    const data = await require("../../services/sellerLevel.service").reviewTopRated(req.params.userId, req.body?.action, req.user.id);
+    res.json({ code: 200, message: "Updated", data: { attributes: data } });
+  } catch (e) {
+    res.status(400).json({ code: 400, message: e.message });
+  }
+}));
 router.patch(
   "/seller-levels/:userId/override",
   auth("admin"),

@@ -31,6 +31,7 @@ import PageHeader from "../../common/PageHeader";
 import Card from "../../common/Card";
 import Avatar from "../../common/Avatar";
 import cls from "../../utils/cls";
+import { adminFetch } from "../../utils/adminApi";
 import { formatMoney, formatNumber } from "../../utils/format";
 
 export default function SellerLevels() {
@@ -73,6 +74,9 @@ function TierEditor() {
         minClients: 0,
         minEarnings: 0,
         minRating: 0,
+        minResponseRate: 0,
+        minSuccessScore: 0,
+        requiresApproval: false,
       },
     ]);
   }
@@ -132,6 +136,9 @@ function TierEditor() {
                 <th className="text-right px-3 py-2 font-semibold">Clients ≥</th>
                 <th className="text-right px-3 py-2 font-semibold">Earnings ≥</th>
                 <th className="text-right px-3 py-2 font-semibold">Rating ≥</th>
+                <th className="text-right px-3 py-2 font-semibold">Response % ≥</th>
+                <th className="text-right px-3 py-2 font-semibold">Success ≥</th>
+                <th className="text-center px-3 py-2 font-semibold">Approval</th>
                 <th className="px-3 py-2"></th>
               </tr>
             </thead>
@@ -194,6 +201,15 @@ function TierEditor() {
                     />
                   </td>
                   <td className="px-3 py-2 text-right">
+                    <input type="number" min={0} max={100} aria-label="Minimum response rate" value={t.minResponseRate ?? 0} onChange={(e) => patch(i, "minResponseRate", Number(e.target.value) || 0)} className="w-20 px-2 py-1.5 rounded border border-ink-200 text-sm text-right outline-none focus:border-primary-400" />
+                  </td>
+                  <td className="px-3 py-2 text-right">
+                    <input type="number" min={0} max={100} aria-label="Minimum success score" title="Job Success Score %, 0 = not required" value={t.minSuccessScore ?? 0} onChange={(e) => patch(i, "minSuccessScore", Number(e.target.value) || 0)} className="w-20 px-2 py-1.5 rounded border border-ink-200 text-sm text-right outline-none focus:border-primary-400" />
+                  </td>
+                  <td className="px-3 py-2 text-center">
+                    <input type="checkbox" aria-label="Requires admin approval" checked={!!t.requiresApproval} onChange={(e) => patch(i, "requiresApproval", e.target.checked)} />
+                  </td>
+                  <td className="px-3 py-2 text-right">
                     <button
                       type="button"
                       onClick={() => removeTier(i)}
@@ -227,9 +243,21 @@ function TierEditor() {
 // -- Sellers table ---------------------------------------------------------
 function SellersTable() {
   const [search, setSearch] = useState("");
-  const { data: sellers = [], isFetching } = useGetSellerLevelsQuery({});
+  const { data: sellers = [], isFetching, refetch: refetchSellers } = useGetSellerLevelsQuery({});
   const { data: tiers = [] } = useGetLevelTiersQuery();
   const [overrideTarget, setOverrideTarget] = useState(null);
+  const [, bump] = useState(0);
+  async function reviewTopRated(s, action) {
+    if (action !== "approve" && !confirm("Remove this seller's Top Rated approval?")) return;
+    try {
+      await adminFetch(`/admin/seller-levels/${s._id}/top-rated`, { method: "POST", body: { action } });
+      toast.success(action === "approve" ? "Top Rated approved" : "Top Rated removed");
+      refetchSellers?.();
+      bump((n) => n + 1);
+    } catch (e) {
+      toast.error(e.message);
+    }
+  }
 
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -349,7 +377,17 @@ function SellersTable() {
                         ({s.reviews || 0})
                       </span>
                     </td>
-                    <td className="px-3 py-3 text-right">
+                    <td className="px-3 py-3 text-right whitespace-nowrap">
+                      {s.topRated?.eligible && s.topRated.status !== "approved" ? (
+                        <button type="button" onClick={() => reviewTopRated(s, "approve")} className="mr-3 text-xs font-semibold text-emerald-700 hover:text-emerald-800">
+                          Approve Top Rated{s.topRated.status === "declined" ? " (declined)" : ""}
+                        </button>
+                      ) : null}
+                      {s.topRated?.status === "approved" ? (
+                        <button type="button" onClick={() => reviewTopRated(s, "reset")} className="mr-3 text-xs font-semibold text-rose-600 hover:text-rose-700">
+                          Remove Top Rated
+                        </button>
+                      ) : null}
                       <button
                         type="button"
                         onClick={() => setOverrideTarget(s)}

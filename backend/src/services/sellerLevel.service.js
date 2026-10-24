@@ -1,66 +1,42 @@
-// Seller level + gig stats — Fiverr-style.
+// Seller levels — Fiverr-style.
 //
-// Two responsibilities:
-//   1. computeLevelOverview(userId) — derives current level (0/1/2/Top
-//      Rated), success score, rating, response rate, and the progress
-//      toward the next level (orders / unique clients / earnings).
-//   2. listMyGigsWithStats(userId) — returns every gig the seller owns,
-//      grouped by status, with per-gig impressions / clicks / orders /
-//      cancellations over the last 30 days.
+//   computeLevelOverview(userId)  current level, metrics and progress to
+//                                 the next level (seller dashboard).
+//   evaluate(userId)              recompute and store user.sellerLevel, the
+//                                 single source for badges and filters.
+//   evaluateAll()                 housekeeping: re-evaluate stale sellers.
+//   listMyGigsWithStats(userId)   per-gig stats for the seller's gig list.
 //
-// Thresholds mirror Fiverr's published tiers, tuned a bit downward for
-// our smaller seeded marketplace so the metrics actually move during
-// QA. Adjust the LEVEL_TIERS table when you onboard real volume.
+// Tiers live in AppConfig.sellerLevels (admin: /dashboard/seller-levels).
+// Defaults follow Fiverr's published criteria. A tier with
+// requiresApproval (Top Rated) is only granted once an admin approves.
 
 const mongoose = require("mongoose");
 const { Gig, Payment, User } = require("../models");
 
-// Default tier ladder used when the admin hasn't customised them in
-// AppConfig.sellerLevels. The admin can edit these from
-// /dashboard/seller-levels to re-calibrate as the marketplace grows.
 const DEFAULT_LEVEL_TIERS = [
-  {
-    id: "level0",
-    label: "Level 0 (New seller)",
-    minOrders: 0,
-    minClients: 0,
-    minEarnings: 0,
-    minRating: 0,
-  },
-  {
-    id: "level1",
-    label: "Level 1",
-    minOrders: 5,
-    minClients: 3,
-    minEarnings: 400,
-    minRating: 4.7,
-  },
-  {
-    id: "level2",
-    label: "Level 2",
-    minOrders: 50,
-    minClients: 25,
-    minEarnings: 2000,
-    minRating: 4.7,
-  },
-  {
-    id: "topRated",
-    label: "Top Rated",
-    minOrders: 100,
-    minClients: 50,
-    minEarnings: 20000,
-    minRating: 4.8,
-  },
+  { id: "level0", label: "New seller", minOrders: 0, minClients: 0, minEarnings: 0, minRating: 0, minResponseRate: 0, minSuccessScore: 0, requiresApproval: false },
+  { id: "level1", label: "Level 1", minOrders: 5, minClients: 3, minEarnings: 400, minRating: 4.4, minResponseRate: 80, minSuccessScore: 0, requiresApproval: false },
+  { id: "level2", label: "Level 2", minOrders: 20, minClients: 10, minEarnings: 2000, minRating: 4.6, minResponseRate: 90, minSuccessScore: 0, requiresApproval: false },
+  { id: "topRated", label: "Top Rated", minOrders: 40, minClients: 20, minEarnings: 10000, minRating: 4.7, minResponseRate: 90, minSuccessScore: 0, requiresApproval: true },
 ];
 
-// Read the live tier ladder from AppConfig; fall back to defaults if
-// the admin hasn't saved any (or if the config service is unavailable).
+// Fill fields older saved tiers don't have from the default with the same id.
+function withDefaults(t) {
+  const d = DEFAULT_LEVEL_TIERS.find((x) => x.id === t.id) || {};
+  return {
+    ...t,
+    minResponseRate: t.minResponseRate ?? d.minResponseRate ?? 0,
+    minSuccessScore: t.minSuccessScore ?? d.minSuccessScore ?? 0,
+    requiresApproval: t.requiresApproval ?? d.requiresApproval ?? false,
+  };
+}
+
 async function getTiers() {
   try {
-    const appConfigService = require("./appConfig.service");
-    const config = await appConfigService.getConfig();
-    const tiers = Array.isArray(config?.sellerLevels) ? config.sellerLevels.map((t) => t.toObject ? t.toObject() : t) : [];
-    if (tiers.length > 0) return tiers;
+    const config = await require("./appConfig.service").getConfig();
+    const tiers = Array.isArray(config?.sellerLevels) ? config.sellerLevels.map((t) => (t.toObject ? t.toObject() : t)) : [];
+    if (tiers.length > 0) return tiers.map(withDefaults);
   } catch {
     /* fall through */
   }
@@ -72,112 +48,78 @@ function qualifies(stats, tier) {
     stats.completedOrders >= tier.minOrders &&
     stats.uniqueClients >= tier.minClients &&
     stats.earnings >= tier.minEarnings &&
-    stats.rating >= tier.minRating
+    stats.rating >= tier.minRating &&
+    stats.responseRate >= (tier.minResponseRate || 0) &&
+    (!tier.minSuccessScore || (stats.successScore ?? 0) >= tier.minSuccessScore)
   );
 }
 
-async function computeLevelOverview(userId) {
-  if (!userId) throw new Error("userId required");
-  const oid = new mongoose.Types.ObjectId(String(userId));
+// Highest tier the seller meets. Tiers that need approval are skipped
+// unless approved; `pending` names the one waiting for an admin.
+function pickTier(stats, tiers, approved) {
+  let pending = null;
+  for (let i = tiers.length - 1; i >= 0; i--) {
+    if (!qualifies(stats, tiers[i])) continue;
+    if (tiers[i].requiresApproval && !approved) {
+      pending = pending || tiers[i];
+      continue;
+    }
+    return { tier: tiers[i], pending };
+  }
+  return { tier: tiers[0], pending };
+}
 
-  const user = await User.findById(oid).select(
-    "review responseTime fullName username levelOverride"
-  );
-  if (!user) throw new Error("User not found");
-
-  const LEVEL_TIERS = await getTiers();
-
-  // Aggregate completed orders + earnings + unique clients in one pass.
-  // "Completed" in this codebase = status === "delivered" (buyer
-  // accepted; freelancer balance has been credited).
+async function statsFor(oid, user) {
   const [agg = {}] = await Payment.aggregate([
-    {
-      $match: {
-        freelancerId: oid,
-        status: "delivered",
-        isDeleted: { $ne: true },
-      },
-    },
-    {
-      $group: {
-        _id: null,
-        completedOrders: { $sum: 1 },
-        earnings: { $sum: { $arrayElemAt: ["$items.price", 0] } },
-        clients: { $addToSet: "$clientId" },
-      },
-    },
-    {
-      $project: {
-        completedOrders: 1,
-        earnings: 1,
-        uniqueClients: { $size: "$clients" },
-      },
-    },
+    { $match: { freelancerId: oid, status: "delivered", isDeleted: { $ne: true } } },
+    { $group: { _id: null, completedOrders: { $sum: 1 }, earnings: { $sum: { $arrayElemAt: ["$items.price", 0] } }, clients: { $addToSet: "$clientId" } } },
+    { $project: { completedOrders: 1, earnings: 1, uniqueClients: { $size: "$clients" } } },
   ]);
-
-  const stats = {
+  const rs = await require("./message.service").responseStats(oid).catch(() => ({}));
+  const jobSuccess = await require("./jobSuccess.service").forSeller(oid).catch(() => null);
+  return {
     completedOrders: agg.completedOrders || 0,
     earnings: agg.earnings || 0,
     uniqueClients: agg.uniqueClients || 0,
     rating: Number(user.review?.rating || 0),
     totalReviews: Number(user.review?.total || 0),
+    // No incoming messages yet counts as 100%: nothing went unanswered.
+    responseRate: rs?.rate ?? 100,
+    successScore: jobSuccess?.score ?? null,
+    jobSuccess,
   };
+}
 
-  // Admin override wins. If the admin has pinned a tier, we hide the
-  // qualifies-for-next progress (it'd be misleading) and surface the
-  // override reason for transparency.
+async function computeLevelOverview(userId) {
+  if (!userId) throw new Error("userId required");
+  const oid = new mongoose.Types.ObjectId(String(userId));
+  const user = await User.findById(oid).select("review responseTime fullName username levelOverride topRatedApproval sellerLevel");
+  if (!user) throw new Error("User not found");
+  const LEVEL_TIERS = await getTiers();
+  const stats = await statsFor(oid, user);
+  const approved = user.topRatedApproval?.status === "approved";
+
   const overrideTierId = user.levelOverride?.tierId || "";
-  let current;
-  let isOverride = false;
-  if (overrideTierId) {
-    const overrideTier = LEVEL_TIERS.find((t) => t.id === overrideTierId);
-    if (overrideTier) {
-      current = overrideTier;
-      isOverride = true;
-    }
-  }
-  if (!current) {
-    // Walk the tiers from highest to lowest and pick the first one the
-    // seller satisfies. Default to the first (lowest) tier.
-    current = LEVEL_TIERS[0];
-    for (let i = LEVEL_TIERS.length - 1; i >= 0; i--) {
-      if (qualifies(stats, LEVEL_TIERS[i])) {
-        current = LEVEL_TIERS[i];
-        break;
-      }
-    }
-  }
+  const overrideTier = overrideTierId ? LEVEL_TIERS.find((t) => t.id === overrideTierId) : null;
+  const picked = pickTier(stats, LEVEL_TIERS, approved);
+  const current = overrideTier || picked.tier;
+  const isOverride = !!overrideTier;
   const currentIdx = LEVEL_TIERS.findIndex((t) => t.id === current.id);
-  const next = LEVEL_TIERS[Math.min(currentIdx + 1, LEVEL_TIERS.length - 1)];
   const atTop = currentIdx === LEVEL_TIERS.length - 1;
-
-  // Response time is stored as a string "0".."N" in user.model. Treat
-  // anything <= 24 as a green response rate; flip to a derived 0-100%
-  // until we wire real DM-response tracking.
-  const responseRate =
-    Number(user.responseTime) > 0 && Number(user.responseTime) <= 24
-      ? Math.max(0, 100 - Number(user.responseTime) * 2)
-      : 100;
-
-  // Success score is a 0–10 composite of rating × 2 (max 10). When
-  // there are no reviews we surface a dash on the UI.
-  const successScore = stats.totalReviews > 0 ? Number((stats.rating * 2).toFixed(1)) : null;
-
-  const jobSuccess = await require("./jobSuccess.service").forSeller(oid).catch(() => null);
+  const next = LEVEL_TIERS[Math.min(currentIdx + 1, LEVEL_TIERS.length - 1)];
+  const { jobSuccess, ...rawStats } = stats;
 
   return {
     jobSuccess,
-    user: {
-      name: user.fullName || user.username || "Seller",
-      username: user.username || null,
-    },
+    user: { name: user.fullName || user.username || "Seller", username: user.username || null },
     currentLevel: current,
     nextLevel: atTop || isOverride ? null : next,
+    pendingApproval: !isOverride && picked.pending ? { tierId: picked.pending.id, label: picked.pending.label, status: user.topRatedApproval?.status || "pending" } : null,
     metrics: {
-      successScore,
+      successScore: stats.successScore,
       rating: stats.rating || null,
       totalReviews: stats.totalReviews,
-      responseRate,
+      responseRate: stats.responseRate,
     },
     progress:
       atTop || isOverride
@@ -187,83 +129,78 @@ async function computeLevelOverview(userId) {
             uniqueClients: { value: stats.uniqueClients, target: next.minClients },
             earnings: { value: stats.earnings, target: next.minEarnings },
             rating: { value: stats.rating, target: next.minRating },
+            responseRate: { value: stats.responseRate, target: next.minResponseRate || 0 },
+            ...(next.minSuccessScore ? { successScore: { value: stats.successScore ?? 0, target: next.minSuccessScore } } : {}),
+            ...(next.requiresApproval ? { approval: { value: approved ? 1 : 0, target: 1 } } : {}),
           },
-    override: isOverride
-      ? {
-          reason: user.levelOverride?.reason || "",
-          setAt: user.levelOverride?.setAt || null,
-        }
-      : null,
-    rawStats: stats,
+    override: isOverride ? { reason: user.levelOverride?.reason || "", setAt: user.levelOverride?.setAt || null } : null,
+    computedTierId: picked.tier.id,
+    rawStats,
   };
 }
 
-// Admin list — every seller (role=freelancer) with their computed
-// level, key stats, and override info. Used by /dashboard/seller-levels.
+const PUBLIC_ID = (id) => (id === "level0" ? "new" : id);
+
+/** Recompute and store user.sellerLevel; marks Top Rated as pending review when earned. */
+async function evaluate(userId) {
+  const o = await computeLevelOverview(userId);
+  const set = { sellerLevel: { id: PUBLIC_ID(o.currentLevel.id), label: o.currentLevel.label, evaluatedAt: new Date() } };
+  const prev = await User.findById(userId).select("topRatedApproval sellerLevel").lean();
+  if (o.pendingApproval && !["pending", "approved", "declined"].includes(prev?.topRatedApproval?.status)) {
+    set.topRatedApproval = { status: "pending", at: new Date(), by: null };
+  }
+  await User.updateOne({ _id: userId }, { $set: set });
+  if (prev?.sellerLevel?.id && prev.sellerLevel.id !== set.sellerLevel.id) {
+    try {
+      await require("./notification.service").addCustomNotification("freelancer-notification", userId, {
+        receiverId: userId, message: `Your seller level is now ${o.currentLevel.label}.`, role: "freelancer", type: "level", viewStatus: false,
+      });
+    } catch { /* best effort */ }
+  }
+  return { ...o, stored: set.sellerLevel };
+}
+
+/** Housekeeping: re-evaluate sellers not checked in the last hour. */
+async function evaluateAll({ maxAgeMs = 3600e3, limit = 200 } = {}) {
+  const stale = new Date(Date.now() - maxAgeMs);
+  const sellers = await User.find({ role: "freelancer", isDeleted: { $ne: true }, $or: [{ "sellerLevel.evaluatedAt": null }, { "sellerLevel.evaluatedAt": { $lt: stale } }] }, { _id: 1 }).limit(limit).lean();
+  let n = 0;
+  for (const s of sellers) {
+    try {
+      await evaluate(s._id);
+      n++;
+    } catch { /* skip */ }
+  }
+  return n;
+}
+
+/** Admin: approve or decline a seller's Top Rated promotion. */
+async function reviewTopRated(sellerId, action, adminId) {
+  if (!["approve", "decline", "reset"].includes(action)) throw new Error("action must be approve, decline or reset");
+  const status = action === "approve" ? "approved" : action === "decline" ? "declined" : "none";
+  const r = await User.updateOne({ _id: sellerId, role: "freelancer" }, { $set: { topRatedApproval: { status, at: new Date(), by: adminId || null } } });
+  if (!r.matchedCount) throw new Error("Seller not found");
+  return evaluate(sellerId);
+}
+
+// Admin list — every seller with their computed level and stats.
 async function listAllSellerLevels({ search = "" } = {}) {
   const filter = { role: "freelancer", isDeleted: { $ne: true } };
   if (search.trim()) {
     const re = new RegExp(search.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
     filter.$or = [{ fullName: re }, { username: re }, { email: re }];
   }
-  const sellers = await User.find(filter)
-    .select("fullName username email image review levelOverride")
-    .limit(500)
-    .lean();
-
+  const sellers = await User.find(filter).select("fullName username email image review levelOverride topRatedApproval").limit(500).lean();
   const LEVEL_TIERS = await getTiers();
-
-  // Compute everyone's metrics in one aggregation pass — cheaper than
-  // calling computeLevelOverview() N times for large platforms.
-  const sellerIds = sellers.map((s) => s._id);
-  const aggRows = await Payment.aggregate([
-    {
-      $match: {
-        freelancerId: { $in: sellerIds },
-        status: "delivered",
-        isDeleted: { $ne: true },
-      },
-    },
-    {
-      $group: {
-        _id: "$freelancerId",
-        completedOrders: { $sum: 1 },
-        earnings: { $sum: { $arrayElemAt: ["$items.price", 0] } },
-        clients: { $addToSet: "$clientId" },
-      },
-    },
-  ]);
-  const statsBySeller = new Map(
-    aggRows.map((r) => [
-      String(r._id),
-      {
-        completedOrders: r.completedOrders || 0,
-        earnings: r.earnings || 0,
-        uniqueClients: (r.clients || []).length,
-      },
-    ])
-  );
-
-  return sellers.map((s) => {
-    const stats = {
-      completedOrders: 0,
-      earnings: 0,
-      uniqueClients: 0,
-      rating: Number(s.review?.rating || 0),
-      ...(statsBySeller.get(String(s._id)) || {}),
-    };
+  const out = [];
+  for (const s of sellers) {
+    const stats = await statsFor(s._id, s);
+    const approved = s.topRatedApproval?.status === "approved";
+    const picked = pickTier(stats, LEVEL_TIERS, approved);
     const overrideTierId = s.levelOverride?.tierId || "";
-    let computed = LEVEL_TIERS[0];
-    for (let i = LEVEL_TIERS.length - 1; i >= 0; i--) {
-      if (qualifies(stats, LEVEL_TIERS[i])) {
-        computed = LEVEL_TIERS[i];
-        break;
-      }
-    }
-    const effective = overrideTierId
-      ? LEVEL_TIERS.find((t) => t.id === overrideTierId) || computed
-      : computed;
-    return {
+    const effective = (overrideTierId && LEVEL_TIERS.find((t) => t.id === overrideTierId)) || picked.tier;
+    const { jobSuccess, ...rest } = stats;
+    out.push({
       _id: s._id,
       id: s._id,
       fullName: s.fullName,
@@ -272,15 +209,17 @@ async function listAllSellerLevels({ search = "" } = {}) {
       image: s.image,
       rating: stats.rating,
       reviews: Number(s.review?.total || 0),
-      computedTierId: computed.id,
-      computedTierLabel: computed.label,
+      computedTierId: picked.tier.id,
+      computedTierLabel: picked.tier.label,
       effectiveTierId: effective.id,
       effectiveTierLabel: effective.label,
       overrideTierId,
       overrideReason: s.levelOverride?.reason || "",
-      stats,
-    };
-  });
+      topRated: { eligible: !!picked.pending || approved, status: s.topRatedApproval?.status || "none" },
+      stats: rest,
+    });
+  }
+  return out;
 }
 
 async function setLevelOverride(sellerId, { tierId = "", reason = "", adminId }) {
@@ -300,6 +239,7 @@ async function setLevelOverride(sellerId, { tierId = "", reason = "", adminId })
     setAt: new Date(),
   };
   await user.save();
+  await evaluate(sellerId).catch(() => {});
   return user;
 }
 
@@ -315,6 +255,9 @@ async function updateTiers(tiers) {
     minClients: Number(t.minClients) || 0,
     minEarnings: Number(t.minEarnings) || 0,
     minRating: Number(t.minRating) || 0,
+    minResponseRate: Math.min(100, Math.max(0, Number(t.minResponseRate) || 0)),
+    minSuccessScore: Math.min(100, Math.max(0, Number(t.minSuccessScore) || 0)),
+    requiresApproval: t.requiresApproval === true || t.requiresApproval === "true",
   }));
   for (const t of cleaned) {
     if (!t.id || !t.label) {
@@ -420,6 +363,9 @@ module.exports = {
   listAllSellerLevels,
   setLevelOverride,
   updateTiers,
+  evaluate,
+  evaluateAll,
+  reviewTopRated,
   getCurrentTiers,
   DEFAULT_LEVEL_TIERS,
 };

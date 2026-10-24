@@ -218,6 +218,15 @@ const userSchema = mongoose.Schema(
     // a non-empty tier id (e.g. "level2"), the seller's computed level
     // is pinned to that tier and the qualifies-for-next progress hides.
     // Empty string = no override (default — derive from metrics).
+    // Stored level (sellerLevel.service.evaluate) — what badges and the
+    // search filter use. id: new | level1 | level2 | topRated.
+    sellerLevel: {
+      id: { type: String, default: "new" },
+      label: { type: String, default: "New seller" },
+      evaluatedAt: { type: Date, default: null },
+    },
+    // Top Rated needs an admin's approval: none | pending | approved | declined.
+    topRatedApproval: { type: Object, default: {}, private: true },
     levelOverride: {
       tierId: { type: String, default: "" },
       reason: { type: String, default: "" },

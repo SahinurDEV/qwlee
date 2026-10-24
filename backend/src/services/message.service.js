@@ -365,20 +365,30 @@ const responseStats = async (userId) => {
     .lean();
   const waiting = new Map();
   const deltas = [];
+  // Response rate: share of conversations the user answered within 24h
+  // of the other side writing (waits younger than 24h aren't counted yet).
+  const DAY = 86400000;
+  let answered = 0;
+  let missed = 0;
   for (const m of rows) {
     const chat = String(m.chat);
     if (String(m.sender) === String(userId)) {
       if (waiting.has(chat)) {
-        deltas.push(new Date(m.createdAt) - waiting.get(chat));
+        const d = new Date(m.createdAt) - waiting.get(chat);
+        deltas.push(d);
+        if (d <= DAY) answered++;
+        else missed++;
         waiting.delete(chat);
       }
     } else if (!waiting.has(chat)) {
       waiting.set(chat, new Date(m.createdAt));
     }
   }
-  if (!deltas.length) return { avgMinutes: null, sample: 0 };
+  for (const at of waiting.values()) if (Date.now() - at > DAY) missed++;
+  const rate = answered + missed ? Math.round((100 * answered) / (answered + missed)) : null;
+  if (!deltas.length) return { avgMinutes: null, sample: 0, rate };
   const avg = deltas.reduce((a, b) => a + b, 0) / deltas.length;
-  return { avgMinutes: Math.max(1, Math.round(avg / 60000)), sample: deltas.length };
+  return { avgMinutes: Math.max(1, Math.round(avg / 60000)), sample: deltas.length, rate };
 };
 
 // Tell both sides a message changed (deleted, edited, reacted to).
