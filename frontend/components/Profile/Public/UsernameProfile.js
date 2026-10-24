@@ -350,6 +350,18 @@ function Section({ id, title, count, children }) {
 }
 
 // Two-column About details strip (Languages / Location / Rate / Response time)
+// Measured from chat (minutes); falls back to the stored hours.
+function formatResponse(user) {
+  const m = Number(user.responseMinutes);
+  if (m > 0) {
+    if (m < 60) return `${m} min`;
+    if (m < 1440) return `${Math.round(m / 60)} hour${Math.round(m / 60) === 1 ? "" : "s"}`;
+    return `${Math.round(m / 1440)} day${Math.round(m / 1440) === 1 ? "" : "s"}`;
+  }
+  const h = Number(user.responseTime);
+  return h > 0 ? `${h} hour${h === 1 ? "" : "s"}` : null;
+}
+
 const LEVEL_LABEL = { basic: "Basic", conversational: "Conversational", fluent: "Fluent", native: "Native" };
 const languageText = (user) =>
   Array.isArray(user.languages) && user.languages.length
@@ -365,8 +377,8 @@ function SideDetails({ user }) {
       value: user.perHourRate ? `$${user.perHourRate}/hr` : null,
     },
     {
-      label: "Response time",
-      value: user.responseTime ? `${user.responseTime} hour(s)` : null,
+      label: "Avg. response time",
+      value: formatResponse(user),
     },
   ].filter((r) => r.value);
   if (rows.length === 0) return null;
@@ -428,7 +440,7 @@ function SellerCard({ user, isOwner, avg, totalReviews, joined }) {
         </SellerRow>
         <SellerRow label="Member since">{joined}</SellerRow>
         <SellerRow label="Avg. response time">
-          {user.responseTime ? `${user.responseTime} hour${user.responseTime === 1 ? "" : "s"}` : "—"}
+          {formatResponse(user) || "—"}
         </SellerRow>
         <SellerRow label="Languages">{languageText(user) || "—"}</SellerRow>
         <SellerRow label="Location">{user.location || "—"}</SellerRow>
@@ -443,7 +455,7 @@ function SellerCard({ user, isOwner, avg, totalReviews, joined }) {
             className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition"
           />
           <p className="text-xs text-gray-400 text-center">
-            Replies typically within {user.responseTime ? `${user.responseTime}h` : "a few hours"}.
+            Replies typically within {formatResponse(user) || "a few hours"}.
           </p>
         </div>
       ) : null}

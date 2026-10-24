@@ -185,6 +185,24 @@ const aggregatePublicProfile = async (matchStage) => {
   return result[0];
 };
 
+// Average chat response time for a seller, cached for 15 minutes. The
+// rounded-up hours are also saved to user.responseTime, which the seller
+// level score reads.
+const rtCache = new Map();
+const sellerResponseTime = async (userId) => {
+  const key = String(userId);
+  const hit = rtCache.get(key);
+  if (hit && hit.at > Date.now() - 15 * 60000) return hit.value;
+  const value = await require("./message.service").responseStats(userId);
+  rtCache.set(key, { at: Date.now(), value });
+  if (rtCache.size > 5000) rtCache.delete(rtCache.keys().next().value);
+  if (value.avgMinutes) {
+    const hours = Math.max(1, Math.ceil(value.avgMinutes / 60));
+    User.updateOne({ _id: userId, responseTime: { $ne: String(hours) } }, { $set: { responseTime: String(hours) } }).catch(() => {});
+  }
+  return value;
+};
+
 const getPublicProfileByUsername = async (username) => {
   return aggregatePublicProfile({ username: String(username).toLowerCase() });
 };
@@ -280,33 +298,14 @@ const getUserStats = async (freelancerId) => {
     }
 
     // Step 3: Fetch additional client info for reporting
-    const uniqueClients = await User.find({ _id: { $in: stats[0].clients } });
+    const uniqueClients = stats[0].clients;
 
-    // Step 4: Fetch messages between the freelancer and clients
-    const messages = await Message.find({
-      $or: [
-        { sender: freelancerId, receiver: { $in: stats[0].clients } },
-        { sender: { $in: stats[0].clients }, receiver: freelancerId }
-      ]
-    }).sort({ createdAt: 1 }); // Sort messages by timestamp in ascending order
-
-    // Step 5: Calculate response times
-    let totalResponseTime = 0;
-    let responseCount = 0;
-
-    for (let i = 1; i < messages.length; i++) {
-      const timeDiff = (messages[i].createdAt - messages[i - 1].createdAt) / 60000; // in minutes
-      totalResponseTime += timeDiff;
-      responseCount++;
-    }
-
-    // Calculate average response time
-    const averageResponseTime = responseCount > 0 ? totalResponseTime / responseCount : 0;
-
-    // Step 6: Calculate the last response time
-    const lastMessageTime = messages[messages.length - 1]?.createdAt;
-    const currentTime = new Date();
-    const lastResponseTime = lastMessageTime ? (currentTime - lastMessageTime) / 60000 : 0; // in minutes
+    // Step 4: Response time from chat (time from a new inbound message
+    // to the seller's next reply, last 60 days).
+    const rt = await sellerResponseTime(freelancerId);
+    const averageResponseTime = rt.avgMinutes || 0;
+    const lastSent = await Message.findOne({ sender: freelancerId }).sort({ createdAt: -1 }).select("createdAt").lean();
+    const lastResponseTime = lastSent ? (Date.now() - new Date(lastSent.createdAt).getTime()) / 60000 : 0;
 
     // Step 7: Prepare response with stats, last response time, and average response time
     return {
@@ -341,5 +340,6 @@ module.exports = {
   isUpdateUser,
   getUsersPublicById,
   getPublicProfileByUsername,
+  sellerResponseTime,
   getUserStats,
 };
