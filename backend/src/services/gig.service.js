@@ -76,7 +76,8 @@ const queryGigs = async (filter, options, { excludeUserId, viewer, ...extra } = 
   // typical seller counts and lets us reuse the existing paginator.
   const sellerFilter = {};
   if (filter.language) {
-    sellerFilter.language = { $regex: `^${escapeRegex(filter.language)}$`, $options: "i" };
+    // Stored as a comma list ("English, Spanish"): match any entry.
+    sellerFilter.language = { $regex: `(^|,)\\s*${escapeRegex(filter.language)}\\s*(,|$)`, $options: "i" };
   }
   if (filter.country) {
     sellerFilter.location = { $regex: escapeRegex(filter.country), $options: "i" };
