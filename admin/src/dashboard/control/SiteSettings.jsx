@@ -61,6 +61,7 @@ export default function SiteSettings() {
             <Toggle label="Demo payments" hint="Checkout completes without charging a card. Turn off in production." checked={s.marketplace.demoPayments} onChange={(v) => set("marketplace", { demoPayments: v })} />
             <Field label="Second approval over ($)" hint="Refunds and payouts of this amount or more need a second admin. 0 = off."><input type="number" min={0} className={input} value={s.marketplace.secondApprovalOver ?? 0} onChange={(e) => set("marketplace", { secondApprovalOver: e.target.value })} /></Field>
             <Toggle label="Require gig approval" hint="New gigs start as 'pending' until a moderator approves them." checked={s.marketplace.requireGigApproval} onChange={(v) => set("marketplace", { requireGigApproval: v })} />
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">{[["new", "New seller"], ["level1", "Level 1"], ["level2", "Level 2"], ["topRated", "Top Rated"]].map(([k, l]) => <Field key={k} label={`Max gigs: ${l}`} hint="0 = no limit"><input type="number" min={0} max={500} className={input} value={s.marketplace.gigCaps?.[k] ?? 0} onChange={(e) => set("marketplace", { gigCaps: { ...(s.marketplace.gigCaps || {}), [k]: e.target.value } })} /></Field>)}</div>
           </Card>
           <Card title="Trust & safety" subtitle="Warnings and restrictions">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

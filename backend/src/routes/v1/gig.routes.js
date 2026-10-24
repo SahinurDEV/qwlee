@@ -74,6 +74,11 @@ router
   .route("/")
   .post(
     auth("freelancer"),
+    // Check the level gig cap before accepting uploads.
+    require("../../utils/catchAsync")(async (req, res, next) => {
+      await require("../../services/gig.service").assertGigCap(req.user.id);
+      next();
+    }),
     upload.array("images", 6),
     imgbbUpload({ optional: false }),
     gigController.createGig
