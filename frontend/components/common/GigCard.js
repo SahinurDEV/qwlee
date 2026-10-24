@@ -11,6 +11,7 @@ import { useI18n } from "@/components/Context/I18nProvider";
 import Money from "@/components/common/Money";
 import Link from "next/link";
 import { IoStar } from "react-icons/io5";
+import LevelBadge from "@/components/common/LevelBadge";
 import { FaHeart, FaRegHeart } from "react-icons/fa";
 import ImageWithFallback from "@/components/common/ImageWithFallback";
 import Avatar from "@/components/common/Avatar";
@@ -107,11 +108,12 @@ export default function GigCard({ item, sponsored = false }) {
                 <span className="truncate">{seller.fullName || "Seller"}</span>
                 <VerifiedBadge user={seller} size={12} />
               </div>
-              {seller.username ? (
-                <div className="text-xs text-gray-500 truncate">
-                  @{seller.username}
-                </div>
-              ) : null}
+              <div className="flex items-center gap-1.5 min-w-0">
+                <LevelBadge seller={seller} />
+                {seller.username ? (
+                  <span className="text-xs text-gray-500 truncate">@{seller.username}</span>
+                ) : null}
+              </div>
             </div>
             {seller?.review?.total > 0 ? (
               <div className="flex items-center gap-0.5 text-xs">
