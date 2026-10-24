@@ -102,6 +102,7 @@ export default function MobileDrawer({ open, onClose }) {
     { label: "Dashboard", path: "/dashboard" },
     { label: "Orders", path: "/order" },
     { label: "Wishlist", path: "/list" },
+    { label: "Browsing history", path: "/history" },
     { label: "Browse services", path: "/gig" },
   ];
 

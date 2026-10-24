@@ -31,6 +31,7 @@ import {
   IoCashOutline,
   IoListOutline,
   IoHeartOutline,
+  IoTimeOutline,
   IoMailOutline,
   IoPersonCircleOutline,
 } from "react-icons/io5";
@@ -162,6 +163,7 @@ export default function TopNav() {
     { icon: IoSparklesOutline, label: "Contests", href: "/contests" },
     { icon: IoSparklesOutline, label: "Create a new gig", href: "/gig/add" },
     { icon: IoHeartOutline, label: "Wishlist", href: "/list" },
+    { icon: IoTimeOutline, label: "Browsing history", href: "/history" },
     authedUser?.username && {
       icon: IoPersonCircleOutline,
       label: "My public profile",
