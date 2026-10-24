@@ -200,7 +200,9 @@ const updateMessageStatus = catchAsync(async (req, res) => {
 
   const updatedMessage = await messageService.updateMessageStatus(
     messageId,
-    status
+    status,
+    undefined,
+    req.user.id
   );
 
   if (!updatedMessage) {
