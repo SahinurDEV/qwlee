@@ -4,6 +4,7 @@
 // to the backend (/v1/gig already honors sortBy via the controller's
 // pick(['sortBy','limit','page','populate'])).
 
+import { useI18n } from "@/components/Context/I18nProvider";
 import { Select } from "antd";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -17,6 +18,7 @@ const OPTIONS = [
 ];
 
 const AllCardTopFilters = ({ totalResults }) => {
+  const { t } = useI18n();
   const params = useSearchParams();
   const router = useRouter();
   const current = params.get("sortBy") || "createdAt:desc";
@@ -32,15 +34,15 @@ const AllCardTopFilters = ({ totalResults }) => {
     <div className="flex flex-wrap justify-between items-center gap-3 mb-3">
       <div className="text-sm text-gray-600">
         <span className="font-semibold text-gray-900">{totalResults ?? 0}</span>{" "}
-        results
+        {t("results")}
       </div>
       <div className="flex gap-2 items-center text-sm">
-        <span className="text-gray-500">Sort by</span>
+        <span className="text-gray-500">{t("Sort by")}</span>
         <Select
           aria-label="Sort services"
           value={current}
           onChange={handleChange}
-          options={OPTIONS}
+          options={OPTIONS.map((o) => ({ ...o, label: t(o.label) }))}
           className="w-[170px] md:w-[200px]"
           size="middle"
         />

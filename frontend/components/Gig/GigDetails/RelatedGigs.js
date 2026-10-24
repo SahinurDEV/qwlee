@@ -1,6 +1,7 @@
 "use client";
 // Rows of gig cards under the gig page: "More from <seller>" and
 // "People also viewed". Horizontal scroll on phones, grid on desktop.
+import { useI18n } from "@/components/Context/I18nProvider";
 import { baseApi } from "@/app/redux/api/baseApi";
 import GigCard from "@/components/common/GigCard";
 
@@ -30,14 +31,15 @@ export function GigRow({ title, gigs }) {
 }
 
 export default function RelatedGigs({ gigId, sellerName }) {
+  const { t } = useI18n();
   const { data } = relatedApi.useGetRelatedGigsQuery(gigId, { skip: !gigId });
   if (!data) return null;
   const first = (sellerName || "this seller").split(" ")[0];
   return (
     <>
-      <GigRow title={`More from ${first}`} gigs={data.moreFromSeller} />
+      <GigRow title={`${t("More from")} ${first}`} gigs={data.moreFromSeller} />
       <GigRow
-        title={data.alsoViewedSource === "views" ? "People also viewed" : "You may also like"}
+        title={t(data.alsoViewedSource === "views" ? "People also viewed" : "You may also like")}
         gigs={data.alsoViewed}
       />
     </>
