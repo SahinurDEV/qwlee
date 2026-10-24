@@ -58,6 +58,10 @@ const reviewSchema = mongoose.Schema(
       recommend: { type: Number, min: 1, max: 5, default: undefined },
     },
     sellerReply: { type: sellerReplySchema, default: () => ({}) },
+    // Private feedback for the qwlee team only (never shown publicly or to
+    // the seller). 1-5, optional, with an optional note.
+    privateRating: { type: Number, min: 1, max: 5, default: undefined },
+    privateNote: { type: String, trim: true, default: "" },
   },
   {
     timestamps: true,

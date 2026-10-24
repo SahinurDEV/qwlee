@@ -20,6 +20,8 @@ export default function LeaveReviewModal({ open, onClose, order, onSuccess }) {
   const [hover, setHover] = useState(0);
   const [text, setText] = useState("");
   const [subs, setSubs] = useState({ communication: 0, service: 0, recommend: 0 });
+  const [privateRating, setPrivateRating] = useState(0);
+  const [privateNote, setPrivateNote] = useState("");
   const [createReview, { isLoading }] = useCreateReviewMutation();
 
   // Reset when the modal opens for a fresh review.
@@ -46,6 +48,8 @@ export default function LeaveReviewModal({ open, onClose, order, onSuccess }) {
       rating,
       review: text.trim(),
       subRatings: Object.fromEntries(Object.entries(subs).filter(([, v]) => v > 0)),
+      ...(privateRating ? { privateRating } : {}),
+      ...(privateNote.trim() ? { privateNote: privateNote.trim() } : {}),
     });
     if (res?.error) {
       toast.error(res.error?.data?.message || "Couldn't submit your review");
@@ -165,6 +169,21 @@ export default function LeaveReviewModal({ open, onClose, order, onSuccess }) {
               </div>
             ))}
           </div>
+
+          {/* Private feedback: only the qwlee team sees it */}
+          <fieldset className="rounded-xl border border-gray-200 p-3 space-y-2">
+            <legend className="px-1 text-sm font-medium text-gray-800">Private feedback (optional)</legend>
+            <p className="text-xs text-gray-500">Only the qwlee team sees this. It is not shown to the seller or on the gig.</p>
+            <div className="flex" role="radiogroup" aria-label="Private rating">
+              {[1, 2, 3, 4, 5].map((n) => (
+                <button key={n} type="button" role="radio" aria-checked={privateRating === n} aria-label={`Private rating: ${n} star${n > 1 ? "s" : ""}`} onClick={() => setPrivateRating(privateRating === n ? 0 : n)} className="p-0.5">
+                  <IoStar className={`w-5 h-5 ${privateRating >= n ? "text-sky-500" : "text-gray-200"}`} />
+                </button>
+              ))}
+            </div>
+            <label htmlFor="private-note" className="sr-only">Private note</label>
+            <textarea id="private-note" rows={2} maxLength={1000} value={privateNote} onChange={(e) => setPrivateNote(e.target.value)} placeholder="Anything we should know?" className="w-full border border-gray-300 rounded-lg p-2 text-sm" />
+          </fieldset>
 
           {/* Review text */}
           <div>
