@@ -27,6 +27,7 @@ import StatusPill from "../../common/StatusPill";
 import cls from "../../utils/cls";
 import { formatDate, formatMoney, formatNumber } from "../../utils/format";
 import getImageUrl from "../../utils/getImageUrl";
+import { frontendUrl } from "../../baseUrl";
 
 const TABS = [
   { v: "all", label: "All" },
@@ -177,7 +178,7 @@ export default function Orders() {
             </button>
           )}
           <a
-            href={`http://localhost:8000/order/${r._id}`}
+            href={`${frontendUrl}/order/${r._id}`}
             target="_blank"
             rel="noreferrer"
             className="text-xs font-medium text-primary-700 hover:text-primary-800"

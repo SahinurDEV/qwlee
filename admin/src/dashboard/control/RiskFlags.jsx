@@ -16,12 +16,13 @@ const TABS = [
   { v: "dismissed", label: "Dismissed" },
   { v: "all", label: "All" },
 ];
-const KINDS = ["", "message", "offer", "gig", "request", "order"];
+const KINDS = ["", "chat", "message", "offer", "gig", "request", "order"];
 const REASON = (r) =>
   r.startsWith("keyword:") ? `Word “${r.slice(8)}”` :
-  ({ "contact:email": "Email address", "contact:phone": "Phone number", "contact:messenger": "Messenger link", "new-account-large-order": "Large order, new account", "order-burst": "3+ orders in an hour" })[r] || r;
+  ({ "contact:email": "Email address", "contact:phone": "Phone number", "contact:messenger": "Messenger link", "new-account-large-order": "Large order, new account", "order-burst": "3+ orders in an hour" })[r] || (r.startsWith("report:") ? `Reported: ${r.slice(7)}` : r);
 
 function targetLink(f) {
+  if (f.kind === "chat") return `/dashboard/conversations?chat=${f.targetId}`;
   if (f.kind === "gig") return "/dashboard/gigs";
   if (f.kind === "order") return "/dashboard/orders";
   if (f.kind === "request" || f.kind === "offer") return "/dashboard/moderation";
@@ -61,7 +62,7 @@ export default function RiskFlags() {
                       {to ? <Link to={to} className="text-xs text-primary-700 underline">Open</Link> : null}
                     </Td>
                     <Td><div className="flex flex-wrap gap-1">{f.reasons.map((r) => <span key={r} className="text-xs bg-amber-50 text-amber-800 border border-amber-200 rounded px-1.5 py-0.5">{REASON(r)}</span>)}</div></Td>
-                    <Td><div className="text-sm">{f.userId?.fullName || "—"}</div><div className="text-xs text-ink-500">{f.userId?.email}</div><div className="text-xs text-ink-500">{timeAgo(f.createdAt)}</div></Td>
+                    <Td><div className="text-sm">{f.userId?.fullName || "—"}</div><div className="text-xs text-ink-500">{f.userId?.email}</div>{f.reportedBy ? <div className="text-xs text-ink-500">Reported by {f.reportedBy.fullName || f.reportedBy.email}</div> : null}<div className="text-xs text-ink-500">{timeAgo(f.createdAt)}</div></Td>
                     <Td><StatusPill status={f.status === "open" ? "pending" : f.status === "actioned" ? "error" : "ok"} label={f.status} />{f.note ? <div className="text-xs text-ink-500 mt-1">{f.note}</div> : null}</Td>
                     <Td className="text-right whitespace-nowrap">
                       {f.status === "open" ? (
