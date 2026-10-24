@@ -94,6 +94,9 @@ const userSchema = mongoose.Schema(
     },
     // Earnings still in the clearance period (clearance.service).
     pendingBalance: { type: Number, default: 0 },
+    // Last payout destination used (a fingerprint, not the details) and
+    // when it changed, for the post-change withdrawal hold.
+    payoutDetails: { type: Object, default: {}, private: true },
     // Seller Plus subscription (sellerPlan.service). planBadge is the
     // public copy of the tier for profile/gig badges.
     sellerPlan: {
