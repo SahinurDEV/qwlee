@@ -175,6 +175,7 @@ const aggregatePublicProfile = async (matchStage) => {
         languages: 1,
         certifications: 1,
         review: 1,
+        sellerLevel: 1,
         createdAt: 1,
         gigs: 1,
         portfolios: 1,
@@ -263,6 +264,7 @@ const getUsersPublicById = async (userId) => {
         languages: 1,
         certifications: 1,
         review: 1,
+        sellerLevel: 1,
         gigs: 1,
         portfolios: 1,
         reviews: { $ifNull: ["$reviews", []] }, // Ensure reviews is an empty array if null

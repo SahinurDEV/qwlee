@@ -1,12 +1,11 @@
-// Seller level shown on cards. Same thresholds as the search "Seller
-// level" filter (backend gig.service LEVEL_RULES), so a badge always
-// matches the filter that finds it.
+// Seller level shown on badges. The server stores it on the seller
+// (user.sellerLevel, from the admin-set level criteria), the same field the
+// search "Seller level" filter uses, so a badge always matches the filter.
+const LABEL = { new: "New seller", level1: "Level 1", level2: "Level 2", topRated: "Top Rated" };
+
 export function sellerLevel(seller) {
-  const rating = Number(seller?.review?.rating || 0);
-  const total = Number(seller?.review?.total || 0);
-  if (total >= 2 && rating >= 4.8) return { id: "topRated", label: "Top Rated" };
-  if (total >= 2 && rating >= 4.5) return { id: "level2", label: "Level 2" };
-  if (total >= 2 && rating >= 4.0) return { id: "level1", label: "Level 1" };
-  if (total <= 1) return { id: "new", label: "New seller" };
-  return null;
+  const s = seller?.sellerLevel;
+  if (!s?.id) return null;
+  const id = s.id === "level0" ? "new" : s.id;
+  return { id, label: s.label || LABEL[id] || id };
 }

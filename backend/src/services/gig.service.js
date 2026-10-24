@@ -4,17 +4,8 @@ const { Gig, User } = require("../models");
 const { PUBLIC_USER_SELECT } = require("../utils/publicUser");
 const { awayFilter } = require("../utils/availability");
 
-// Fiverr-style seller level thresholds. The frontend filter sends a
-// short identifier (`new`, `level1`, `level2`, `topRated`) and we
-// translate to a (minRating, minReviews, verifiedOnly?) tuple. Tuned
-// to the seeded dataset's review distribution so the filters return
-// non-empty results.
-const LEVEL_RULES = {
-  new: { maxReviews: 1 },
-  level1: { minRating: 4.0, minReviews: 2 },
-  level2: { minRating: 4.5, minReviews: 2 },
-  topRated: { minRating: 4.8, minReviews: 2 },
-};
+// Seller level filter ids (stored on user.sellerLevel by sellerLevel.service).
+const LEVEL_RULES = { new: 1, level1: 1, level2: 1, topRated: 1 };
 
 // A subcategory must be a child of the gig's category. Empty clears it.
 const resolveSubCategory = async (subCategoryId, categoriesId) => {
@@ -95,26 +86,8 @@ const queryGigs = async (filter, options, { excludeUserId, viewer, ...extra } = 
     sellerFilter["review.rating"] = { $gte: Number(filter.minRating) };
   }
   if (filter.level && LEVEL_RULES[filter.level]) {
-    const rule = LEVEL_RULES[filter.level];
-    if (rule.minRating != null) {
-      sellerFilter["review.rating"] = {
-        ...(sellerFilter["review.rating"] || {}),
-        $gte: rule.minRating,
-      };
-    }
-    if (rule.minReviews != null) {
-      sellerFilter["review.total"] = {
-        ...(sellerFilter["review.total"] || {}),
-        $gte: rule.minReviews,
-      };
-    }
-    if (rule.maxReviews != null) {
-      sellerFilter["review.total"] = {
-        ...(sellerFilter["review.total"] || {}),
-        $lte: rule.maxReviews,
-      };
-    }
-    if (rule.verifiedOnly) sellerFilter.isVerified = true;
+    // Stored level (sellerLevel.service) is the single source of truth.
+    sellerFilter["sellerLevel.id"] = filter.level === "new" ? { $in: ["new", null] } : filter.level;
   }
 
   const query = {};

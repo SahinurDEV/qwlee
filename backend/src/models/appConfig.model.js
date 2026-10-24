@@ -75,6 +75,9 @@ const appConfigSchema = new mongoose.Schema(
             minClients: { type: Number, default: 0 },
             minEarnings: { type: Number, default: 0 },
             minRating: { type: Number, default: 0 },
+            minResponseRate: { type: Number, default: 0 },
+            minSuccessScore: { type: Number, default: 0 },
+            requiresApproval: { type: Boolean, default: false },
           },
           { _id: false }
         ),
