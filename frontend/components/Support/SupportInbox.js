@@ -28,6 +28,7 @@ const CATEGORIES = [
   { v: "orders", label: "Orders & delivery" },
   { v: "account", label: "Account access" },
   { v: "trust-safety", label: "Trust & safety" },
+  { v: "ip", label: "Intellectual property" },
   { v: "other", label: "Something else" },
 ];
 
@@ -38,7 +39,12 @@ export default function SupportInbox() {
   const tickets = data?.results || [];
 
   const [subject, setSubject] = useState("");
-  const [category, setCategory] = useState("other");
+  // /support?category=ip preselects (linked from the IP policy page).
+  const [category, setCategory] = useState(() => {
+    if (typeof window === "undefined") return "other";
+    const c = new URLSearchParams(window.location.search).get("category");
+    return CATEGORIES.some((x) => x.v === c) ? c : "other";
+  });
   const [body, setBody] = useState("");
 
   async function handleCreate(e) {
@@ -193,7 +199,7 @@ export default function SupportInbox() {
                   rows={6}
                   required
                   aria-label="Describe the issue"
-                  placeholder="Be as specific as possible: order ids, dates, anything you've tried…"
+                  placeholder={category === "ip" ? "Your name and contact details; the work you own; the link to the content on qwlee; a statement that this report is accurate and made in good faith." : "Be as specific as possible: order ids, dates, anything you've tried…"}
                   className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-emerald-500 resize-none"
                 />
                 <div className="text-xs text-gray-400 mt-1 text-right">

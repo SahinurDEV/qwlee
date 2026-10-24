@@ -55,7 +55,7 @@ const ticketSchema = mongoose.Schema(
     subject: { type: String, required: true, maxlength: 200 },
     category: {
       type: String,
-      enum: ["billing", "orders", "account", "trust-safety", "other"],
+      enum: ["billing", "orders", "account", "trust-safety", "ip", "other"],
       default: "other",
     },
     status: {

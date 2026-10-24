@@ -61,7 +61,8 @@ const addMessage = catchAsync(async (req, res) => {
 
   if (!chatInfo) {
     await require("../services/trust.service").assertNotRestricted(sender, "start new conversations");
-    chatInfo = await chatService.addChat({ participants: [sender, receiver] });
+    await chatService.assertCanStartChat(sender);
+    chatInfo = await chatService.addChat({ participants: [sender, receiver], startedBy: sender });
     if (!chatInfo) {
       throw new ApiError(
         httpStatus.BAD_REQUEST,
