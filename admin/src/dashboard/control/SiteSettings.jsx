@@ -173,6 +173,7 @@ export default function SiteSettings() {
               </div>
               <div className="mt-3"><Toggle checked={s.moderation.flagContactInfo} onChange={(v) => set("moderation", { flagContactInfo: v })} label="Flag emails, phone numbers and messenger links in messages and offers" /></div>
               <div className="mt-2"><Toggle checked={s.moderation.maskContactBeforeOrder !== false} onChange={(v) => set("moderation", { maskContactBeforeOrder: v })} label="Hide contact details in messages until the two users have an order together" /></div>
+              <div className="mt-2 max-w-xs"><Field label="New conversations per day" hint="How many new chats one person can start in 24 hours. 0 = no limit."><input type="number" min={0} max={1000} className={input} value={s.moderation.newChatsPerDay ?? 10} onChange={(e) => set("moderation", { newChatsPerDay: e.target.value })} /></Field></div>
               <div className="grid grid-cols-2 gap-3 mt-3">
                 <Field label="Flag orders from new accounts (< 3 days) at or above ($, 0 = off)"><input type="number" min={0} className={input} value={s.moderation.riskOrderAmount} onChange={(e) => set("moderation", { riskOrderAmount: e.target.value })} /></Field>
               </div>
