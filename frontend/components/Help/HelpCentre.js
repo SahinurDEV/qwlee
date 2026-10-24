@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useGetAllBlogsQuery } from "@/app/redux/features/getAllBlogs";
 import { IoSearchOutline, IoChevronForward } from "react-icons/io5";
 import { useGetHelpQuery } from "@/app/redux/features/helpApi";
 
@@ -76,10 +77,36 @@ export default function HelpCentre() {
             </section>
           ))
         )}
+        <HelpGuides />
         <p className="text-sm text-gray-500 text-center mt-8">
           Still need help? <Link href="/support" className="text-emerald-700 font-medium">Contact support</Link>
         </p>
       </div>
     </main>
+  );
+}
+
+// Latest step-by-step guides from the blog (posts marked "guide").
+function HelpGuides() {
+  const { data } = useGetAllBlogsQuery("guide");
+  const guides = (data?.data?.attributes?.results || []).slice(0, 4);
+  if (!guides.length) return null;
+  return (
+    <section className="mt-8" aria-labelledby="help-guides">
+      <div className="flex items-end justify-between mb-2">
+        <h2 id="help-guides" className="text-lg font-semibold text-gray-900">Guides</h2>
+        <Link href="/blogs?kind=guide" className="text-sm text-emerald-700 font-medium">All guides →</Link>
+      </div>
+      <ul className="grid gap-3 sm:grid-cols-2">
+        {guides.map((g) => (
+          <li key={g.id || g._id}>
+            <Link href={`/blogs/${g.slug}`} className="block h-full bg-white border border-gray-200 rounded-2xl px-5 py-4 hover:border-emerald-300">
+              <span className="block font-medium text-gray-900 line-clamp-2">{g.title}</span>
+              <span className="block mt-1 text-sm text-gray-500 line-clamp-2">{String(g.description || "").replace(/<[^>]+>/g, " ").trim()}</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
