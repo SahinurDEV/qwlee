@@ -11,6 +11,8 @@ import { useI18n } from "@/components/Context/I18nProvider";
 import Money from "@/components/common/Money";
 import Link from "next/link";
 import { IoStar } from "react-icons/io5";
+import { useState } from "react";
+import CardVideoPreview from "@/components/common/CardVideoPreview";
 import LevelBadge from "@/components/common/LevelBadge";
 import { FaHeart, FaRegHeart } from "react-icons/fa";
 import ImageWithFallback from "@/components/common/ImageWithFallback";
@@ -35,6 +37,7 @@ export default function GigCard({ item, sponsored = false }) {
   const gigId = item._id || item.id;
 
   const { isLoved, toggle } = useWishlist();
+  const [hovering, setHovering] = useState(false);
   const loved = isLoved(gigId);
 
   function handleHeart(e) {
@@ -47,6 +50,8 @@ export default function GigCard({ item, sponsored = false }) {
   return (
     <div
       className="group relative flex flex-col bg-white rounded-2xl border border-gray-200 hover:border-emerald-300 hover:shadow-md transition overflow-hidden h-full"
+      onPointerEnter={item?.video ? (e) => { if (e.pointerType === "mouse") setHovering(true); } : undefined}
+      onPointerLeave={item?.video ? () => setHovering(false) : undefined}
       onClickCapture={sponsored ? () => {
         // Count the sponsored click; never blocks navigation.
         try { navigator.sendBeacon?.(`${baseUrl}/promotions/click/${gigId}`); } catch {}
@@ -76,6 +81,7 @@ export default function GigCard({ item, sponsored = false }) {
             className="object-cover group-hover:scale-105 transition-transform duration-300"
             alt={item?.title || "gig"}
           />
+          {item?.video ? <CardVideoPreview url={item.video} hovering={hovering} /> : null}
           {sponsored ? (
             <span className="absolute left-3 top-3 z-10 rounded-full bg-gray-900/80 px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-white shadow-sm">
               Sponsored
