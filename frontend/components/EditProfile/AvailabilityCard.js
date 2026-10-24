@@ -58,6 +58,7 @@ export default function AvailabilityCard({ user }) {
           <label className="block text-sm sm:col-span-2">
             Message for buyers
             <input maxLength={300} value={message} onChange={(e) => setMessage(e.target.value)} placeholder="On a short break, back next week!" className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-200" />
+            <span className="block mt-1 text-xs text-gray-500">Shown on your profile and sent as an automatic reply when someone messages you (at most once per conversation every 12 hours).</span>
           </label>
         </div>
       )}

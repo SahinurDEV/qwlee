@@ -67,6 +67,32 @@ async function storeLocally(file) {
   return { url, displayUrl: url, thumbUrl: url, deleteUrl: null, raw: { local: true } };
 }
 
+// Voice notes: stored on local disk next to images, after checking the
+// real container format from magic bytes.
+const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
+function sniffAudio(buf) {
+  if (!buf || buf.length < 12) return null;
+  if (buf[0] === 0x1a && buf[1] === 0x45 && buf[2] === 0xdf && buf[3] === 0xa3) return "webm";
+  if (buf.slice(0, 4).toString("ascii") === "OggS") return "ogg";
+  if (buf.slice(4, 8).toString("ascii") === "ftyp") return "m4a";
+  if (buf.slice(0, 3).toString("ascii") === "ID3" || (buf[0] === 0xff && (buf[1] & 0xe0) === 0xe0)) return "mp3";
+  if (buf.slice(0, 4).toString("ascii") === "RIFF" && buf.slice(8, 12).toString("ascii") === "WAVE") return "wav";
+  return null;
+}
+async function storeAudio(file) {
+  if (!file?.buffer?.length) throw new ApiError(httpStatus.BAD_REQUEST, "Empty voice note");
+  if (file.buffer.length > MAX_AUDIO_BYTES) throw new ApiError(httpStatus.PAYLOAD_TOO_LARGE, "Voice notes can be up to 10MB");
+  const ext = sniffAudio(file.buffer);
+  if (!ext) throw new ApiError(httpStatus.BAD_REQUEST, "File is not a supported audio format");
+  const fs = require("fs/promises");
+  const name = `${require("crypto").randomBytes(16).toString("hex")}.${ext}`;
+  await fs.mkdir(UPLOAD_DIR, { recursive: true });
+  await fs.writeFile(require("path").join(UPLOAD_DIR, name), file.buffer, { flag: "wx" });
+  const base = (process.env.PUBLIC_API_URL || "http://localhost:7171").replace(/\/+$/, "");
+  const url = `${base}/uploads/${name}`;
+  return { url, displayUrl: url, thumbUrl: url, deleteUrl: null, raw: { local: true } };
+}
+
 async function uploadOne(file) {
   validate(file);
 
@@ -117,4 +143,4 @@ async function uploadMany(files) {
   return out;
 }
 
-module.exports = { uploadOne, uploadMany, ALLOWED_MIME, MAX_BYTES, UPLOAD_DIR, sniff };
+module.exports = { storeAudio, sniffAudio, uploadOne, uploadMany, ALLOWED_MIME, MAX_BYTES, UPLOAD_DIR, sniff };

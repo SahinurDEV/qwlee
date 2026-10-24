@@ -16,6 +16,18 @@ const ALLOWED_IMAGE_MIME = new Set([
   "image/heif",
 ]);
 
+// Voice notes recorded in the browser (MediaRecorder) or uploaded.
+const ALLOWED_AUDIO_MIME = new Set([
+  "audio/webm",
+  "audio/ogg",
+  "audio/mp4",
+  "audio/mpeg",
+  "audio/x-m4a",
+  "audio/aac",
+  "audio/wav",
+  "audio/x-wav",
+]);
+
 module.exports = function messageFileUpload() {
   return multer({
     storage: multer.memoryStorage(),
@@ -24,9 +36,14 @@ module.exports = function messageFileUpload() {
     },
     fileFilter: (req, file, cb) => {
       if (ALLOWED_IMAGE_MIME.has(file.mimetype)) return cb(null, true);
+      const base = String(file.mimetype || "").split(";")[0].trim();
+      if (ALLOWED_AUDIO_MIME.has(base)) {
+        file.mimetype = base;
+        return cb(null, true);
+      }
       cb(
         new Error(
-          `Only image attachments are supported (received ${file.mimetype})`
+          `Only images and voice notes are supported (received ${file.mimetype})`
         )
       );
     },

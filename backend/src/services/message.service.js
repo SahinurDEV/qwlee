@@ -288,6 +288,99 @@ const deleteMessage = async (messageId, userId, scope = "me") => {
   return message;
 };
 
+const EDIT_WINDOW_MIN = Number(process.env.MESSAGE_EDIT_WINDOW_MIN) || 15;
+const REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🙏", "✅", "🎉"];
+
+// Sender edits the text of their own message within EDIT_WINDOW_MIN.
+const editMessage = async (messageId, userId, text) => {
+  const message = await Message.findById(messageId);
+  assertParty(message, userId);
+  if (String(message.sender) !== String(userId)) throw new ApiError(httpStatus.FORBIDDEN, "You can only edit your own messages.");
+  if (message.deletedForEveryone) throw new ApiError(httpStatus.BAD_REQUEST, "This message was deleted.");
+  if (message.content?.messageType !== "text" || message.autoReply) throw new ApiError(httpStatus.BAD_REQUEST, "Only text messages can be edited.");
+  if (Date.now() - new Date(message.createdAt).getTime() > EDIT_WINDOW_MIN * 60000) {
+    throw new ApiError(httpStatus.BAD_REQUEST, `Messages can only be edited within ${EDIT_WINDOW_MIN} minutes.`);
+  }
+  const clean = String(text || "").trim();
+  if (!clean) throw new ApiError(httpStatus.BAD_REQUEST, "Message can't be empty.");
+  if (clean.length > 5000) throw new ApiError(httpStatus.BAD_REQUEST, "Message is too long.");
+  const risk = require("./risk.service");
+  const screened = await risk.screen(clean, { contact: true });
+  message.content.message = clean;
+  message.editedAt = new Date();
+  message.markModified("content");
+  await message.save();
+  if (screened.reasons.length) risk.record("message", message._id, userId, screened.reasons, clean);
+  notifyUpdate(message);
+  return loadForClient(message._id);
+};
+
+// Toggle a reaction. Each member keeps at most one; picking the same
+// emoji again removes it.
+const reactToMessage = async (messageId, userId, emoji) => {
+  if (!REACTIONS.includes(emoji)) throw new ApiError(httpStatus.BAD_REQUEST, "Unsupported reaction.");
+  const message = await Message.findById(messageId);
+  assertParty(message, userId);
+  if (message.deletedForEveryone) throw new ApiError(httpStatus.BAD_REQUEST, "This message was deleted.");
+  const me = String(userId);
+  const mine = (message.reactions || []).find((r) => String(r.user) === me);
+  const others = (message.reactions || []).filter((r) => String(r.user) !== me);
+  message.reactions = mine && mine.emoji === emoji ? others : [...others, { user: userId, emoji }];
+  await message.save();
+  notifyUpdate(message);
+  return loadForClient(message._id);
+};
+
+// Translate a message the user received or sent. Uses the site's AI
+// provider (AI_API_URL / AI_API_KEY); without one, says so.
+const LANGS = { en: "English", bn: "Bengali", es: "Spanish", fr: "French", de: "German", pt: "Portuguese", it: "Italian", hi: "Hindi", ar: "Arabic", zh: "Chinese", ja: "Japanese", ko: "Korean", ru: "Russian", tr: "Turkish", ur: "Urdu", id: "Indonesian", nl: "Dutch", pl: "Polish" };
+const translateMessage = async (messageId, userId, to) => {
+  const lang = String(to || "en").slice(0, 2).toLowerCase();
+  if (!LANGS[lang]) throw new ApiError(httpStatus.BAD_REQUEST, "Unsupported language.");
+  const message = await Message.findById(messageId);
+  assertParty(message, userId);
+  const text = message.deletedForEveryone ? "" : String(message.content?.message || "").trim();
+  if (!text) throw new ApiError(httpStatus.BAD_REQUEST, "Nothing to translate.");
+  const ai = require("./ai.service");
+  if (!ai.enabled() || ai.provider() !== "remote") {
+    throw new ApiError(httpStatus.SERVICE_UNAVAILABLE, "Translation isn't set up on this site yet.");
+  }
+  const out = await ai.complete(
+    `Translate the following chat message into ${LANGS[lang]}. Reply with the translation only, no notes.\n\n${text.slice(0, 4000)}`
+  );
+  if (!out) throw new ApiError(httpStatus.BAD_GATEWAY, "The translation service didn't answer. Try again later.");
+  return { text: out, to: lang };
+};
+
+// Average time the user takes to answer a new message, over the last
+// 60 days (each inbound message that started a wait, to their next reply).
+const responseStats = async (userId) => {
+  const since = new Date(Date.now() - 60 * 86400000);
+  const rows = await Message.find(
+    { $or: [{ sender: userId }, { receiver: userId }], createdAt: { $gte: since }, autoReply: { $ne: true } },
+    { chat: 1, sender: 1, createdAt: 1 }
+  )
+    .sort({ createdAt: 1 })
+    .limit(2000)
+    .lean();
+  const waiting = new Map();
+  const deltas = [];
+  for (const m of rows) {
+    const chat = String(m.chat);
+    if (String(m.sender) === String(userId)) {
+      if (waiting.has(chat)) {
+        deltas.push(new Date(m.createdAt) - waiting.get(chat));
+        waiting.delete(chat);
+      }
+    } else if (!waiting.has(chat)) {
+      waiting.set(chat, new Date(m.createdAt));
+    }
+  }
+  if (!deltas.length) return { avgMinutes: null, sample: 0 };
+  const avg = deltas.reduce((a, b) => a + b, 0) / deltas.length;
+  return { avgMinutes: Math.max(1, Math.round(avg / 60000)), sample: deltas.length };
+};
+
 // Tell both sides a message changed (deleted, edited, reacted to).
 const notifyUpdate = (message) => {
   try {
@@ -310,6 +403,11 @@ const getMessageByChatId = async (id) => {
 };
 
 module.exports = {
+  editMessage,
+  reactToMessage,
+  translateMessage,
+  responseStats,
+  REACTIONS,
   loadForClient,
   searchMessages,
   notifyUpdate,

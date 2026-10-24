@@ -16,6 +16,9 @@ router
     messageController.addMessage
   );
 router.get("/search", auth("withOutAdmin"), messageController.searchMessages);
+router.patch("/:messageId/edit", auth("withOutAdmin"), messageController.editMessage);
+router.post("/:messageId/react", auth("withOutAdmin"), messageController.reactToMessage);
+router.post("/:messageId/translate", auth("withOutAdmin"), messageController.translateMessage);
 
 router
   .route("/get-messages")
