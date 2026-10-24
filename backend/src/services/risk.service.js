@@ -80,7 +80,7 @@ async function list({ status = "open", kind, page = 1, limit = 50 } = {}) {
   const filter = {};
   if (status && status !== "all") filter.status = status;
   if (kind) filter.kind = kind;
-  return RiskFlag.paginate(filter, { sortBy: "createdAt:desc", page: Number(page) || 1, limit: Math.min(Number(limit) || 50, 200), populate: "userId" });
+  return RiskFlag.paginate(filter, { sortBy: "createdAt:desc", page: Number(page) || 1, limit: Math.min(Number(limit) || 50, 200), populate: "userId reportedBy" });
 }
 
 async function review(id, { status, note }, reviewer) {

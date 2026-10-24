@@ -15,6 +15,44 @@ const assertParty = (message, userId) => {
   }
 };
 
+const PARTY = "fullName image role online";
+const POPULATE = [
+  { path: "replyTo", select: "content.messageType content.message content.files sender deletedForEveryone", populate: { path: "sender", select: "fullName" } },
+  { path: "sender", select: PARTY },
+  { path: "receiver", select: PARTY },
+];
+
+// Wiped messages keep their place in the thread but lose their content.
+const mask = (m) => {
+  const o = typeof m.toJSON === "function" ? m.toJSON() : m;
+  if (o.deletedForEveryone) {
+    o.content = { messageType: "text", message: "", files: [] };
+  }
+  if (o.replyTo && o.replyTo.deletedForEveryone) {
+    o.replyTo.content = { messageType: "text", message: "", files: [] };
+  }
+  return o;
+};
+
+const loadForClient = async (id) => {
+  const m = await Message.findById(id).populate(POPULATE);
+  return m ? mask(m) : null;
+};
+
+const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const searchMessages = async (userId, q, chatId) => {
+  const filter = {
+    $or: [{ sender: userId }, { receiver: userId }],
+    deletedBy: { $ne: userId },
+    deletedForEveryone: { $ne: true },
+    "content.message": { $regex: escapeRe(q), $options: "i" },
+  };
+  if (chatId) filter.chat = chatId;
+  const rows = await Message.find(filter).sort({ createdAt: -1 }).limit(50).populate(POPULATE.slice(1));
+  return rows.map(mask);
+};
+
 const addMessage = async (messageBody) => {
   try {
     return await Message.create(messageBody);
@@ -51,17 +89,17 @@ const getMessages = async (chatId, options, userId) => {
     const skip = (page - 1) * limit; // Calculate skip value
 
     // Find messages in the chat excluding those marked as deleted by the user
-    const messages = await Message.find({
+    // Page 1 is the most recent messages; each page is returned oldest
+    // first so the thread reads top to bottom.
+    const rows = await Message.find({
       chat: chatId,
       deletedBy: { $ne: userId }, // Exclude messages marked as deleted by the user
     })
-      .populate([
-        { path: "replyTo", select: "message file fileType" },
-        { path: "sender", select: "fullName image role online" },
-        { path: "receiver", select: "fullName image role online" },
-      ])
+      .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(limit);
+      .limit(Number(limit))
+      .populate(POPULATE);
+    const messages = rows.reverse().map(mask);
 
     // Reading the thread marks the viewer's inbound messages as read.
     // Don't await — the client doesn't need the count back, and the
@@ -216,9 +254,24 @@ const cancelAndWithdrawOfferMessage = async (messageId, userId) => {
   }
 };
 
-const deleteMessage = async (messageId, userId) => {
+const deleteMessage = async (messageId, userId, scope = "me") => {
   const message = await Message.findById(messageId);
   assertParty(message, userId);
+  if (scope === "everyone") {
+    if (String(message.sender) !== String(userId)) {
+      throw new ApiError(httpStatus.FORBIDDEN, "You can only delete your own messages for everyone.");
+    }
+    if (message.content?.messageType === "offer") {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Withdraw the offer instead of deleting it.");
+    }
+    if (message.deletedForEveryone) return message;
+    message.deletedForEveryone = true;
+    message.deletedAt = new Date();
+    message.content = { messageType: "text", message: "", files: [] };
+    await message.save();
+    notifyUpdate(message);
+    return message;
+  }
 
   //  if(message.sender != userId){
   //    throw new ApiError(httpStatus.BAD_REQUEST, "This is not your message");
@@ -235,6 +288,16 @@ const deleteMessage = async (messageId, userId) => {
   return message;
 };
 
+// Tell both sides a message changed (deleted, edited, reacted to).
+const notifyUpdate = (message) => {
+  try {
+    const { io } = require("../socket/socketServer");
+    loadForClient(message._id).then((m) => {
+      for (const u of [message.sender, message.receiver]) io.to(String(u)).emit("message-updated", m);
+    }).catch(() => {});
+  } catch { /* socket optional */ }
+};
+
 const getMessageByChatId = async (id) => {
   try {
     const message = await Message.find({ chat: id });
@@ -247,6 +310,10 @@ const getMessageByChatId = async (id) => {
 };
 
 module.exports = {
+  loadForClient,
+  searchMessages,
+  notifyUpdate,
+  mask,
   markRead,
   addMessage,
   getMessages,

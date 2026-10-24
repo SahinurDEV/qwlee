@@ -113,6 +113,10 @@ const messageSchema = mongoose.Schema(
       default: [],
     },
     readAt: { type: Date, default: null },
+    // "Delete for everyone": the sender wiped the content; a tombstone
+    // stays so the thread keeps its shape.
+    deletedForEveryone: { type: Boolean, default: false },
+    deletedAt: { type: Date, default: null },
     readed: {
       type: Boolean,
       required: true,

@@ -4,11 +4,13 @@ const { toJSON, paginate } = require("./plugins");
 // Something the risk rules want a moderator to look at (risk.service).
 const riskFlagSchema = new mongoose.Schema(
   {
-    kind: { type: String, enum: ["message", "gig", "request", "offer", "order"], required: true },
+    kind: { type: String, enum: ["message", "gig", "request", "offer", "order", "chat"], required: true },
     targetId: { type: String, required: true },
     userId: { type: mongoose.SchemaTypes.ObjectId, ref: "User", default: null },
     reasons: [{ type: String }], // e.g. "keyword:whatsapp", "contact:email", "new-account-large-order"
     excerpt: { type: String, default: "" },
+    // Set when a member reported this (kind "chat": targetId is the chat).
+    reportedBy: { type: mongoose.SchemaTypes.ObjectId, ref: "User", default: null },
     score: { type: Number, default: 1 },
     status: { type: String, enum: ["open", "dismissed", "actioned"], default: "open" },
     note: { type: String, default: "" },

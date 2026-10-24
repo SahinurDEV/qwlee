@@ -32,7 +32,7 @@ function formatTime(time) {
 export default function ChatCart({ chatData }) {
   const user = useUser();
   const dispatch = useDispatch();
-  const { chat, lastMessage, unreadCount = 0 } = chatData || {};
+  const { chat, lastMessage, unreadCount = 0, pinned, blocked } = chatData || {};
   const other = chat?.participants?.[0] || {};
   const { fullName, username, image, online } = other;
   // Manually-registered accounts often have no profile photo. Pass the
@@ -48,6 +48,8 @@ export default function ChatCart({ chatData }) {
   // Build a one-line preview of the last message.
   const previewBase = (() => {
     const c = last.content || {};
+    if (last.deletedForEveryone) return "message deleted";
+    if (c.messageType === "audio") return "a voice note";
     if (c.messageType === "text" && c.message) {
       return c.message.length > 28 ? `${c.message.slice(0, 28)}…` : c.message;
     }
@@ -92,7 +94,9 @@ export default function ChatCart({ chatData }) {
                 unread ? "font-bold text-gray-900" : "font-semibold text-gray-800"
               }`}
             >
+              {pinned ? <span className="mr-1" aria-label="Pinned" title="Pinned">📌</span> : null}
               {displayName}
+              {blocked ? <span className="ml-1 text-[10px] font-semibold uppercase text-rose-600">Blocked</span> : null}
             </h3>
             <span
               className={`text-xs shrink-0 ${
