@@ -27,6 +27,7 @@ import { useGetReviewByOrderQuery } from "@/app/redux/features/reviewsApi";
 import DeliverNowModal from "./DeliveryModal";
 import ExtendDeliveryDateModal from "./ExtendDeliveryDateModal";
 import LeaveReviewModal from "./LeaveReviewModal";
+import useSiteConfig from "@/hooks/useSiteConfig";
 import BuyerReviewCard from "./BuyerReviewCard";
 import OpenDisputeModal from "./OpenDisputeModal";
 import TipCard from "./TipCard";
@@ -50,6 +51,10 @@ export default function OrderActions({ order, orderId, isSeller }) {
   const { data: myReview } = useGetReviewByOrderQuery(orderId, {
     skip: !orderId || isSeller,
   });
+  // Reviews close reviewWindowDays after completion (admin setting).
+  const reviewWindowDays = useSiteConfig()?.policy?.reviewWindowDays ?? 14;
+  const doneAt = order?.completedAt || order?.updatedAt;
+  const reviewWindowOpen = !reviewWindowDays || !doneAt || Date.now() <= new Date(doneAt).getTime() + reviewWindowDays * 86400000;
 
   const [respondExtension, { isLoading: extLoading }] =
     useRespondOrderExtensionMutation();
@@ -271,7 +276,7 @@ export default function OrderActions({ order, orderId, isSeller }) {
       </section>
 
       {/* Buyer actions */}
-      {!isSeller && status === "delivered" && !myReview && (
+      {!isSeller && status === "delivered" && !myReview && reviewWindowOpen && (
         <section className="bg-white border border-gray-200 rounded-2xl p-5 space-y-2">
           <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
             Rate your experience
@@ -287,6 +292,9 @@ export default function OrderActions({ order, orderId, isSeller }) {
             Leave a review
           </button>
         </section>
+      )}
+      {!isSeller && status === "delivered" && !myReview && !reviewWindowOpen && (
+        <p className="text-xs text-gray-500">The {reviewWindowDays}-day review window for this order has closed.</p>
       )}
       {status === "delivered" && <BuyerReviewCard orderId={orderId} isSeller={isSeller} />}
       {!isSeller && myReview && (
