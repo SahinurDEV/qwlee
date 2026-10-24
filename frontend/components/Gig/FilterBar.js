@@ -537,9 +537,17 @@ function Pill({ label, active, badge, children }) {
         />
       </button>
       {open && (
-        <div className="absolute left-0 mt-2 z-30">
-          {children({ close: () => setOpen(false) })}
-        </div>
+        <>
+          {/* Phones: bottom sheet with a backdrop. sm and up: popover. */}
+          <div className="sm:hidden fixed inset-0 z-40 bg-black/30" onClick={() => setOpen(false)} aria-hidden="true" />
+          <div
+            role="dialog"
+            aria-label={label}
+            className="fixed inset-x-0 bottom-0 z-50 max-h-[85vh] overflow-y-auto pb-[env(safe-area-inset-bottom)] sm:pb-0 sm:absolute sm:inset-x-auto sm:bottom-auto sm:left-0 sm:mt-2 sm:z-30 sm:max-h-none sm:overflow-visible"
+          >
+            {children({ close: () => setOpen(false) })}
+          </div>
+        </>
       )}
     </div>
   );
@@ -548,8 +556,8 @@ function Pill({ label, active, badge, children }) {
 function PopoverShell({ title, wide, children, onApply, onClear }) {
   return (
     <div
-      className={`bg-white border border-gray-200 rounded-xl shadow-xl p-4 ${
-        wide ? "w-[340px]" : "w-[280px]"
+      className={`bg-white border border-gray-200 rounded-t-2xl sm:rounded-xl shadow-xl p-4 w-full ${
+        wide ? "sm:w-[340px]" : "sm:w-[280px]"
       }`}
       style={{ boxShadow: "0 12px 32px rgba(15,23,42,0.12)" }}
     >
