@@ -381,10 +381,16 @@ const updateGigById = async (gigId, data, images, actor) => {
     const allowed =
       actor?.role === "admin" ||
       (next === "paused" && gig.gigStatus === "active") ||
-      (next === "active" && gig.gigStatus === "paused");
+      (next === "active" && gig.gigStatus === "paused") ||
+      // Resubmit after changes were requested or the gig was denied.
+      (next === "pending" && ["requires-modification", "denied"].includes(gig.gigStatus));
     if (!allowed) throw new ApiError(httpStatus.FORBIDDEN, "You cannot set that gig status");
     if (next === "active" && actor?.role !== "admin") await require("./trust.service").assertNotRestricted(gig.userId, "publish gigs");
     patch.gigStatus = next;
+    if (next === "pending" && actor?.role !== "admin") {
+      await require("./trust.service").assertNotRestricted(gig.userId, "publish gigs");
+      patch.moderation = { ...(gig.moderation?.toObject?.() || gig.moderation || {}), resubmittedAt: new Date() };
+    }
   }
   const risk = require("./risk.service");
   const screened = await risk.screenAll([patch.title, patch.description]);
