@@ -247,6 +247,10 @@ const getUserPublicByUsername = catchAsync(async (req, res) => {
   if (user.role === "admin") {
     throw new ApiError(httpStatus.NOT_FOUND, "User not found");
   }
+  if (user.role === "freelancer") {
+    const rt = await userService.sellerResponseTime(user._id);
+    user.responseMinutes = rt.avgMinutes;
+  }
   res.status(httpStatus.OK).json(
     response({
       message: "User",
