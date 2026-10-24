@@ -19,6 +19,19 @@ const resolveSubCategory = async (subCategoryId, categoriesId) => {
   return sub._id;
 };
 
+// Gig cap for the seller's stored level (siteSettings.marketplace.gigCaps).
+async function assertGigCap(userId) {
+  const caps = (await require("./siteSettings.service").get()).marketplace.gigCaps || {};
+  const u = await User.findById(userId).select("sellerLevel").lean();
+  const level = u?.sellerLevel?.id || "new";
+  const cap = Number(caps[level] || 0);
+  if (!cap) return;
+  const n = await Gig.countDocuments({ userId, isDeleted: { $ne: true } });
+  if (n >= cap) {
+    throw new ApiError(httpStatus.CONFLICT, `${u?.sellerLevel?.label || "New seller"} accounts can have up to ${cap} gigs. Delete one or level up to add more.`);
+  }
+}
+
 const createGig = async (data) => {
   const sub = await resolveSubCategory(data.subCategoryId, data.categoriesId);
   if (sub !== undefined) data.subCategoryId = sub;
@@ -417,6 +430,7 @@ const gigSingleImageDelete = async (gigId, image, actor) => {
 };
 
 module.exports = {
+  assertGigCap,
   validatePackages,
   slugify,
   sanitiseGigExtrasFields,
