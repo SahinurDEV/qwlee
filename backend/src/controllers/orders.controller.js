@@ -330,28 +330,25 @@ const getOrderCounts = catchAsync(async (req, res) => {
 const myTotalIncome = catchAsync(async (req, res) => {
   const freelancerId = req.user.id;
 
+  // Orders are finished when they reach "delivered" (there is no
+  // "completed" status). Count what the seller actually keeps.
   const result = await Payment.aggregate([
     {
       $match: {
         freelancerId: new mongoose.Types.ObjectId(freelancerId),
-        status: "completed",
-        isDeleted: false,
+        status: "delivered",
+        isDeleted: { $ne: true },
       },
-    },
-    {
-      $unwind: "$items",
     },
     {
       $group: {
         _id: null,
-        totalIncome: {
-          $sum: { $multiply: ["$items.price", "$items.quantity"] },
-        },
+        totalIncome: { $sum: { $ifNull: ["$sellerEarning", "$price"] } },
       },
     },
   ]);
 
-  const totalIncome = result.length > 0 ? result[0].totalIncome : 0;
+  const totalIncome = result.length > 0 ? Math.round(result[0].totalIncome * 100) / 100 : 0;
 
   res.status(200).json({
     success: true,
