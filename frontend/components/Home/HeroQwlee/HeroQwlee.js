@@ -12,6 +12,7 @@
 // file in `frontend/public/hero.mp4` and add a <video> behind everything.
 // Don't hotlink third-party CDN videos — they're copyrighted assets.
 
+import { useI18n } from "@/components/Context/I18nProvider";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -47,6 +48,7 @@ const FALLBACK_TRENDING = [
 
 
 export default function HeroQwlee() {
+  const { t } = useI18n();
   const site = useSiteConfig();
   const router = useRouter();
   // Read auth state in a client-only effect so SSR + first client paint
@@ -140,9 +142,9 @@ export default function HeroQwlee() {
               site.homepage.heroTitle
             ) : (
               <>
-                Find the right freelancer{" "}
+                {t("Find the right freelancer")}{" "}
                 <span className="bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent">
-                  for any project
+                  {t("for any project")}
                 </span>
               </>
             )}
@@ -152,7 +154,7 @@ export default function HeroQwlee() {
             style={{ animationDelay: "160ms" }}
           >
             {site?.homepage?.heroSubtitle ||
-              "Web, design, video, AI, and more — hire from a global marketplace of vetted professionals."}
+              t("Web, design, video, AI, and more — hire from a global marketplace of vetted professionals.")}
           </p>
 
           {/* Search wrapper intentionally uses qwlee-fade (opacity only)
@@ -176,7 +178,7 @@ export default function HeroQwlee() {
             className="qwlee-rise mt-4 md:mt-5 flex flex-wrap items-center justify-center gap-1.5 md:gap-2"
             style={{ animationDelay: "280ms" }}
           >
-            <span className="text-xs md:text-sm text-gray-500">Trending:</span>
+            <span className="text-xs md:text-sm text-gray-500">{t("Trending:")}</span>
             {trending.map((t, i) => (
               <button
                 key={t}
@@ -215,9 +217,9 @@ export default function HeroQwlee() {
               className="qwlee-rise mt-6 md:mt-8 text-sm text-gray-500"
               style={{ animationDelay: "500ms" }}
             >
-              New to Qwlee?{" "}
+              {t("New to Qwlee?")}{" "}
               <Link href="/sign-up" className="text-emerald-700 font-medium">
-                Create your free account
+                {t("Create your free account")}
               </Link>
             </p>
           )}
@@ -331,14 +333,15 @@ export default function HeroQwlee() {
 }
 
 function TrustCard({ icon, title, body }) {
+  const { t } = useI18n();
   return (
     <div className="qwlee-trust-card bg-white/80 backdrop-blur rounded-xl border border-gray-100 p-4 flex items-start gap-3 hover:border-emerald-200 hover:shadow-sm">
       <div className="shrink-0 w-9 h-9 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
         {icon}
       </div>
       <div>
-        <div className="font-semibold text-gray-900">{title}</div>
-        <div className="text-sm text-gray-600 mt-0.5">{body}</div>
+        <div className="font-semibold text-gray-900">{t(title)}</div>
+        <div className="text-sm text-gray-600 mt-0.5">{t(body)}</div>
       </div>
     </div>
   );

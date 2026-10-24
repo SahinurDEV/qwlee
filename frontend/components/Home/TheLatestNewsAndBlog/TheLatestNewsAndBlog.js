@@ -4,6 +4,7 @@
 // so it harmonizes with the rest of the page (no section background of
 // its own).
 
+import { useI18n } from "@/components/Context/I18nProvider";
 import Link from "next/link";
 import Image from "next/image";
 import { MdArrowForward } from "react-icons/md";
@@ -13,6 +14,7 @@ import { useGetAllBlogsQuery } from "@/app/redux/features/getAllBlogs";
 import { RevealStagger, RevealItem } from "@/components/common/Reveal";
 
 export default function TheLatestNewsAndBlog() {
+  const { t } = useI18n();
   const { data, isLoading, isError } = useGetAllBlogsQuery();
   const blogs = data?.data?.attributes?.results || [];
 
@@ -56,7 +58,7 @@ export default function TheLatestNewsAndBlog() {
               From the blog
             </span>
             <h2 className="mt-1 text-2xl md:text-3xl font-bold text-gray-900">
-              Insights for freelancers and buyers
+              {t("Insights for freelancers and buyers")}
             </h2>
             <p className="text-gray-500 mt-1 text-sm md:text-base">
               Tips on pricing, positioning, hiring, and shipping work that gets

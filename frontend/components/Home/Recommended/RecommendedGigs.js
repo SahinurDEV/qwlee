@@ -1,6 +1,7 @@
 "use client";
 // Homepage "Recommended for you": gigs like the ones the visitor saved,
 // ordered or recently viewed (best rated first); popular gigs otherwise.
+import { useI18n } from "@/components/Context/I18nProvider";
 import useRecentlyViewed from "@/hooks/useRecentlyViewed";
 import useUser from "@/hooks/useUser";
 import useViewMode from "@/hooks/useViewMode";
@@ -8,6 +9,7 @@ import GigCard from "@/components/common/GigCard";
 import { useGetRecommendedQuery } from "@/app/redux/features/collectionsApi";
 
 export default function RecommendedGigs() {
+  const { t } = useI18n();
   const { items } = useRecentlyViewed();
   const user = useUser();
   const { isSelling } = useViewMode(user);
@@ -19,7 +21,7 @@ export default function RecommendedGigs() {
     <section className="py-10 md:py-14" aria-labelledby="rec-h">
       <div className="container mx-auto px-4">
         <h2 id="rec-h" className="text-xl md:text-2xl font-bold text-gray-900">
-          {data?.personal ? "Recommended for you" : "Popular right now"}
+          {t(data?.personal ? "Recommended for you" : "Popular right now")}
         </h2>
         <p className="text-gray-500 mt-1 text-sm mb-5 md:mb-6">
           {data?.personal ? "Based on gigs you saved, ordered or viewed." : "Top-rated services on Qwlee."}
