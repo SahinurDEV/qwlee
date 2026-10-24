@@ -32,6 +32,8 @@ jobs:
           sed -i "s/^JWT_SECRET=.*/JWT_SECRET=$(openssl rand -hex 32)/" .env
           # The suite deliberately makes many failed sign-ins from one IP.
           echo "AUTH_RATE_LIMIT_MAX=500" >> .env
+          # Throw-away CI database: let the tests write to it.
+          echo "TEST_MODE=true" >> .env
           docker compose up -d --build --wait --wait-timeout 300
       - name: Smoke test
         run: |
