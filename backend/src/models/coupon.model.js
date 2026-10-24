@@ -18,7 +18,7 @@ const couponSchema = new mongoose.Schema(
     // Restrict to one account (referral rewards) or first orders only.
     onlyUser: { type: mongoose.SchemaTypes.ObjectId, ref: "User", default: null },
     firstOrderOnly: { type: Boolean, default: false },
-    source: { type: String, enum: ["admin", "referral"], default: "admin" },
+    source: { type: String, enum: ["admin", "referral", "welcome"], default: "admin" },
     note: { type: String, default: "", maxlength: 200 },
   },
   { timestamps: true }
