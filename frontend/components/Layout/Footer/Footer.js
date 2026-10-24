@@ -108,9 +108,9 @@ export default function Footer() {
     <footer className="bg-gray-900 text-gray-300">
       {/* Main grid */}
       <div className="container mx-auto px-4 py-12 md:py-16">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-10 md:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-0 md:gap-8">
           {/* Brand / pitch / newsletter */}
-          <div className="md:col-span-5">
+          <div className="md:col-span-5 pb-8 md:pb-0">
             <Link href="/" aria-label="Qwlee home" className="inline-block">
               <QwleeLogo height={32} variant="white" />
             </Link>
@@ -194,13 +194,28 @@ export default function Footer() {
   );
 }
 
+// On phones each column folds into a tap-to-open section so the footer
+// isn't a long scroll; from md up all columns are always open. Links stay
+// in the DOM either way, so crawlers still see them.
 function FooterColumn({ title, links }) {
+  const [open, setOpen] = useState(false);
+  const id = `footer-${String(title).toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
   return (
-    <div className="md:col-span-2">
-      <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-3">
-        {title}
+    <div className="md:col-span-2 border-b border-gray-800 md:border-0">
+      <h3 className="text-sm font-semibold text-white uppercase tracking-wider md:mb-3">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          aria-controls={id}
+          className="md:hidden w-full flex items-center justify-between py-3 uppercase tracking-wider"
+        >
+          {title}
+          <span aria-hidden className={`text-gray-400 text-lg leading-none transition-transform ${open ? "rotate-45" : ""}`}>+</span>
+        </button>
+        <span className="hidden md:inline">{title}</span>
       </h3>
-      <ul className="space-y-1">
+      <ul id={id} className={`space-y-1 pb-3 md:pb-0 ${open ? "block" : "hidden"} md:block`}>
         {links.map((l) => (
           <li key={l.href}>
             <Link
