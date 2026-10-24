@@ -14,6 +14,7 @@
 // number explicitly today — keeping it derived avoids a new endpoint.)
 
 import { useGetMyClearanceQuery } from "./clearanceApi";
+import useSiteConfig from "@/hooks/useSiteConfig";
 import { Modal, Form, Select, Input } from "antd";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -240,6 +241,7 @@ function SellerEarnings({ user }) {
   }, [activeOrders, deliveredOrders]);
 
   const { data: clearance } = useGetMyClearanceQuery();
+  const site = useSiteConfig();
   const clearing = Number(clearance?.pending) || 0;
   const nextClear = clearance?.next?.[0];
 
@@ -587,6 +589,8 @@ function SellerEarnings({ user }) {
               {method === "bank"
                 ? "Bank transfers are paid by our finance team, typically within 2–5 business days. A small bank processing fee may apply."
                 : `Sent to your ${method === "paypal" ? "PayPal" : "Payoneer"} account as soon as the request is approved.`}
+              {site?.policy?.withdrawMin ? ` Minimum $${site.policy.withdrawMin[method] ?? 0}.` : ""}
+              {site?.policy?.payoutChangeHoldHours ? ` New payout details can be used ${site.policy.payoutChangeHoldHours} hours after you first enter them.` : ""}
             </div>
 
             <div className="flex items-center justify-end gap-2">
