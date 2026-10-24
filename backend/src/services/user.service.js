@@ -240,6 +240,8 @@ const getUsersPublicById = async (userId) => {
         perHourRate: 1,
         responseTime: 1,
         language: 1,
+        languages: 1,
+        certifications: 1,
         review: 1,
         gigs: 1,
         portfolios: 1,

@@ -32,6 +32,7 @@ import VerificationSection from "@/components/EditProfile/VerificationSection";
 import SessionsSection from "@/components/EditProfile/SessionsSection";
 import PrivacySection from "@/components/EditProfile/PrivacySection";
 import TwoFactorSection from "@/components/EditProfile/TwoFactorSection";
+import { LanguagesEditor, CertificationsEditor, initialLanguages, cleanLanguages, cleanCertifications } from "@/components/EditProfile/LanguagesCertsEditor";
 
 function normaliseSkills(rawSkills) {
   if (!Array.isArray(rawSkills)) return [];
@@ -63,6 +64,15 @@ export default function FreelancerEditProfile() {
     setTags(normaliseSkills(loginUser?.skills));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [skillsSignature]);
+
+  const [languages, setLanguages] = useState([]);
+  const [certifications, setCertifications] = useState([]);
+  const langSignature = JSON.stringify([loginUser?.languages || null, loginUser?.language || "", loginUser?.certifications || []]);
+  useEffect(() => {
+    setLanguages(initialLanguages(loginUser));
+    setCertifications((loginUser?.certifications || []).map((c) => ({ ...c, year: c.year ? String(c.year) : "" })));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [langSignature]);
 
   const [updateImage, { isLoading: uploadingImage }] =
     useUpdateProfileImageMutation();
@@ -109,9 +119,12 @@ export default function FreelancerEditProfile() {
   }
 
   async function handleSaveProfile(values) {
+    const { language: _legacyLanguage, ...rest } = values;
     const payload = {
-      ...values,
+      ...rest,
       skills: tags.map((t) => ({ id: t.id, text: t.text })),
+      languages: cleanLanguages(languages),
+      certifications: cleanCertifications(certifications),
     };
     try {
       const res = await setProfile(payload);
@@ -231,7 +244,6 @@ export default function FreelancerEditProfile() {
           intro: loginUser?.intro,
           about: loginUser?.about,
           location: loginUser?.location,
-          language: loginUser?.language,
           perHourRate: loginUser?.perHourRate,
         }}
         onFinish={handleSaveProfile}
@@ -268,10 +280,17 @@ export default function FreelancerEditProfile() {
             >
               <Input size="large" placeholder="City, country" />
             </Form.Item>
-            <Form.Item name="language" label="Languages">
-              <Input size="large" placeholder="e.g. English, Spanish" />
-            </Form.Item>
           </div>
+        </SectionCard>
+
+        <SectionCard>
+          <SectionHeader title="Languages" hint="Add each language you work in and how well you speak it." />
+          <LanguagesEditor value={languages} onChange={setLanguages} />
+        </SectionCard>
+
+        <SectionCard>
+          <SectionHeader title="Certifications" hint="Optional. Courses or certificates that back up your skills." />
+          <CertificationsEditor value={certifications} onChange={setCertifications} />
         </SectionCard>
 
         <SectionCard>

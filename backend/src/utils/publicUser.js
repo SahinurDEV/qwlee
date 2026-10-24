@@ -17,6 +17,8 @@ const PUBLIC_USER_FIELDS = [
   "availability",
   "responseTime",
   "language",
+  "languages",
+  "certifications",
   "review",
   "isVerified",
   "isProfileCompleted",
