@@ -20,6 +20,7 @@ const PUBLIC_USER_FIELDS = [
   "languages",
   "certifications",
   "review",
+  "sellerLevel",
   "isVerified",
   "isProfileCompleted",
   "createdAt",

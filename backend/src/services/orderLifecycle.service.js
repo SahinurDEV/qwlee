@@ -419,6 +419,7 @@ const runHousekeeping = async ({ trigger = "timer" } = {}) => {
   }, trigger);
   await track("contests", () => require("./contest.service").housekeeping(now), trigger);
   await track("sellerPlans", () => require("./sellerPlan.service").renewDue(now), trigger);
+  await track("sellerLevels", () => require("./sellerLevel.service").evaluateAll(), trigger);
   await track("clearance", () => require("./clearance.service").releaseDue(now), trigger);
   const markedLate = await track("markLate", async () => {
     const late = await Payment.updateMany(

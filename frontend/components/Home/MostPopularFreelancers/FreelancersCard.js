@@ -58,7 +58,7 @@ export default function FreelancersCard({ data }) {
               {fullName}
             </div>
             <div className="flex items-center gap-1.5 min-w-0 mt-0.5">
-              <LevelBadge seller={{ review }} />
+              <LevelBadge seller={data} />
               {username && <span className="text-xs text-gray-500 truncate">@{username}</span>}
             </div>
           </div>
