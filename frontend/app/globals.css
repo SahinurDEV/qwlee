@@ -253,3 +253,8 @@ html.dark .ant-pagination-item a, html.dark .ant-table-cell, html.dark .ant-draw
 html.dark .ant-select-item-option-active, html.dark .ant-select-item-option-selected, html.dark .ant-dropdown-menu-item:hover { background-color: #1f2a40 !important; }
 html.dark .ant-table-thead > tr > th { background-color: #0f1729 !important; }
 html.dark img { opacity: .95; }
+/* Light gradient stops (hero, banners) turn deep tints in dark mode. */
+html.dark .from-emerald-50, html.dark .from-emerald-100 { --tw-gradient-from: #0d2a26 !important; --tw-gradient-to: rgba(13,42,38,0) !important; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important; }
+html.dark .via-white { --tw-gradient-stops: var(--tw-gradient-from), #0b1220, var(--tw-gradient-to) !important; }
+html.dark .to-cyan-50 { --tw-gradient-to: #0b2430 !important; }
+html.dark .to-white, html.dark .to-gray-100 { --tw-gradient-to: #0b1220 !important; }
