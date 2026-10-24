@@ -270,6 +270,7 @@ const requestExtension = async (orderId, sellerId, { newDeliveryDate, reason }) 
       "The new delivery date must be after the original date"
     );
   }
+  require("./orderRequests.service").assertNoOpenRequest(order, "extension");
   if (order.extensionRequest?.status === "pending") {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
