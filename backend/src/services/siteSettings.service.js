@@ -92,6 +92,7 @@ function defaults() {
       feePercent: Number(process.env.PLATFORM_FEE_PERCENT ?? 5),
       autoCompleteDays: Number(process.env.AUTO_COMPLETE_DAYS) || 3,
       reviewWindowDays: 14,
+      reviewExtensionDays: 5,
       // Test stacks (TEST_MODE) credit at once so balance checks stay simple.
       clearanceDays: Number(process.env.CLEARANCE_DAYS ?? (process.env.TEST_MODE === "true" ? 0 : 14)),
       clearanceDaysFast: 7,
@@ -110,6 +111,8 @@ function defaults() {
       payoutChangeHoldHours: process.env.TEST_MODE === "true" ? 0 : 24,
       demoPayments: process.env.DEMO_PAYMENTS === "true",
       requireGigApproval: false,
+      // Max live gigs per seller level (0 = no limit). Off on test stacks.
+      gigCaps: process.env.TEST_MODE === "true" ? { new: 0, level1: 0, level2: 0, topRated: 0 } : { new: 4, level1: 10, level2: 10, topRated: 30 },
       secondApprovalOver: Number(process.env.SECOND_APPROVAL_OVER || 0),
       categoryFees: [],
       loyaltyFees: { enabled: false, tiers: [{ over: 500, percent: 3 }, { over: 10000, percent: 1 }] },
@@ -154,6 +157,8 @@ function normalise(site = {}, base = defaults()) {
       autoCompleteDays: Math.round(num(m.autoCompleteDays, 3, 1, 30)),
       // Days after completion the buyer can leave a review (0 = no limit).
       reviewWindowDays: Math.round(num(m.reviewWindowDays, 14, 0, 365)),
+      // Buyer can push auto-complete back once per delivery (0 = off).
+      reviewExtensionDays: Math.round(num(m.reviewExtensionDays, 5, 0, 30)),
       // Days before earnings can be withdrawn; Fast = Top Rated / Premium.
       clearanceDays: Math.round(num(m.clearanceDays, 14, 0, 90)),
       clearanceDaysFast: Math.round(num(m.clearanceDaysFast, 7, 0, 90)),
@@ -174,6 +179,7 @@ function normalise(site = {}, base = defaults()) {
       payoutChangeHoldHours: Math.round(num(m.payoutChangeHoldHours, 24, 0, 720)),
       demoPayments: bool(m.demoPayments, false),
       requireGigApproval: bool(m.requireGigApproval, false),
+      gigCaps: Object.fromEntries(["new", "level1", "level2", "topRated"].map((k) => [k, Math.round(num(m.gigCaps?.[k], base.marketplace.gigCaps[k], 0, 500))])),
       // Refunds / payouts at or above this amount (USD) need a second
       // admin's approval. 0 = off.
       secondApprovalOver: num(m.secondApprovalOver, 0, 0, 1000000),
@@ -277,6 +283,7 @@ async function getPublic() {
       clearanceDaysFast: s.marketplace.clearanceDaysFast,
       autoCompleteDays: s.marketplace.autoCompleteDays,
       reviewWindowDays: s.marketplace.reviewWindowDays,
+      reviewExtensionDays: s.marketplace.reviewExtensionDays,
       withdrawMin: { bank: s.marketplace.withdrawMinBank, paypal: s.marketplace.withdrawMinPaypal, payoneer: s.marketplace.withdrawMinPayoneer },
       withdrawMax: s.marketplace.withdrawMax,
       payoutChangeHoldHours: s.marketplace.payoutChangeHoldHours,
