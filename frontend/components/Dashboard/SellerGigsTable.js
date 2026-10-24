@@ -9,6 +9,15 @@
 // /gig/add.
 
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
+import { baseApi } from "@/app/redux/api/baseApi";
+
+// Seller sends a gig back to review after making the requested changes.
+const resubmitApi = baseApi.injectEndpoints({
+  endpoints: (b) => ({
+    resubmitGig: b.mutation({ query: (id) => ({ url: `/gig/${id}`, method: "PATCH", body: { gigStatus: "pending" } }), invalidatesTags: ["MyGigs", "Gigs"] }),
+  }),
+});
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -32,7 +41,14 @@ const STATUS_TABS = [
 ];
 
 export default function SellerGigsTable() {
-  const { data, isFetching } = useGetMyGigsStatsQuery();
+  const { data, isFetching, refetch } = useGetMyGigsStatsQuery();
+  const [resubmit, { isLoading: resubmitting }] = resubmitApi.useResubmitGigMutation();
+  const onResubmit = async (g) => {
+    const r = await resubmit(g._id || g.id);
+    if (r.error) return toast.error(r.error?.data?.message || "Could not resubmit");
+    toast.success("Sent for review again");
+    refetch();
+  };
   const [tab, setTab] = useState("active");
 
   const counts = data?.counts || {};
@@ -184,6 +200,11 @@ export default function SellerGigsTable() {
                   </td>
                   <td className="px-5 md:px-6 py-4 text-right">
                     <div className="inline-flex items-center gap-3 text-xs">
+                      {(g.status === "requires-modification" || g.status === "denied") && (
+                        <button type="button" disabled={resubmitting} onClick={() => onResubmit(g)} className="text-emerald-700 hover:text-emerald-800 font-medium disabled:opacity-50" title="Send back for review after editing">
+                          Resubmit
+                        </button>
+                      )}
                       {g.status === "active" && (
                         <Link
                           href={`/gig/${g.slug}`}
@@ -245,7 +266,7 @@ function EmptyState({ tab }) {
     },
     denied: {
       title: "No denied gigs",
-      hint: "Denied gigs can be revised and resubmitted.",
+      hint: "Denied gigs can be edited and resubmitted for review.",
     },
     paused: {
       title: "No paused gigs",
