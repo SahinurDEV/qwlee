@@ -21,7 +21,7 @@ after(async () => {
 
 test("only sellers at the minimum level can promote gigs", async () => {
   admin = await login("admin@example.com", "Admin123!");
-  const seller = await login("thiago.ribeiro@example.com", "Seller123!");
+  const seller = await login("seller@example.com", "Seller123!");
   assert.equal((await call("PATCH", "/admin/settings/site", { token: admin.token, body: { marketplace: { adsMinLevel: "topRated" } } })).status, 200);
   const g = (await call("GET", "/gig/mine/stats", { token: seller.token })).data.gigs.find((x) => x.status === "active");
   const r = await call("POST", "/promotions", { token: seller.token, body: { gigId: g._id || g.id, days: 1 } });
