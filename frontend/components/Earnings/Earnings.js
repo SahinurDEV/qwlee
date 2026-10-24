@@ -13,6 +13,7 @@
 // are en route but not yet released. (Backend doesn't surface this
 // number explicitly today — keeping it derived avoids a new endpoint.)
 
+import { useGetMyClearanceQuery } from "./clearanceApi";
 import { Modal, Form, Select, Input } from "antd";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -238,6 +239,10 @@ function SellerEarnings({ user }) {
     return list.reduce((sum, o) => sum + (Number(o.price) || 0), 0);
   }, [activeOrders, deliveredOrders]);
 
+  const { data: clearance } = useGetMyClearanceQuery();
+  const clearing = Number(clearance?.pending) || 0;
+  const nextClear = clearance?.next?.[0];
+
   const [openModal, setOpenModal] = useState(false);
   const [method, setMethod] = useState("bank");
   const [form] = Form.useForm();
@@ -319,10 +324,10 @@ function SellerEarnings({ user }) {
           />
           <KpiCard
             label="Pending clearance"
-            value={money(pendingClearance)}
+            value={money(clearing)}
             icon={IoTimerOutline}
             tone="amber"
-            hint="From active and delivered orders"
+            hint={nextClear ? `Next ${money(nextClear.amount)} clears ${new Date(nextClear.availableAt).toLocaleDateString()} · ${money(pendingClearance)} in open orders` : `${money(pendingClearance)} in open orders`}
           />
           <KpiCard
             label="Lifetime earnings"

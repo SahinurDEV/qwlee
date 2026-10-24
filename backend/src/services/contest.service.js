@@ -137,7 +137,7 @@ async function release(c) {
   const net = round2(c.prize - fee);
   const r = await Contest.updateOne({ _id: c._id, status: "handover" }, { $set: { status: "completed", payout: { feePercent, fee, net, paidAt: new Date() } } });
   if (!r.modifiedCount) return false;
-  await User.updateOne({ _id: w.sellerId }, { $inc: { balance: net } });
+  await require("./clearance.service").credit(w.sellerId, net, { source: "contest", ref: c._id });
   notify(w.sellerId, `Prize paid: $${net.toFixed(2)} for "${c.title}"`, c._id, "freelancer");
   return true;
 }

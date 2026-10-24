@@ -42,6 +42,8 @@ export default function SiteSettings() {
           <Card title="Marketplace" subtitle="Money and order rules">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Field label="Platform fee (%)" hint="Taken from each completed order and tip (0–50)."><input type="number" min={0} max={50} step="0.5" className={input} value={s.marketplace.feePercent} onChange={(e) => set("marketplace", { feePercent: e.target.value })} /></Field>
+              <Field label="Clearance (days)" hint="Days before new earnings can be withdrawn. 0 = at once."><input type="number" min={0} max={90} className={input} value={s.marketplace.clearanceDays ?? 14} onChange={(e) => set("marketplace", { clearanceDays: e.target.value })} /></Field>
+              <Field label="Clearance for Top Rated / Premium (days)" hint="Shorter wait for Top Rated sellers and Seller Plus Premium."><input type="number" min={0} max={90} className={input} value={s.marketplace.clearanceDaysFast ?? 7} onChange={(e) => set("marketplace", { clearanceDaysFast: e.target.value })} /></Field>
               <Field label="Auto-complete after (days)" hint="A delivery the buyer ignores is accepted automatically (1–30)."><input type="number" min={1} max={30} className={input} value={s.marketplace.autoCompleteDays} onChange={(e) => set("marketplace", { autoCompleteDays: e.target.value })} /></Field>
             </div>
             <Toggle label="Demo payments" hint="Checkout completes without charging a card. Turn off in production." checked={s.marketplace.demoPayments} onChange={(v) => set("marketplace", { demoPayments: v })} />

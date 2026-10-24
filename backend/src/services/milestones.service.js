@@ -67,7 +67,7 @@ async function release(orderId, userId, index) {
     { new: true }
   );
   if (!updated) throw new ApiError(httpStatus.CONFLICT, "Milestone cannot be released now");
-  await User.updateOne({ _id: order.freelancerId }, { $inc: { balance: net } });
+  await require("./clearance.service").credit(order.freelancerId, net, { source: "milestone", ref: order._id });
   return updated;
 }
 

@@ -89,6 +89,8 @@ const userSchema = mongoose.Schema(
       required: false,
       default: 0,
     },
+    // Earnings still in the clearance period (clearance.service).
+    pendingBalance: { type: Number, default: 0 },
     // Seller Plus subscription (sellerPlan.service). planBadge is the
     // public copy of the tier for profile/gig badges.
     sellerPlan: {
