@@ -3,6 +3,15 @@ const ApiError = require("../utils/ApiError");
 const Chat = require("../models/chat.model");
 const Message = require("../models/message.model");
 
+// First-message limit: how many new conversations one person can open in
+// 24 hours (siteSettings.moderation.newChatsPerDay, 0 = no limit).
+const assertCanStartChat = async (userId) => {
+  const limit = (await require("./siteSettings.service").get()).moderation.newChatsPerDay;
+  if (!limit) return;
+  const n = await Chat.countDocuments({ startedBy: userId, createdAt: { $gte: new Date(Date.now() - 86400000) } });
+  if (n >= limit) throw new ApiError(httpStatus.TOO_MANY_REQUESTS, `You can start up to ${limit} new conversations a day. Try again tomorrow, or reply in an existing conversation.`);
+};
+
 const addChat = async (chatBody) => {
   try {
     return await Chat.create(chatBody);
@@ -170,6 +179,7 @@ const getChatByDeleteId = async (chatId, userId) => {
 };
 
 module.exports = {
+  assertCanStartChat,
   addChat,
   getChats,
   getChat,
