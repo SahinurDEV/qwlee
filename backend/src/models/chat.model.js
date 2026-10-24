@@ -15,6 +15,12 @@ const chatSchema = mongoose.Schema(
       enum: ["accepted", "blocked"],
       default: "accepted",
     },
+    // Users who blocked this conversation. While anyone is listed here
+    // nobody can send new messages in it.
+    blockedBy: {
+      type: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+      default: [],
+    },
     deletedBy: {
       type: Array,
       default: [],
