@@ -67,6 +67,16 @@ router.post("/me/delete", auth("common"), catchAsync(async (req, res) => {
 // Seller Plus subscription (paid from balance).
 const plan = require("../../services/sellerPlan.service");
 const okPlan = (res, d) => res.json({ code: 200, message: "Seller plan", data: { attributes: d } });
+// Account standing: active warnings and any restriction (own account only).
+router.get("/me/standing", auth("common"), catchAsync(async (req, res) => {
+  const trust = require("../../services/trust.service");
+  const { User } = require("../../models");
+  const [warnings, u] = await Promise.all([trust.active(req.user.id), User.findById(req.user.id, "restriction").lean()]);
+  res.json({ code: 200, message: "Standing", data: { attributes: {
+    warnings: warnings.map((w) => ({ id: String(w._id), reason: w.reason, label: trust.LABEL[w.reason], note: w.note, createdAt: w.createdAt, expiresAt: w.expiresAt })),
+    restriction: u?.restriction?.active ? { reason: u.restriction.reason, since: u.restriction.since, until: u.restriction.until } : null,
+  } } });
+}));
 router.get("/me/plan", auth("common"), catchAsync(async (req, res) => okPlan(res, await plan.get(req.user.id))));
 router.post("/me/plan", auth("common"), catchAsync(async (req, res) => okPlan(res, await plan.subscribe(req.user, req.body?.tier))));
 router.post("/me/plan/cancel", auth("common"), catchAsync(async (req, res) => okPlan(res, await plan.cancel(req.user))));

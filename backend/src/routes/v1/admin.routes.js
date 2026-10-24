@@ -150,6 +150,17 @@ router.patch("/users/:userId/seller-plan", A, require("../../utils/catchAsync")(
 router.post("/users/:userId/reset-password", A, ac.resetPassword);
 router.post("/users/:userId/logout-all", A, ac.logoutEverywhere);
 router.get("/users/:userId/sessions", A, ac.userSessions);
+// Trust & safety: warnings and restrictions (trust.service).
+{
+  const trust = require("../../services/trust.service");
+  const ca = require("../../utils/catchAsync");
+  const ok = (res, data, message = "OK", code = 200) => res.status(code).json({ code, message, data: { attributes: data } });
+  router.get("/users/:userId/warnings", A, ca(async (req, res) => ok(res, await trust.listWarnings(req.params.userId))));
+  router.post("/users/:userId/warnings", A, ca(async (req, res) => ok(res, await trust.issueWarning(req.params.userId, { reason: req.body?.reason, note: req.body?.note, issuedBy: req.user._id || req.user.id, source: req.body?.source === "risk-flag" ? "risk-flag" : "admin" }), "Warning issued", 201)));
+  router.delete("/warnings/:id", A, ca(async (req, res) => ok(res, await trust.revokeWarning(req.params.id), "Warning revoked")));
+  router.post("/users/:userId/restrict", A, ca(async (req, res) => ok(res, await trust.restrict(req.params.userId, { reason: req.body?.reason, days: req.body?.days, by: req.user._id || req.user.id }), "Account restricted")));
+  router.delete("/users/:userId/restrict", A, ca(async (req, res) => ok(res, await trust.liftRestriction(req.params.userId), "Restriction lifted")));
+}
 router.delete("/users/:userId/sessions/:sid", A, ac.revokeUserSession);
 router.get("/users/:userId/view", A, ac.viewUser);
 router.patch("/gigs/:gigId/feature", A, ac.featureGig);

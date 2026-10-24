@@ -21,6 +21,7 @@ const addChat = catchAsync(async (req, res) => {
       })
     );
   }
+  await require("../services/trust.service").assertNotRestricted(req.user.id, "start new conversations");
   const chatBody = { participants: participants };
   const chat = await chatService.addChat(chatBody);
   return res.status(httpStatus.CREATED).json(

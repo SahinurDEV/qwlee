@@ -16,6 +16,7 @@ module.exports.Inboxes = require('./inboxes.model');
 module.exports.Chats = require('./chat.model');
 module.exports.Messages = require('./message.model');
 module.exports.Withdrawal = require('./withdraw.model');
+module.exports.Warning = require('./warning.model');
 module.exports.Clearance = require('./clearance.model');
 module.exports.OrderMessage = require('./orderMessage.model');
 module.exports.BannerImage = require('./banner.model');

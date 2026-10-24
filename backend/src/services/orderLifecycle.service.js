@@ -78,7 +78,8 @@ const quoteCheckout = async (args) => {
   }
   Object.assign(quote, await buyerFee(quote.charge, quote.total));
   // Vacation mode: no new orders while the seller is away.
-  const seller = await User.findById(quote.freelancerId).select("availability");
+  const seller = await User.findById(quote.freelancerId).select("availability restriction");
+  if (seller?.restriction?.active) throw new ApiError(httpStatus.CONFLICT, "This seller is not taking new orders right now");
   if (isAway(seller)) {
     const until = seller.availability.until ? ` until ${new Date(seller.availability.until).toISOString().slice(0, 10)}` : "";
     throw new ApiError(httpStatus.CONFLICT, `This seller is unavailable${until} and is not taking new orders`);
@@ -429,6 +430,7 @@ const runHousekeeping = async ({ trigger = "timer" } = {}) => {
   const autoCancelled = await track("autoCancel", () => require("./cancellation.service").autoAcceptExpired(), trigger);
   const subscriptions = await track("subscriptions", () => require("./subscription.service").billDue(), trigger);
   const announcements = await track("announcements", () => require("./announcements.service").sendDue(), trigger);
+  await track("restrictionsEnded", () => require("./trust.service").expireRestrictions(now), trigger);
   const bansLifted = await track("bansLifted", () => require("./moderation.service").liftExpiredBans(), trigger);
   const kpiEmail = await track("kpiEmail", () => require("./kpi.service").maybeSendWeekly(), trigger);
   return { kpiEmail, autoCompleted, markedLate, autoCancelled, subscriptions, bansLifted, announcements };
