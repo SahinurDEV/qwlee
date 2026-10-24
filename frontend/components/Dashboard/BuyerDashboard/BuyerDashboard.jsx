@@ -17,6 +17,7 @@ import useUser from "@/hooks/useUser";
 import Avatar from "@/components/common/Avatar";
 import Kpi from "@/components/Dashboard/Kpi";
 import RecentOrdersTable from "@/components/Dashboard/RecentOrdersTable";
+import SavedListsCard from "@/components/Dashboard/BuyerDashboard/SavedListsCard";
 import BecomeSellerCta from "@/components/Dashboard/BecomeSellerCta";
 
 export default function BuyerDashboard() {
@@ -146,6 +147,7 @@ export default function BuyerDashboard() {
             </Link>
           </div>
 
+          <SavedListsCard user={user} />
           <BecomeSellerCta user={user} />
         </aside>
 

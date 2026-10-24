@@ -30,7 +30,9 @@ export default function MyList() {
   const [move] = useMoveToCollectionMutation();
   const [renameC] = useRenameCollectionMutation();
   const [deleteC] = useDeleteCollectionMutation();
-  const [tab, setTab] = useState(null); // null = all, "" = Saved, else a name
+  // ?collection=<name> opens that collection (links from the dashboard).
+  const initialTab = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("collection") : null;
+  const [tab, setTab] = useState(initialTab); // null = all, "" = Saved, else a name
   const [newName, setNewName] = useState("");
   const [drafts, setDrafts] = useState([]); // created here, still empty
   const named = [...new Set([...collections.filter((c) => c.name).map((c) => c.name), ...drafts])];
