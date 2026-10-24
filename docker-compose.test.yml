@@ -1,0 +1,53 @@
+# Throw-away stack for the API test-suite. It has its own database
+# (in memory, gone when the stack stops), its own mail catcher and its own
+# ports, so tests never touch a live or demo database.
+#
+#   scripts/test-isolated.sh        # build, seed, test, tear down
+#
+# Run it with its own project name so it never clashes with the main stack:
+#   docker compose -p qwlee-test -f docker-compose.test.yml up -d --build
+name: qwlee-test
+
+services:
+  mongo:
+    image: mongo:7
+    tmpfs:
+      - /data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  mailpit:
+    image: axllent/mailpit:v1.21
+    ports:
+      - "${TEST_MAILPIT_PORT:-18025}:8025"
+
+  backend:
+    build: ./backend
+    depends_on:
+      mongo:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+    environment:
+      NODE_ENV: production
+      PORT: 7171
+      SOCKET_PORT: 8181
+      MONGODB_URL: mongodb://mongo:27017/qwlee_test
+      # Tells the tests this API is safe to write to.
+      TEST_MODE: "true"
+      JWT_SECRET: test-only-secret-not-for-production-use-0123456789
+      PUBLIC_API_URL: http://localhost:${TEST_API_PORT:-17171}
+      FRONTEND_URL: http://localhost:8000
+      CORS_ORIGINS: http://localhost:8000,http://localhost:4000
+      # The suite makes many deliberate failed sign-ins from one IP.
+      AUTH_RATE_LIMIT_MAX: "100000"
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+      EMAIL_FROM: Qwlee <no-reply@qwlee.local>
+      DEMO_PAYMENTS: "true"
+      SEED_DEMO_IF_EMPTY: "true"
+    ports:
+      - "${TEST_API_PORT:-17171}:7171"
