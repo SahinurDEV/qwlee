@@ -5,6 +5,7 @@ import { Providers } from "./redux/provider";
 import { Toaster } from "sonner";
 import { MdError } from "react-icons/md";
 import { SocketProvider } from "@/components/Context/SocketProvider";
+import { DARK_MODE } from "@/lib/features";
 import { I18nProvider } from "@/components/Context/I18nProvider";
 import { LANG_COOKIE, normaliseLang } from "@/lib/i18n";
 import MaintenancePage from "@/components/common/MaintenancePage";
@@ -89,7 +90,7 @@ export async function generateMetadata() {
 export default async function RootLayout({ children }) {
   const jar = await cookies();
   const lang = normaliseLang(jar.get(LANG_COOKIE)?.value);
-  const dark = jar.get("qwlee_theme")?.value === "dark";
+  const dark = DARK_MODE && jar.get("qwlee_theme")?.value === "dark";
   const site = await siteSettings();
   if (site?.maintenance?.enabled) {
     return (

@@ -8,6 +8,7 @@
 import CurrencySelect from "@/components/common/CurrencySelect";
 import LanguageSelect from "@/components/common/LanguageSelect";
 import ThemeToggle from "@/components/common/ThemeToggle";
+import { DARK_MODE } from "@/lib/features";
 import { useI18n } from "@/components/Context/I18nProvider";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -160,7 +161,7 @@ export default function Footer() {
           <p>© {new Date().getFullYear()} Qwlee. {t("rights")}</p>
           <div className="flex flex-wrap items-center gap-4">
             <LanguageSelect />
-            <ThemeToggle />
+            {DARK_MODE && <ThemeToggle />}
             <CurrencySelect />
           </div>
 
