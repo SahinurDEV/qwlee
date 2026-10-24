@@ -161,6 +161,7 @@ const findOrCreateUser = async (claims) => {
     image: claims.picture || "",
   });
   created.$locals.created = true;
+  await require("./referral.service").grantWelcome(created);
   return created;
 };
 
