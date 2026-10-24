@@ -128,6 +128,9 @@ export default function SellerGigsTable() {
               <th className="text-right px-3 py-3 font-semibold">
                 Cancellations
               </th>
+              <th className="text-right px-3 py-3 font-semibold" title="Success Score 1–10 (last 90 days)">
+                Success
+              </th>
               <th className="text-right px-5 md:px-6 py-3 font-semibold"></th>
             </tr>
           </thead>
@@ -135,7 +138,7 @@ export default function SellerGigsTable() {
             {isFetching && gigs.length === 0 ? (
               <tr>
                 <td
-                  colSpan={6}
+                  colSpan={7}
                   className="px-6 py-10 text-center text-sm text-gray-500"
                 >
                   Loading gigs…
@@ -143,7 +146,7 @@ export default function SellerGigsTable() {
               </tr>
             ) : visible.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-6 py-10 text-center">
+                <td colSpan={7} className="px-6 py-10 text-center">
                   <EmptyState tab={tab} />
                 </td>
               </tr>
@@ -196,6 +199,12 @@ export default function SellerGigsTable() {
                     {g.stats?.cancellationRate || 0}%
                     <div className="text-xs text-gray-400">
                       ({Number(g.stats?.cancellations || 0)})
+                    </div>
+                  </td>
+                  <td className="px-3 py-4 text-right text-gray-900 tabular-nums">
+                    {g.successScore?.score != null ? `${g.successScore.score}/10` : "—"}
+                    <div className="text-xs text-gray-400">
+                      {g.successScore?.score != null ? `${g.successScore.orders} orders` : `needs ${g.successScore?.minOrders || 5} orders`}
                     </div>
                   </td>
                   <td className="px-5 md:px-6 py-4 text-right">
