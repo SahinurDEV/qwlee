@@ -39,7 +39,7 @@ const queryTrustSafety = catchAsync(async (req, res) => {
 // cached in front of CloudFront / Vercel would be ideal — for now we just
 // run countDocuments on each request; the collections are small.
 // Orders live in the Payment collection (the old "Orders" model is unused).
-const { User, Gig, Payment, Categories } = require("../models");
+const { User, Gig, Payment, Categories, Reviews } = require("../models");
 
 const getStats = catchAsync(async (req, res) => {
     const [sellers, buyers, gigs, orders, categories] = await Promise.all([
@@ -57,6 +57,12 @@ const getStats = catchAsync(async (req, res) => {
     });
     const countriesCount = countries.filter(Boolean).length;
 
+    // Review count + average for the homepage trust strip.
+    const [rev] = await Reviews.aggregate([
+        { $match: { rating: { $gte: 1 } } },
+        { $group: { _id: null, count: { $sum: 1 }, avg: { $avg: "$rating" } } },
+    ]);
+
     res.status(httpStatus.OK).json(
         response({
             message: "Marketplace stats",
@@ -70,6 +76,8 @@ const getStats = catchAsync(async (req, res) => {
                 orders,
                 categories,
                 countries: countriesCount,
+                reviews: rev?.count || 0,
+                avgRating: rev?.avg ? Math.round(rev.avg * 10) / 10 : null,
             },
         })
     );

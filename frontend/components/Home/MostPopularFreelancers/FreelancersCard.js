@@ -6,6 +6,7 @@
 // - Shows real rating from user.review.{rating,total}, real hourly rate,
 //   and a small online dot when presence is set.
 
+import LevelBadge from "@/components/common/LevelBadge";
 import Link from "next/link";
 import { GoDotFill } from "react-icons/go";
 import { GiRoundStar } from "react-icons/gi";
@@ -56,9 +57,10 @@ export default function FreelancersCard({ data }) {
             <div className="font-semibold text-gray-900 truncate group-hover:text-emerald-700 transition">
               {fullName}
             </div>
-            {username && (
-              <div className="text-xs text-gray-500 truncate">@{username}</div>
-            )}
+            <div className="flex items-center gap-1.5 min-w-0 mt-0.5">
+              <LevelBadge seller={{ review }} />
+              {username && <span className="text-xs text-gray-500 truncate">@{username}</span>}
+            </div>
           </div>
           <div className="flex items-center gap-1 text-amber-500 text-sm shrink-0">
             <GiRoundStar />
