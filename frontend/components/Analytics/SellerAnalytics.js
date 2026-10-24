@@ -5,6 +5,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { baseApi } from "@/app/redux/api/baseApi";
 import useUser from "@/hooks/useUser";
+import TrendChart from "./TrendChart";
 
 const api = baseApi.injectEndpoints({
   endpoints: (b) => ({
@@ -20,6 +21,32 @@ function delta(cur, prev) {
   return <span className={d >= 0 ? "text-emerald-700" : "text-rose-600"}>{d >= 0 ? "▲" : "▼"} {Math.abs(d)}% vs previous</span>;
 }
 
+// The API only returns periods that had orders; fill the gaps with zeros
+// so the line is to scale (daily keys YYYY-MM-DD, monthly YYYY-MM).
+function fillSeries(series, days) {
+  if (!series.length) return series;
+  const byKey = new Map(series.map((s) => [s.period, s]));
+  const monthly = series[0].period.length === 7;
+  const out = [];
+  const now = new Date();
+  if (monthly) {
+    const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - Math.ceil(days / 30) + 1, 1));
+    while (d <= now) {
+      const k = d.toISOString().slice(0, 7);
+      out.push(byKey.get(k) || { period: k, earnings: 0, orders: 0 });
+      d.setUTCMonth(d.getUTCMonth() + 1);
+    }
+  } else {
+    for (let i = days - 1; i >= 0; i--) {
+      const k = new Date(now.getTime() - i * 86400000).toISOString().slice(0, 10);
+      out.push(byKey.get(k) || { period: k, earnings: 0, orders: 0 });
+    }
+  }
+  // Keep anything the API returned outside the window (time zones).
+  for (const s of series) if (!out.some((o) => o.period === s.period)) out.push(s);
+  return out.sort((a, b) => a.period.localeCompare(b.period));
+}
+
 function Kpi({ label, value, sub }) {
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-4">
@@ -33,12 +60,18 @@ function Kpi({ label, value, sub }) {
 export default function SellerAnalytics() {
   const user = useUser();
   const [days, setDays] = useState(30);
+  const [metric, setMetric] = useState("earnings");
   const isSeller = user?.role === "freelancer";
   const { data, isFetching, error } = api.useGetSellerAnalyticsQuery(days, { skip: !isSeller });
   if (!user) return <main className="max-w-6xl mx-auto px-4 py-10"><p className="text-gray-600">Sign in to see your analytics.</p></main>;
   if (!isSeller) return <main className="max-w-6xl mx-auto px-4 py-10"><p className="text-gray-600">Analytics are for sellers. <Link className="text-emerald-700 underline" href="/dashboard">Back to dashboard</Link></p></main>;
   const t = data?.totals;
-  const max = Math.max(1, ...(data?.series || []).map((s) => s.earnings));
+  const points = fillSeries(data?.series || [], days).map((s) => ({
+    label: s.period,
+    short: s.period.length > 7 ? s.period.slice(5) : s.period,
+    value: metric === "earnings" ? Number(s.earnings || 0) : Number(s.orders || 0),
+    note: metric === "earnings" ? `${s.orders} orders` : money(s.earnings),
+  }));
   return (
     <main className="max-w-6xl mx-auto px-4 py-8 space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -63,16 +96,23 @@ export default function SellerAnalytics() {
             <Kpi label="Repeat buyers" value={`${t.repeatBuyerRate}%`} />
           </div>
 
-          <section className="mt-6 bg-white border border-gray-200 rounded-2xl p-5">
-            <h2 className="text-base font-semibold text-gray-900">Earnings over time</h2>
-            {data.series.length === 0 ? <p className="mt-3 text-sm text-gray-500">No completed orders in this period.</p> : (
-              <div className="mt-4 flex items-end gap-1 h-48" role="img" aria-label={`Earnings by period: ${data.series.map((s) => `${s.period} ${money(s.earnings)}`).join(", ")}`}>
-                {data.series.map((s) => (
-                  <div key={s.period} className="flex-1 min-w-[8px] flex flex-col items-center justify-end h-full group" title={`${s.period}: ${money(s.earnings)} · ${s.orders} orders`}>
-                    <div className="w-full rounded-t bg-emerald-500 group-hover:bg-emerald-600" style={{ height: `${Math.max(2, (s.earnings / max) * 100)}%` }} />
-                    {data.series.length <= 14 ? <span className="mt-1 text-xs text-gray-500 truncate w-full text-center">{s.period.slice(5)}</span> : null}
-                  </div>
+          <section className="mt-6 bg-white border border-gray-200 rounded-2xl p-4 sm:p-5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 className="text-base font-semibold text-gray-900">{metric === "earnings" ? "Earnings" : "Orders"} over time</h2>
+              <div role="tablist" aria-label="Chart metric" className="inline-flex rounded-lg bg-gray-100 p-0.5 text-sm">
+                {[["earnings", "Earnings"], ["orders", "Orders"]].map(([k, l]) => (
+                  <button key={k} type="button" role="tab" aria-selected={metric === k} onClick={() => setMetric(k)}
+                    className={`px-3 py-1 rounded-md ${metric === k ? "bg-white shadow-sm text-gray-900" : "text-gray-600"}`}>{l}</button>
                 ))}
+              </div>
+            </div>
+            {points.length === 0 ? <p className="mt-3 text-sm text-gray-500">No completed orders in this period.</p> : (
+              <div className="mt-3">
+                <TrendChart
+                  points={points}
+                  label={metric === "earnings" ? "Earnings by period" : "Orders by period"}
+                  format={metric === "earnings" ? (v) => `$${v >= 1000 ? `${(v / 1000).toFixed(v >= 10000 ? 0 : 1)}k` : Math.round(v)}` : (v) => String(Math.round(v))}
+                />
               </div>
             )}
           </section>
