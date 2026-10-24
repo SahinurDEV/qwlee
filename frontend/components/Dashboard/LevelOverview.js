@@ -41,7 +41,7 @@ export default function LevelOverview() {
 
   if (!data) return null;
 
-  const { user, currentLevel, nextLevel, metrics, progress } = data;
+  const { user, currentLevel, nextLevel, metrics, progress, pendingApproval } = data;
   const atTop = !nextLevel;
 
   return (
@@ -84,7 +84,7 @@ export default function LevelOverview() {
             value={
               metrics?.successScore != null ? metrics.successScore : "—"
             }
-            max={10}
+            max={100}
             tone="emerald"
           />
           <Metric
@@ -165,14 +165,23 @@ export default function LevelOverview() {
                 star
                 decimals={1}
               />
+              {progress?.responseRate ? <Progress label="Response rate" value={progress.responseRate.value} target={progress.responseRate.target} pct /> : null}
+              {progress?.successScore ? <Progress label="Success score" value={progress.successScore.value} target={progress.successScore.target} pct /> : null}
+              {progress?.approval ? <p className="text-xs text-gray-500 py-2">{nextLevel?.label} also needs a review by the qwlee team.</p> : null}
             </>
           )}
         </div>
       </div>
 
+      {pendingApproval ? (
+        <p className="mt-4 text-sm rounded-lg bg-amber-50 border border-amber-200 text-amber-900 p-3">
+          You meet the {pendingApproval.label} criteria.{" "}
+          {pendingApproval.status === "declined" ? "The team reviewed your account and didn't approve it this time." : "The qwlee team is reviewing your account."}
+        </p>
+      ) : null}
       <p className="text-xs text-gray-500 mt-4">
         Tip: keep delivering on time and replying to messages quickly. See{" "}
-        <Link href="/support" className="text-emerald-700 hover:underline">
+        <Link href="/seller-level" className="text-emerald-700 hover:underline">
           how levels work
         </Link>{" "}
         for full details.
@@ -213,12 +222,12 @@ function Metric({ icon: Icon, label, value, max, sub, tone = "emerald" }) {
   );
 }
 
-function Progress({ label, value, target, money, star, decimals = 0 }) {
+function Progress({ label, value, target, money, star, pct: percent, decimals = 0 }) {
   const v = Number(value || 0);
   const t = Number(target || 0);
   const pct = t > 0 ? Math.min(100, Math.round((v / t) * 100)) : 0;
   const fmt = (n) =>
-    money ? `US$${Number(n).toLocaleString()}` : star ? `${Number(n).toFixed(decimals)}★` : `${n}`;
+    money ? `US$${Number(n).toLocaleString()}` : percent ? `${n}%` : star ? `${Number(n).toFixed(decimals)}★` : `${n}`;
   return (
     <div className="py-2">
       <div className="flex items-center justify-between gap-2">

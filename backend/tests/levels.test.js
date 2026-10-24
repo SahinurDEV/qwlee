@@ -44,6 +44,9 @@ test("stored level drives the badge and the search filter", async () => {
   assert.equal(set.status, 200, JSON.stringify(set.json));
   const lv = await call("GET", "/gig/mine/level", { token: seller.token });
   assert.equal(lv.status, 200);
+  const ov = lv.data.overview || lv.data;
+  assert.equal(ov.currentLevel.id, "level2");
+  assert.ok(Array.isArray(ov.tiers) && ov.tiers.length >= 4);
   const found = await call("GET", "/gig?level=level2&limit=100");
   assert.equal(found.status, 200);
   const results = found.data.results;
