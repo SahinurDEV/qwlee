@@ -27,6 +27,7 @@ import { useGetReviewByOrderQuery } from "@/app/redux/features/reviewsApi";
 import DeliverNowModal from "./DeliveryModal";
 import ExtendDeliveryDateModal from "./ExtendDeliveryDateModal";
 import LeaveReviewModal from "./LeaveReviewModal";
+import BuyerReviewCard from "./BuyerReviewCard";
 import OpenDisputeModal from "./OpenDisputeModal";
 import TipCard from "./TipCard";
 import MilestonesCard from "./MilestonesCard";
@@ -287,6 +288,7 @@ export default function OrderActions({ order, orderId, isSeller }) {
           </button>
         </section>
       )}
+      {status === "delivered" && <BuyerReviewCard orderId={orderId} isSeller={isSeller} />}
       {!isSeller && myReview && (
         <section className="bg-white border border-gray-200 rounded-2xl p-5">
           <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">

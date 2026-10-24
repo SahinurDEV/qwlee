@@ -47,3 +47,4 @@ module.exports.HourlyContract = require('./hourlyContract.model');
 module.exports.Contest = require('./contest.model');
 module.exports.Team = require('./team.model');
 module.exports.OrderCall = require('./orderCall.model');
+module.exports.BuyerReview = require('./buyerReview.model');

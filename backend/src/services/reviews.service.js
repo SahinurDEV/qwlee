@@ -30,7 +30,8 @@ const createReview = async (payload, userId) => {
     throw new ApiError(httpStatus.BAD_REQUEST, "review text is required");
   }
 
-  const order = await Orders.findById(orderId);
+  // Orders placed through checkout live in Payment; Orders holds legacy rows.
+  const order = (await require("../models").Payment.findById(orderId).catch(() => null)) || (await Orders.findById(orderId).catch(() => null));
   if (!order) throw new ApiError(httpStatus.NOT_FOUND, "Order not found");
   if (String(order.clientId) !== String(userId)) {
     throw new ApiError(httpStatus.FORBIDDEN, "Only the buyer can review this order");
@@ -58,6 +59,8 @@ const createReview = async (payload, userId) => {
   });
 
   require("./gigStats.service").recomputeLater(order.gigId);
+  // Double-blind: the seller's review of the buyer goes public now too.
+  require("./buyerReviews.service").publishDue().catch(() => {});
 
   // Email the seller that they got a review.
   try {
