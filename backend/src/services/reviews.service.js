@@ -20,6 +20,11 @@ const createReview = async (payload, userId) => {
     if (!Number.isInteger(Number(v)) || v < 1 || v > 5) throw new ApiError(httpStatus.BAD_REQUEST, `${k} rating must be 1-5`);
     subRatings[k] = Number(v);
   }
+  let privateRating;
+  if (payload?.privateRating !== undefined && payload?.privateRating !== null && payload?.privateRating !== "") {
+    privateRating = Number(payload.privateRating);
+    if (!Number.isInteger(privateRating) || privateRating < 1 || privateRating > 5) throw new ApiError(httpStatus.BAD_REQUEST, "privateRating must be 1-5");
+  }
   if (!orderId) {
     throw new ApiError(httpStatus.BAD_REQUEST, "orderId is required");
   }
@@ -56,6 +61,8 @@ const createReview = async (payload, userId) => {
     rating: Number(rating),
     review: String(review).trim(),
     ...(Object.keys(subRatings).length ? { subRatings } : {}),
+    ...(privateRating ? { privateRating } : {}),
+    privateNote: String(payload?.privateNote || "").trim().slice(0, 1000),
   });
 
   require("./gigStats.service").recomputeLater(order.gigId);
@@ -90,6 +97,8 @@ const { PUBLIC_USER_SELECT, toPublicUser } = require("../utils/publicUser");
 const publicReview = (r) => {
   const o = typeof r?.toObject === "function" ? r.toObject() : { ...r };
   o.id = String(o._id || o.id);
+  delete o.privateRating;
+  delete o.privateNote;
   if (o.userId && typeof o.userId === "object") o.userId = toPublicUser(o.userId);
   if (o.freelancerId && typeof o.freelancerId === "object") o.freelancerId = toPublicUser(o.freelancerId);
   return o;

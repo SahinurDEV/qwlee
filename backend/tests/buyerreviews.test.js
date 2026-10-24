@@ -47,8 +47,14 @@ test("seller review of the buyer is double-blind", async (t) => {
   const sellerView = await call("GET", `/reviews/buyer/order/${id}`, { token: seller.token });
   assert.equal(sellerView.data.review.rating, 4);
 
-  const b = await call("POST", "/reviews", { token: buyer.token, body: { orderId: id, rating: 5, review: "Great work" } });
+  const b = await call("POST", "/reviews", { token: buyer.token, body: { orderId: id, rating: 5, review: "Great work", privateRating: 3, privateNote: "Slow at first" } });
   assert.ok([200, 201].includes(b.status), JSON.stringify(b.json));
+  // Private rating never shows on public review lists.
+  const list = await call("GET", `/reviews?gigId=${gig.id || gig._id}&limit=50`);
+  const mineRev = list.json.data.attributes.results.find((x) => String(x.orderId?._id || x.orderId) === String(id));
+  assert.ok(mineRev, "review is listed");
+  assert.equal(mineRev.privateRating, undefined);
+  assert.equal(mineRev.privateNote, undefined);
   const shown = await call("GET", `/reviews/buyer/order/${id}`, { token: buyer.token });
   assert.equal(shown.data.review.rating, 4);
   const pub = await call("GET", `/reviews/buyer/${buyer.user.id}`);
