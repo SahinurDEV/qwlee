@@ -10,6 +10,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { base } from "@/lib/constant";
+import { IoStar, IoShieldCheckmarkOutline, IoLockClosedOutline, IoHeadsetOutline } from "react-icons/io5";
 
 function formatCount(n) {
   if (n == null) return "—";
@@ -87,6 +88,29 @@ export default function MarketplaceStats() {
           </motion.div>
         ))}
       </motion.div>
+      <ul className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 text-sm" aria-label="Why buyers trust Qwlee">
+        {stats?.reviews ? (
+          <li className="flex items-center gap-2 rounded-xl bg-white border border-gray-100 px-3 py-2.5">
+            <IoStar className="text-amber-500 shrink-0" aria-hidden />
+            <span className="min-w-0">
+              <span className="font-semibold text-gray-900">{stats.avgRating?.toFixed(1)}/5</span>{" "}
+              <span className="text-gray-500">from {formatCount(stats.reviews)} reviews</span>
+            </span>
+          </li>
+        ) : null}
+        <li className="flex items-center gap-2 rounded-xl bg-white border border-gray-100 px-3 py-2.5">
+          <IoShieldCheckmarkOutline className="text-emerald-600 shrink-0" aria-hidden />
+          <span className="text-gray-700">Project done or your money back</span>
+        </li>
+        <li className="flex items-center gap-2 rounded-xl bg-white border border-gray-100 px-3 py-2.5">
+          <IoLockClosedOutline className="text-emerald-600 shrink-0" aria-hidden />
+          <span className="text-gray-700">Secure payments held in escrow</span>
+        </li>
+        <li className="flex items-center gap-2 rounded-xl bg-white border border-gray-100 px-3 py-2.5">
+          <IoHeadsetOutline className="text-emerald-600 shrink-0" aria-hidden />
+          <span className="text-gray-700">Support and dispute help</span>
+        </li>
+      </ul>
     </section>
   );
 }
