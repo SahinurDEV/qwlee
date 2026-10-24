@@ -185,6 +185,7 @@ const SECTION_LABELS = {
   recentlyViewed: "Recently viewed (returning visitors only)",
   recommended: "Recommended gigs",
   categories: "Popular categories",
+  howItWorks: "How it works (buyers / sellers)",
   freelancers: "Popular freelancers",
   whyUs: "Why choose us",
   testimonials: "Testimonials",
