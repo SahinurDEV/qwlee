@@ -366,6 +366,7 @@ const recordDelivery = async (orderId, userId) => {
     count: (order.delivery?.count || 0) + 1,
     lastDeliveredAt: now,
     autoCompleteAt: new Date(now.getTime() + (await autoCompleteDays()) * 86400000),
+    reviewExtendedAt: null,
   };
   await order.save();
   return order;
@@ -385,6 +386,28 @@ const requestRevision = async (orderId, userId, reason) => {
   order.revisions = [...(order.revisions || []), { reason: String(reason || "").slice(0, 2000), requestedAt: new Date() }];
   await order.save();
   return order;
+};
+
+/** Buyer asks for more time to review a delivery (once per delivery). */
+const extendReview = async (orderId, userId) => {
+  const { order, isBuyer } = await loadParty(orderId, userId);
+  if (!isBuyer) throw new ApiError(httpStatus.FORBIDDEN, "Only the buyer can extend the review time");
+  if (!OPEN.includes(order.status) || order.delivery?.state !== "submitted") throw new ApiError(httpStatus.CONFLICT, "There is no delivery waiting for review");
+  const days = (await require("./siteSettings.service").get()).marketplace.reviewExtensionDays;
+  if (!days) throw new ApiError(httpStatus.CONFLICT, "Review extensions are turned off");
+  const base = order.delivery.autoCompleteAt ? new Date(order.delivery.autoCompleteAt) : new Date();
+  const next = new Date(base.getTime() + days * 86400000);
+  const r = await Payment.updateOne(
+    { _id: order._id, "delivery.state": "submitted", "delivery.reviewExtendedAt": null },
+    { $set: { "delivery.autoCompleteAt": next, "delivery.reviewExtendedAt": new Date() } }
+  );
+  if (!r.modifiedCount) throw new ApiError(httpStatus.CONFLICT, "You already extended the review time for this delivery");
+  try {
+    await require("./notification.service").addCustomNotification("freelancer-notification", order.freelancerId, {
+      receiverId: order.freelancerId, message: `The buyer asked for ${days} more days to review your delivery.`, linkId: order._id, role: "freelancer", type: "order", viewStatus: false,
+    });
+  } catch { /* best effort */ }
+  return Payment.findById(order._id);
 };
 
 const acceptDelivery = async (orderId, userId) => {
@@ -453,6 +476,7 @@ module.exports = {
   recordDelivery,
   requestRevision,
   acceptDelivery,
+  extendReview,
   runHousekeeping,
   startHousekeeping,
   revisionsFromPackage,

@@ -109,6 +109,14 @@ test("full lifecycle: requirements, delivery, revision, accept, single payout", 
   assert.equal((await call("POST", `/orders/${id}/revision`, { token: buyer.token, body: {} })).status, 409);
   assert.equal((await deliver(seller)).status, 201);
 
+  // Buyer can add review time once per delivery; seller cannot.
+  const pre = (await call("GET", `/orders/${id}`, { token: buyer.token })).data.delivery.autoCompleteAt;
+  assert.equal((await call("POST", `/orders/${id}/extend-review`, { token: seller.token })).status, 403);
+  const ext = await call("POST", `/orders/${id}/extend-review`, { token: buyer.token });
+  assert.equal(ext.status, 200, JSON.stringify(ext.json));
+  assert.equal(new Date(ext.data.delivery.autoCompleteAt) - new Date(pre), 5 * 86400000);
+  assert.equal((await call("POST", `/orders/${id}/extend-review`, { token: buyer.token })).status, 409);
+
   // Seller cannot accept their own work; buyer accepts once.
   assert.equal((await call("POST", `/orders/${id}/accept`, { token: seller.token })).status, 403);
   const before = await balanceOf(seller);

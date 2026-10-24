@@ -69,6 +69,10 @@ const buyerOrderApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["Orders", "OrderMessages"],
     }),
+    extendOrderReview: builder.mutation({
+      query: ({ orderId }) => ({ url: `/orders/${orderId}/extend-review`, method: "POST" }),
+      invalidatesTags: ["Orders"],
+    }),
     releaseMilestone: builder.mutation({
       query: ({ orderId, index }) => ({ url: `/orders/${orderId}/milestones/${index}/release`, method: "POST" }),
       invalidatesTags: ["Orders"],
@@ -97,6 +101,7 @@ const buyerOrderApi = baseApi.injectEndpoints({
 });
 
 export const {
+  useExtendOrderReviewMutation,
   useCreateBuyerOrderMutation,
   useTipOrderMutation,
   useReleaseMilestoneMutation,
