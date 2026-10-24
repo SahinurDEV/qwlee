@@ -65,7 +65,9 @@ const register = catchAsync(async (req, res) => {
     const refCode = req.body.ref;
     delete req.body.ref;
     const user = await userService.createUser(req.body);
-    if (refCode) await require("../services/referral.service").attach(user, refCode);
+    const referral = require("../services/referral.service");
+    if (refCode) await referral.attach(user, refCode);
+    await referral.grantWelcome(user);
     res.status(httpStatus.CREATED).json(
       response({
         message: "Thank you for registering. Please verify your email",

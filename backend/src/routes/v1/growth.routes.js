@@ -10,4 +10,8 @@ router.get("/referrals/me", auth("withOutAdmin"), catchAsync(async (req, res) =>
   ok(res, await require("../../services/referral.service").summary(req.user));
 }));
 
+router.get("/welcome/me", auth("withOutAdmin"), catchAsync(async (req, res) => {
+  ok(res, await require("../../services/referral.service").myWelcome(req.user));
+}));
+
 module.exports = router;

@@ -103,7 +103,7 @@ function defaults() {
     email: { footerText: "" },
     features: { signups: true, buyerRequests: true, tips: true, googleLogin: true },
     security: { requireAdmin2fa: false, adminIpAllowlist: [] },
-    growth: { referrals: true, refereePercent: 10, referrerReward: 10 },
+    growth: { referrals: true, refereePercent: 10, referrerReward: 10, welcomePercent: 10, welcomeDays: 30 },
     moderation: { blockedWords: [], flaggedWords: [], flagContactInfo: true, riskOrderAmount: 500 },
     maintenance: { enabled: false, message: "", until: "" },
   };
@@ -164,7 +164,15 @@ function normalise(site = {}, base = defaults()) {
     security: { requireAdmin2fa: bool(sec.requireAdmin2fa, false), adminIpAllowlist: ipList },
     // Referral programme: the invitee gets refereePercent% off their first
     // order; the inviter gets a $referrerReward coupon when it completes.
-    growth: { referrals: bool(g.referrals, true), refereePercent: num(g.refereePercent, 10, 0, 50), referrerReward: num(g.referrerReward, 10, 0, 500) },
+    // New accounts without a referral get welcomePercent% off their first
+    // order (0 turns it off), valid for welcomeDays.
+    growth: {
+      referrals: bool(g.referrals, true),
+      refereePercent: num(g.refereePercent, 10, 0, 50),
+      referrerReward: num(g.referrerReward, 10, 0, 500),
+      welcomePercent: num(g.welcomePercent, 10, 0, 50),
+      welcomeDays: num(g.welcomeDays, 30, 1, 365),
+    },
     // Keyword filters and risk rules (risk.service).
     moderation: {
       blockedWords: words(mod.blockedWords),

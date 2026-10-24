@@ -14,11 +14,16 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { IoClose, IoShieldCheckmarkOutline, IoTimeOutline } from "react-icons/io5";
 
+import { useGetMyWelcomeQuery } from "@/components/Growth/welcomeApi";
+import useUser from "@/hooks/useUser";
+
 export default function CheckoutReview({ open, onClose, onConfirm, onApplyCoupon, coupon, quote, loading, confirming, error, gig, packageName }) {
   const [agree, setAgree] = useState(false);
   const [code, setCode] = useState("");
   const [couponErr, setCouponErr] = useState("");
   const [applying, setApplying] = useState(false);
+  const user = useUser();
+  const { data: welcome } = useGetMyWelcomeQuery(undefined, { skip: !open || !user });
   const apply = async (value) => {
     if (!onApplyCoupon) return;
     setApplying(true);
@@ -111,6 +116,16 @@ export default function CheckoutReview({ open, onClose, onConfirm, onApplyCoupon
                   </p>
                 ) : (
                   <div>
+                    {welcome?.code ? (
+                      <button
+                        type="button"
+                        onClick={() => apply(welcome.code)}
+                        disabled={applying}
+                        className="mb-2 w-full text-left text-sm rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-800 disabled:opacity-50"
+                      >
+                        🎁 Apply your first-order code <span className="font-mono font-semibold">{welcome.code}</span> ({welcome.type === "percent" ? `${welcome.value}% off` : `$${welcome.value} off`})
+                      </button>
+                    ) : null}
                     <label htmlFor="coupon-code" className="text-xs text-gray-600">Have a coupon?</label>
                     <div className="mt-1 flex gap-2">
                       <input id="coupon-code" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} maxLength={32} placeholder="CODE" className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm uppercase" />
