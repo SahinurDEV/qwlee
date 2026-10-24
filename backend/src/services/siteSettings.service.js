@@ -53,7 +53,7 @@ function categoryFees(v) {
 // Homepage builder: the hero always comes first; these sections follow in
 // the admin's order and can be hidden. Up to 5 custom text blocks
 // ("block-1".."block-5") can be placed anywhere in the list.
-const HOME_SECTIONS = ["stats", "recentlyViewed", "recommended", "categories", "freelancers", "whyUs", "testimonials", "join", "blog"];
+const HOME_SECTIONS = ["stats", "recentlyViewed", "recommended", "categories", "howItWorks", "freelancers", "whyUs", "testimonials", "join", "blog"];
 const BLOCK_IDS = ["block-1", "block-2", "block-3", "block-4", "block-5"];
 function homeLayout(h) {
   const blocks = (Array.isArray(h.blocks) ? h.blocks : [])
