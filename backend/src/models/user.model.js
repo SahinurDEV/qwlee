@@ -181,6 +181,16 @@ const userSchema = mongoose.Schema(
       required: false,
       default: "English",
     },
+    // Languages with a proficiency level. `language` above stays as the
+    // comma list derived from these (search filter + older clients).
+    languages: {
+      type: [{ _id: false, name: String, level: { type: String, enum: ["basic", "conversational", "fluent", "native"] } }],
+      default: undefined,
+    },
+    certifications: {
+      type: [{ _id: false, title: String, issuer: String, year: Number, url: String }],
+      default: undefined,
+    },
     review: {
       rating: {
         type: Number,
