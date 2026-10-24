@@ -255,6 +255,26 @@ export default function UsernameProfile({ user }) {
             </Section>
           ) : null}
 
+          {user.certifications?.length ? (
+            <Section id="certifications" title="Certifications">
+              <ul className="space-y-2">
+                {user.certifications.map((c, i) => (
+                  <li key={`${c.title}-${i}`} className="flex items-start justify-between gap-3 rounded-lg border border-gray-100 px-3 py-2">
+                    <div className="min-w-0">
+                      <div className="font-medium text-gray-900 break-words">{c.title}</div>
+                      <div className="text-sm text-gray-500">{[c.issuer, c.year].filter(Boolean).join(" · ")}</div>
+                    </div>
+                    {c.url ? (
+                      <a href={c.url} target="_blank" rel="noopener noreferrer nofollow" className="shrink-0 text-sm text-emerald-700 hover:underline">
+                        Verify
+                      </a>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            </Section>
+          ) : null}
+
           {isFreelancer ? (
             <Section
               id="gigs"
@@ -342,9 +362,15 @@ function formatResponse(user) {
   return h > 0 ? `${h} hour${h === 1 ? "" : "s"}` : null;
 }
 
+const LEVEL_LABEL = { basic: "Basic", conversational: "Conversational", fluent: "Fluent", native: "Native" };
+const languageText = (user) =>
+  Array.isArray(user.languages) && user.languages.length
+    ? user.languages.map((l) => `${l.name} (${LEVEL_LABEL[l.level] || l.level})`).join(", ")
+    : user.language;
+
 function SideDetails({ user }) {
   const rows = [
-    { label: "Languages", value: user.language },
+    { label: "Languages", value: languageText(user) },
     { label: "Location", value: user.location },
     {
       label: "Rate",
@@ -416,7 +442,7 @@ function SellerCard({ user, isOwner, avg, totalReviews, joined }) {
         <SellerRow label="Avg. response time">
           {formatResponse(user) || "—"}
         </SellerRow>
-        <SellerRow label="Languages">{user.language || "—"}</SellerRow>
+        <SellerRow label="Languages">{languageText(user) || "—"}</SellerRow>
         <SellerRow label="Location">{user.location || "—"}</SellerRow>
         <SellerRow label="Active gigs">{user.gigs?.length || 0}</SellerRow>
       </dl>
@@ -450,7 +476,7 @@ function BuyerCard({ user, isOwner, joined }) {
       <dl className="divide-y divide-gray-100 border-t border-gray-100">
         <SellerRow label="Member since">{joined}</SellerRow>
         <SellerRow label="Location">{user.location || "—"}</SellerRow>
-        <SellerRow label="Languages">{user.language || "—"}</SellerRow>
+        <SellerRow label="Languages">{languageText(user) || "—"}</SellerRow>
       </dl>
       {!isOwner ? (
         <div className="p-4 border-t border-gray-100">

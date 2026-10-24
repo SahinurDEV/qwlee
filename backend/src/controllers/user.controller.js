@@ -81,6 +81,34 @@ const parseAvailability = (a) => {
   return out;
 };
 
+const LANG_LEVELS = ["basic", "conversational", "fluent", "native"];
+const parseLanguages = (list) => {
+  if (!Array.isArray(list)) throw new ApiError(httpStatus.BAD_REQUEST, "Invalid languages");
+  const seen = new Set();
+  const out = [];
+  for (const l of list.slice(0, 10)) {
+    const name = String(l?.name || "").trim().slice(0, 40);
+    if (!name || seen.has(name.toLowerCase())) continue;
+    if (/,/.test(name)) throw new ApiError(httpStatus.BAD_REQUEST, "Add one language per row");
+    seen.add(name.toLowerCase());
+    out.push({ name, level: LANG_LEVELS.includes(l?.level) ? l.level : "conversational" });
+  }
+  return out;
+};
+const parseCertifications = (list) => {
+  if (!Array.isArray(list)) throw new ApiError(httpStatus.BAD_REQUEST, "Invalid certifications");
+  const year = new Date().getFullYear();
+  return list.slice(0, 10).map((c) => {
+    const title = String(c?.title || "").trim().slice(0, 120);
+    if (!title) throw new ApiError(httpStatus.BAD_REQUEST, "Each certification needs a title");
+    const y = c?.year ? Number(c.year) : undefined;
+    if (y !== undefined && (!Number.isInteger(y) || y < 1950 || y > year)) throw new ApiError(httpStatus.BAD_REQUEST, "Invalid certification year");
+    const url = String(c?.url || "").trim();
+    if (url && !/^https:\/\/[^\s]+$/i.test(url)) throw new ApiError(httpStatus.BAD_REQUEST, "Certification links must start with https://");
+    return { title, issuer: String(c?.issuer || "").trim().slice(0, 80), ...(y ? { year: y } : {}), ...(url ? { url: url.slice(0, 300) } : {}) };
+  });
+};
+
 const updateUser = catchAsync(async (req, res) => {
   const userId = req.user.id;
   // Only profile fields are self-editable. Role, balance, email, ban,
@@ -88,6 +116,13 @@ const updateUser = catchAsync(async (req, res) => {
   const updatedUserData = pick(req.body || {}, PROFILE_FIELDS);
   if (req.body?.availability !== undefined) {
     updatedUserData.availability = parseAvailability(req.body.availability);
+  }
+  if (req.body?.languages !== undefined) {
+    updatedUserData.languages = parseLanguages(req.body.languages);
+    if (updatedUserData.languages.length) updatedUserData.language = updatedUserData.languages.map((l) => l.name).join(", ");
+  }
+  if (req.body?.certifications !== undefined) {
+    updatedUserData.certifications = parseCertifications(req.body.certifications);
   }
 
   // Update user data

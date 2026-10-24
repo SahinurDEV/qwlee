@@ -36,6 +36,10 @@ export default function RelatedGigs({ gigId, sellerName }) {
   return (
     <>
       <GigRow title={`More from ${first}`} gigs={data.moreFromSeller} />
+      <GigRow
+        title={data.alsoViewedSource === "views" ? "People also viewed" : "You may also like"}
+        gigs={data.alsoViewed}
+      />
     </>
   );
 }
