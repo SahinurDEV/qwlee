@@ -1,5 +1,6 @@
 "use client";
 // "How it works" with a buyer / seller switch.
+import { useI18n } from "@/components/Context/I18nProvider";
 import { useState } from "react";
 import Link from "next/link";
 import {
@@ -29,14 +30,15 @@ const STEPS = {
 };
 
 export default function HowItWorks() {
+  const { t } = useI18n();
   const [tab, setTab] = useState("buyer");
   const steps = STEPS[tab];
   return (
     <section className="container mx-auto px-4 my-12" aria-labelledby="how-it-works">
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
         <div>
-          <h2 id="how-it-works" className="text-2xl md:text-3xl font-bold text-gray-900">How it works</h2>
-          <p className="mt-1 text-gray-600">Simple steps whether you hire or sell.</p>
+          <h2 id="how-it-works" className="text-2xl md:text-3xl font-bold text-gray-900">{t("How it works")}</h2>
+          <p className="mt-1 text-gray-600">{t("Simple steps whether you hire or sell.")}</p>
         </div>
         <div role="tablist" aria-label="How it works for" className="inline-flex self-start rounded-full bg-gray-100 p-1">
           {[["buyer", "For buyers"], ["seller", "For sellers"]].map(([k, label]) => (
@@ -48,7 +50,7 @@ export default function HowItWorks() {
               onClick={() => setTab(k)}
               className={`px-4 py-1.5 rounded-full text-sm font-medium transition ${tab === k ? "bg-white text-emerald-700 shadow-sm" : "text-gray-600 hover:text-gray-900"}`}
             >
-              {label}
+              {t(label)}
             </button>
           ))}
         </div>
@@ -58,8 +60,8 @@ export default function HowItWorks() {
           <li key={s.title} className="relative rounded-2xl border border-gray-200 bg-white p-5">
             <span className="absolute right-4 top-4 text-xs font-semibold text-gray-300">0{i + 1}</span>
             <s.icon className="text-2xl text-emerald-600" aria-hidden />
-            <h3 className="mt-3 font-semibold text-gray-900">{s.title}</h3>
-            <p className="mt-1 text-sm text-gray-600">{s.body}</p>
+            <h3 className="mt-3 font-semibold text-gray-900">{t(s.title)}</h3>
+            <p className="mt-1 text-sm text-gray-600">{t(s.body)}</p>
           </li>
         ))}
       </ol>
@@ -68,7 +70,7 @@ export default function HowItWorks() {
           href={tab === "buyer" ? "/services" : "/sign-up"}
           className="inline-block px-5 py-2.5 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700"
         >
-          {tab === "buyer" ? "Browse services" : "Start selling"}
+          {t(tab === "buyer" ? "Browse services" : "Start selling")}
         </Link>
       </div>
     </section>

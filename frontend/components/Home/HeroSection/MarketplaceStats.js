@@ -7,6 +7,7 @@
 // `useMotionValue` + `animate` when the strip enters the viewport, so
 // the figures feel earned. Once.
 
+import { useI18n } from "@/components/Context/I18nProvider";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { base } from "@/lib/constant";
@@ -27,6 +28,7 @@ function Counter({ value }) {
 }
 
 export default function MarketplaceStats() {
+  const { t } = useI18n();
   const [stats, setStats] = useState(null);
   const [errored, setErrored] = useState(false);
 
@@ -83,7 +85,7 @@ export default function MarketplaceStats() {
               <Counter value={it.value} />
             </div>
             <div className="text-xs md:text-sm text-gray-500 mt-1 uppercase tracking-wide">
-              {it.label}
+              {t(it.label)}
             </div>
           </motion.div>
         ))}
@@ -94,21 +96,21 @@ export default function MarketplaceStats() {
             <IoStar className="text-amber-500 shrink-0" aria-hidden />
             <span className="min-w-0">
               <span className="font-semibold text-gray-900">{stats.avgRating?.toFixed(1)}/5</span>{" "}
-              <span className="text-gray-500">from {formatCount(stats.reviews)} reviews</span>
+              <span className="text-gray-500">{t("from")} {formatCount(stats.reviews)} {t("reviews")}</span>
             </span>
           </li>
         ) : null}
         <li className="flex items-center gap-2 rounded-xl bg-white border border-gray-100 px-3 py-2.5">
           <IoShieldCheckmarkOutline className="text-emerald-600 shrink-0" aria-hidden />
-          <span className="text-gray-700">Project done or your money back</span>
+          <span className="text-gray-700">{t("Project done or your money back")}</span>
         </li>
         <li className="flex items-center gap-2 rounded-xl bg-white border border-gray-100 px-3 py-2.5">
           <IoLockClosedOutline className="text-emerald-600 shrink-0" aria-hidden />
-          <span className="text-gray-700">Secure payments held in escrow</span>
+          <span className="text-gray-700">{t("Secure payments held in escrow")}</span>
         </li>
         <li className="flex items-center gap-2 rounded-xl bg-white border border-gray-100 px-3 py-2.5">
           <IoHeadsetOutline className="text-emerald-600 shrink-0" aria-hidden />
-          <span className="text-gray-700">Support and dispute help</span>
+          <span className="text-gray-700">{t("Support and dispute help")}</span>
         </li>
       </ul>
     </section>

@@ -7,6 +7,7 @@
 // - Caps to a single row (4 cards) so it stays a small re-entry hint
 //   rather than another grid competing with the marketplace.
 
+import { useI18n } from "@/components/Context/I18nProvider";
 import Link from "next/link";
 import { GoX } from "react-icons/go";
 import useRecentlyViewed from "@/hooks/useRecentlyViewed";
@@ -17,6 +18,7 @@ import ImageWithFallback from "@/components/common/ImageWithFallback";
 const MAX_ITEMS = 4; // one row on desktop (xl:grid-cols-4)
 
 export default function RecentlyViewedGigs() {
+  const { t } = useI18n();
   const { items, clear } = useRecentlyViewed();
   const user = useUser();
   const { isSelling } = useViewMode(user);
@@ -32,7 +34,7 @@ export default function RecentlyViewedGigs() {
         <div className="flex items-end justify-between gap-4 mb-5 md:mb-6">
           <div>
             <h2 className="text-xl md:text-2xl font-bold text-gray-900">
-              Recently viewed
+              {t("Recently viewed")}
             </h2>
             <p className="text-gray-500 mt-1 text-sm">
               Pick up where you left off.

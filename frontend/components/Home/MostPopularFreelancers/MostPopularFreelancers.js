@@ -3,6 +3,7 @@
 // from the real /v1/users?role=freelancer endpoint and renders up to 8
 // in a responsive grid. Cleaner header, no horizontal scroll required.
 
+import { useI18n } from "@/components/Context/I18nProvider";
 import { useRouter } from "next/navigation";
 import { MdArrowForward } from "react-icons/md";
 import Image from "next/image";
@@ -12,6 +13,7 @@ import { useGetAllUsersQuery } from "@/app/redux/features/getAllUsersApi";
 import { RevealStagger, RevealItem } from "@/components/common/Reveal";
 
 export default function MostPopularFreelancers() {
+  const { t } = useI18n();
   const router = useRouter();
   const { data, isLoading, isError } = useGetAllUsersQuery({ limit: 8 });
   const freelancers = data?.data?.attributes?.results || [];
@@ -56,7 +58,7 @@ export default function MostPopularFreelancers() {
         <div className="flex items-end justify-between gap-4 mb-6 md:mb-8">
           <div>
             <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
-              Popular freelancers
+              {t("Popular freelancers")}
             </h2>
             <p className="text-gray-500 mt-1 text-sm md:text-base">
               Hand-picked sellers with great reviews and fast response.

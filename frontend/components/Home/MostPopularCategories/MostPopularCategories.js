@@ -3,6 +3,7 @@
 // every viewport. The old swiper hid 5+ categories behind a swipe gesture
 // for no good reason.
 
+import { useI18n } from "@/components/Context/I18nProvider";
 import { MdArrowForward } from "react-icons/md";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -12,6 +13,7 @@ import { useGetAllCategoryQuery } from "@/app/redux/features/getAllCategoryApi";
 import { RevealStagger, RevealItem } from "@/components/common/Reveal";
 
 const MostPopularCategories = () => {
+  const { t } = useI18n();
   const router = useRouter();
   const {
     data: responseCategoriesData,
@@ -57,7 +59,7 @@ const MostPopularCategories = () => {
         <div className="flex items-end justify-between gap-4 mb-6 md:mb-8">
           <div>
             <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
-              Browse by category
+              {t("Browse by category")}
             </h2>
             <p className="text-gray-500 mt-1 text-sm md:text-base">
               Find a service that matches your project.

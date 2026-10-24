@@ -4,6 +4,7 @@
 // review cards; empty state renders a tidy placeholder instead of red
 // text.
 
+import { useI18n } from "@/components/Context/I18nProvider";
 import { useState } from "react";
 import { IoStar } from "react-icons/io5";
 import { useGetAllReviewApiQuery } from "@/app/redux/features/getAllReviewApi";
@@ -17,6 +18,7 @@ const summaryApi = baseApi.injectEndpoints({
 });
 
 export default function GigReviews({ id, sellerRating = 0, sellerReviewTotal = 0 }) {
+  const { t } = useI18n();
   const [star, setStar] = useState(0);
   const [sort, setSort] = useState("newest");
   const [withReply, setWithReply] = useState(false);
@@ -100,10 +102,10 @@ export default function GigReviews({ id, sellerRating = 0, sellerReviewTotal = 0
           <label className="inline-flex items-center gap-2">
             <span className="text-gray-500">Sort</span>
             <select value={sort} onChange={(e) => { setSort(e.target.value); setLimit(10); }} className="rounded-lg border border-gray-200 px-2 py-1.5 text-sm bg-white">
-              <option value="newest">Most recent</option>
-              <option value="highest">Highest rated</option>
-              <option value="lowest">Lowest rated</option>
-              <option value="oldest">Oldest</option>
+              <option value="newest">{t("Most recent")}</option>
+              <option value="highest">{t("Highest rated")}</option>
+              <option value="lowest">{t("Lowest rated")}</option>
+              <option value="oldest">{t("Oldest")}</option>
             </select>
           </label>
           <select
@@ -112,16 +114,16 @@ export default function GigReviews({ id, sellerRating = 0, sellerReviewTotal = 0
             aria-label="Filter by rating"
             className="rounded-lg border border-gray-200 px-2 py-1.5 text-sm bg-white"
           >
-            <option value={0}>All ratings</option>
+            <option value={0}>{t("All ratings")}</option>
             {[5, 4, 3, 2, 1].map((n) => <option key={n} value={n}>{n} stars</option>)}
           </select>
           <label className="inline-flex items-center gap-1.5 text-gray-700">
             <input type="checkbox" checked={withReply} onChange={(e) => { setWithReply(e.target.checked); setLimit(10); }} />
-            With seller reply
+            {t("With seller reply")}
           </label>
           {filtered && (
             <button type="button" onClick={() => { setStar(0); setWithReply(false); setLimit(10); }} className="text-emerald-700 hover:underline">
-              Clear filters
+              {t("Clear filters")}
             </button>
           )}
         </div>
@@ -135,7 +137,7 @@ export default function GigReviews({ id, sellerRating = 0, sellerReviewTotal = 0
         )}
         {!isFetching && reviews.length === 0 && (
           <div className="text-sm text-gray-500 text-center py-6">
-            {filtered ? "No reviews match these filters." : "No reviews yet — be the first to leave one after your order."}
+            {t(filtered ? "No reviews match these filters." : "No reviews yet — be the first to leave one after your order.")}
           </div>
         )}
         {reviews.map((item) => (

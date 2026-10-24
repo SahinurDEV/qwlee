@@ -1,6 +1,8 @@
 // Interface translations for the shared site chrome (header, footer, gig
 // cards). Page content and user-written text stay in their own language.
 // Add a language by adding a column here; missing keys fall back to English.
+import { PHRASES } from "./i18nPhrases";
+
 export const LANGS = { en: "English", es: "Español", fr: "Français", bn: "বাংলা" };
 export const LANG_COOKIE = "qwlee_lang";
 
@@ -60,8 +62,12 @@ export function normaliseLang(v) {
   return LANGS[s] ? s : "en";
 }
 
+// Keys are either short ids from EN above, or the English phrase itself
+// (see i18nPhrases.js), which falls back to the phrase.
 export function translate(lang, key) {
-  return (lang !== "en" && T[key]?.[lang]) || EN[key] || key;
+  if (lang !== "en" && T[key]?.[lang]) return T[key][lang];
+  if (EN[key]) return EN[key];
+  return (lang !== "en" && PHRASES[key]?.[lang]) || key;
 }
 
 export const KEYS = Object.keys(EN);

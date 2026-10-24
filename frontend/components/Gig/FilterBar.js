@@ -6,6 +6,7 @@
 // is the single source of truth — both this bar and ActiveFilterChips
 // re-read it on every render, so chips and pill labels stay in sync.
 
+import { useI18n } from "@/components/Context/I18nProvider";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -50,6 +51,7 @@ const BUDGETS = [
 ];
 
 export default function FilterBar() {
+  const { t } = useI18n();
   const router = useRouter();
   const params = useSearchParams();
   const { data: categoryData } = useGetAllCategoryQuery({});
@@ -236,7 +238,7 @@ export default function FilterBar() {
                       : "bg-white border-gray-200 text-gray-700 hover:border-gray-300"
                   }`}
                 >
-                  {l.label}
+                  {t(l.label)}
                 </button>
               ))}
             </div>
@@ -411,7 +413,7 @@ export default function FilterBar() {
                         : "bg-white border-gray-200 text-gray-700 hover:border-gray-300"
                     }`}
                   >
-                    {b.label}
+                    {t(b.label)}
                   </button>
                 );
               })}
@@ -469,7 +471,7 @@ export default function FilterBar() {
                       sel ? "bg-emerald-50 text-emerald-800" : "hover:bg-gray-50 text-gray-800"
                     }`}
                   >
-                    <span>{d.label}</span>
+                    <span>{t(d.label)}</span>
                     {sel && <IoCheckmarkOutline className="w-4 h-4 text-emerald-600" />}
                   </button>
                 );
@@ -504,6 +506,7 @@ export default function FilterBar() {
 }
 
 function Pill({ label, active, badge, children }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -526,7 +529,7 @@ function Pill({ label, active, badge, children }) {
             : "bg-white border-gray-200 text-gray-700 hover:border-gray-300"
         }`}
       >
-        {label}
+        {t(label)}
         {badge != null && (
           <span className="text-xs font-semibold bg-emerald-600 text-white rounded-full px-1.5 py-0.5">
             {badge}
@@ -554,6 +557,7 @@ function Pill({ label, active, badge, children }) {
 }
 
 function PopoverShell({ title, wide, children, onApply, onClear }) {
+  const { t } = useI18n();
   return (
     <div
       className={`bg-white border border-gray-200 rounded-t-2xl sm:rounded-xl shadow-xl p-4 w-full ${
@@ -562,13 +566,13 @@ function PopoverShell({ title, wide, children, onApply, onClear }) {
       style={{ boxShadow: "0 12px 32px rgba(15,23,42,0.12)" }}
     >
       <div className="flex items-center justify-between mb-3">
-        <h4 className="text-sm font-semibold text-gray-900">{title}</h4>
+        <h4 className="text-sm font-semibold text-gray-900">{t(title)}</h4>
         <button
           type="button"
           onClick={onClear}
           className="text-xs text-gray-500 hover:text-gray-900"
         >
-          Clear
+          {t("Clear")}
         </button>
       </div>
       {children}
@@ -578,7 +582,7 @@ function PopoverShell({ title, wide, children, onApply, onClear }) {
           onClick={onApply}
           className="text-sm font-semibold bg-emerald-600 text-white px-4 py-1.5 rounded-lg hover:bg-emerald-700"
         >
-          Done
+          {t("Done")}
         </button>
       </div>
     </div>
@@ -586,17 +590,19 @@ function PopoverShell({ title, wide, children, onApply, onClear }) {
 }
 
 function SectionLabel({ children }) {
+  const { t } = useI18n();
   return (
     <div className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1.5">
-      {children}
+      {typeof children === "string" ? t(children) : children}
     </div>
   );
 }
 
 function Toggle({ label, checked, onChange }) {
+  const { t } = useI18n();
   return (
     <label className="flex items-center justify-between gap-3 text-sm text-gray-800 cursor-pointer py-1">
-      <span>{label}</span>
+      <span>{t(label)}</span>
       <button
         type="button"
         role="switch"
