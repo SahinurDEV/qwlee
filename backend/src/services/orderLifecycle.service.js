@@ -50,6 +50,20 @@ const idOf = (v) => String(v?._id || v?.id || v || "");
  * Work out what the buyer must pay. Prices always come from the database
  * (gig package + extras, or the seller's custom offer), never the client.
  */
+/**
+ * Buyer service fee for a payment of `amount` (what goes to escrow).
+ * `orderTotal` decides the small-order fee; tips pass null (percent only).
+ */
+const buyerFee = async (amount, orderTotal = null) => {
+  const m = (await require("./siteSettings.service").get()).marketplace;
+  const a = Number(amount) || 0;
+  if (a <= 0) return { serviceFee: 0, smallOrderFee: 0, payable: round2(a) };
+  const pct = round2((a * Number(m.buyerFeePercent || 0)) / 100);
+  const small = orderTotal != null && Number(orderTotal) < Number(m.smallOrderUnder || 0) ? Number(m.smallOrderFee || 0) : 0;
+  const serviceFee = round2(pct + small);
+  return { serviceFee, smallOrderFee: small, payable: round2(a + serviceFee) };
+};
+
 const quoteCheckout = async (args) => {
   const quote = await priceCheckout(args);
   // Coupon: the buyer is charged `charge`; the platform funds the rest.
@@ -62,6 +76,7 @@ const quoteCheckout = async (args) => {
     quote.couponDescription = c.description;
     quote.charge = round2(quote.total - c.discount);
   }
+  Object.assign(quote, await buyerFee(quote.charge, quote.total));
   // Vacation mode: no new orders while the seller is away.
   const seller = await User.findById(quote.freelancerId).select("availability");
   if (isAway(seller)) {
@@ -196,7 +211,7 @@ const createOrderFromQuote = async (quote, { sessionId, provider }) => {
     deliveryDate: new Date(Date.now() + quote.deliveryDays * 86400000),
     // escrow.amount is what the buyer paid; platformFunded tops it up
     // to the full price for the seller's payout.
-    escrow: { status: "held", amount: quote.charge ?? quote.total, platformFunded: quote.discount || 0, provider, heldAt: new Date() },
+    escrow: { status: "held", amount: quote.charge ?? quote.total, platformFunded: quote.discount || 0, serviceFee: quote.serviceFee || 0, provider, heldAt: new Date() },
     ...(quote.couponCode ? { coupon: { code: quote.couponCode, discount: quote.discount } } : {}),
     requirementsStatus: needsRequirements ? "pending" : "not_required",
   });
@@ -286,7 +301,7 @@ const quoteTip = async (orderId, buyerId, amount) => {
   const value = round2(amount);
   const max = order.price < 25 ? 25 : round2(order.price);
   if (!(value >= 5 && value <= max)) throw new ApiError(httpStatus.BAD_REQUEST, `Tip must be between $5 and $${max}`);
-  return { order, amount: value };
+  return { order, amount: value, ...(await buyerFee(value, null)) };
 };
 
 /** Credit a paid tip to the seller (net of platform fee). Idempotent on sessionId. */
@@ -430,6 +445,7 @@ module.exports = {
   quoteTip,
   recordTip,
   quoteCheckout,
+  buyerFee,
   createOrderFromQuote,
   completeOrder,
   refundEscrow,
