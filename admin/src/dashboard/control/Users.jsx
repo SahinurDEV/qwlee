@@ -183,6 +183,7 @@ function ManageUser({ user, isSuper, onClose, onChanged }) {
             <Button size="sm" variant="secondary" onClick={() => act({ title: "Sign this user out everywhere?", description: "All their current sessions end immediately.", path: `/admin/users/${user.id}/logout-all`, done, success: "Signed out everywhere" })}>Sign out everywhere</Button>
           </div>
         </section>
+        {user.role !== "admin" ? <UserWarnings userId={user.id} /> : null}
         <UserSessions userId={user.id} />
         {isSuper && user.role !== "admin" ? (
           <section className="border-t border-ink-100 pt-4">
@@ -257,6 +258,58 @@ function UserSessions({ userId }) {
           ))}
         </ul>
       ) : <p className="text-sm text-ink-500">No active sessions.</p>}
+    </section>
+  );
+}
+
+// Trust & safety: warnings (with expiry) and restriction for one user.
+function UserWarnings({ userId }) {
+  const { data, reload } = useAdminQuery(`/admin/users/${userId}/warnings`);
+  const [reason, setReason] = useState("off_platform");
+  const [note, setNote] = useState("");
+  const rows = data?.results || [];
+  const run = async (path, method, body, msg) => {
+    try {
+      const r = await adminFetch(path, { method, body });
+      toast.success(r?.escalation ? `${msg} — account ${r.escalation}` : msg);
+      setNote("");
+      reload();
+    } catch (e) {
+      toast.error(e.message);
+    }
+  };
+  return (
+    <section className="border-t border-ink-100 pt-4" data-testid="user-warnings">
+      <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-500 mb-2">Warnings ({rows.filter((w) => w.active).length} active)</h3>
+      {data?.restriction ? (
+        <div className="mb-3 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800 flex flex-wrap items-center justify-between gap-2">
+          <span>Restricted until {formatDate(data.restriction.until)}: {data.restriction.reason}</span>
+          <Button size="sm" variant="secondary" onClick={() => act({ title: "Lift the restriction?", description: "Paused gigs go live again.", path: `/admin/users/${userId}/restrict`, method: "DELETE", done: reload, success: "Restriction lifted" })}>Lift</Button>
+        </div>
+      ) : null}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <select aria-label="Warning reason" className={select} value={reason} onChange={(e) => setReason(e.target.value)}>
+          {(data?.reasons || []).map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+        </select>
+        <input aria-label="Warning note" className={input + " sm:col-span-2"} placeholder="Note shown to the user (optional)" value={note} onChange={(e) => setNote(e.target.value)} />
+      </div>
+      <div className="mt-2 flex flex-wrap gap-2">
+        <Button size="sm" variant="secondary" onClick={() => run(`/admin/users/${userId}/warnings`, "POST", { reason, note }, "Warning issued")}>Issue warning</Button>
+        {!data?.restriction ? <Button size="sm" variant="danger" onClick={() => act({ title: "Restrict this account?", description: "They can finish current orders and withdraw, but can't publish gigs, send offers, start conversations or get new orders. Their gigs are paused. At the end of the period the account is suspended.", askReason: "Reason shown to the user", path: `/admin/users/${userId}/restrict`, done: reload, success: "Account restricted" })}>Restrict</Button> : null}
+      </div>
+      {rows.length ? (
+        <ul className="mt-3 divide-y divide-ink-100 text-sm">
+          {rows.map((w) => (
+            <li key={w.id} className="flex items-center justify-between gap-3 py-2">
+              <div className="min-w-0">
+                <p className={w.active ? "text-ink-800" : "text-ink-400 line-through"}>{w.label}{w.note ? ` — ${w.note}` : ""}</p>
+                <p className="text-xs text-ink-500">{formatDate(w.createdAt)} · {w.revokedAt ? "revoked" : w.active ? `expires ${formatDate(w.expiresAt)}` : "expired"}{w.escalation ? ` · led to ${w.escalation}` : ""}{w.issuedBy?.fullName ? ` · by ${w.issuedBy.fullName}` : ""}</p>
+              </div>
+              {w.active ? <Button size="sm" variant="secondary" onClick={() => run(`/admin/warnings/${w.id}`, "DELETE", undefined, "Warning revoked")}>Revoke</Button> : null}
+            </li>
+          ))}
+        </ul>
+      ) : null}
     </section>
   );
 }

@@ -54,10 +54,27 @@ export default function SiteSettings() {
               <Field label="Clearance for Top Rated / Premium (days)" hint="Shorter wait for Top Rated sellers and Seller Plus Premium."><input type="number" min={0} max={90} className={input} value={s.marketplace.clearanceDaysFast ?? 7} onChange={(e) => set("marketplace", { clearanceDaysFast: e.target.value })} /></Field>
               <Field label="Auto-complete after (days)" hint="A delivery the buyer ignores is accepted automatically (1–30)."><input type="number" min={1} max={30} className={input} value={s.marketplace.autoCompleteDays} onChange={(e) => set("marketplace", { autoCompleteDays: e.target.value })} /></Field>
               <Field label="Extra review time (days)" hint="Buyer can push auto-complete back once per delivery. 0 = off."><input type="number" min={0} max={30} className={input} value={s.marketplace.reviewExtensionDays ?? 5} onChange={(e) => set("marketplace", { reviewExtensionDays: e.target.value })} /></Field>
+              <Field label="Very late after (hours)" hint="Hours past the due date before the buyer can cancel a late order on their own."><input type="number" min={0} max={720} className={input} value={s.marketplace.veryLateHours ?? 24} onChange={(e) => set("marketplace", { veryLateHours: e.target.value })} /></Field>
+              <Field label="Late reminder (days late)" hint="Both sides get one reminder email when an order is this many days late."><input type="number" min={1} max={180} className={input} value={s.marketplace.lateReminderDays ?? 15} onChange={(e) => set("marketplace", { lateReminderDays: e.target.value })} /></Field>
+              <Field label="Auto-cancel late orders (days)" hint="Undelivered orders are cancelled and refunded this many days after the due date. 0 = off."><input type="number" min={0} max={365} className={input} value={s.marketplace.lateAutoCancelDays ?? 30} onChange={(e) => set("marketplace", { lateAutoCancelDays: e.target.value })} /></Field>
             </div>
             <Toggle label="Demo payments" hint="Checkout completes without charging a card. Turn off in production." checked={s.marketplace.demoPayments} onChange={(v) => set("marketplace", { demoPayments: v })} />
             <Field label="Second approval over ($)" hint="Refunds and payouts of this amount or more need a second admin. 0 = off."><input type="number" min={0} className={input} value={s.marketplace.secondApprovalOver ?? 0} onChange={(e) => set("marketplace", { secondApprovalOver: e.target.value })} /></Field>
             <Toggle label="Require gig approval" hint="New gigs start as 'pending' until a moderator approves them." checked={s.marketplace.requireGigApproval} onChange={(v) => set("marketplace", { requireGigApproval: v })} />
+          </Card>
+          <Card title="Trust & safety" subtitle="Warnings and restrictions">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Field label="Warnings expire after (days)"><input type="number" min={1} className={input} value={s.trust?.warningExpiryDays ?? 90} onChange={(e) => set("trust", { warningExpiryDays: e.target.value })} /></Field>
+              <Field label="Escalate at N warnings for the same reason" hint="0 = off."><input type="number" min={0} max={20} className={input} value={s.trust?.suspendAfterSameReason ?? 2} onChange={(e) => set("trust", { suspendAfterSameReason: e.target.value })} /></Field>
+              <Field label="Escalate at N active warnings in total" hint="0 = off."><input type="number" min={0} max={20} className={input} value={s.trust?.suspendAfterTotal ?? 3} onChange={(e) => set("trust", { suspendAfterTotal: e.target.value })} /></Field>
+              <Field label="Escalation" hint="Restrict first (finish work, then suspended) or suspend at once.">
+                <select className={input} value={s.trust?.escalateTo ?? "restrict"} onChange={(e) => set("trust", { escalateTo: e.target.value })}>
+                  <option value="restrict">Restrict</option>
+                  <option value="suspend">Suspend</option>
+                </select>
+              </Field>
+              <Field label="Restriction length (days)" hint="After this the account is suspended."><input type="number" min={1} max={365} className={input} value={s.trust?.restrictionDays ?? 60} onChange={(e) => set("trust", { restrictionDays: e.target.value })} /></Field>
+            </div>
           </Card>
           <Card title="Admin security" subtitle="Applies to every admin account">
             <Toggle label="Require two-factor for admins" hint="Admins without it can only open My security until they turn it on. Turn it on for yourself first." checked={!!s.security?.requireAdmin2fa} onChange={(v) => set("security", { requireAdmin2fa: v })} />
@@ -153,6 +170,7 @@ export default function SiteSettings() {
                 </Field>
               </div>
               <div className="mt-3"><Toggle checked={s.moderation.flagContactInfo} onChange={(v) => set("moderation", { flagContactInfo: v })} label="Flag emails, phone numbers and messenger links in messages and offers" /></div>
+              <div className="mt-2"><Toggle checked={s.moderation.maskContactBeforeOrder !== false} onChange={(v) => set("moderation", { maskContactBeforeOrder: v })} label="Hide contact details in messages until the two users have an order together" /></div>
               <div className="grid grid-cols-2 gap-3 mt-3">
                 <Field label="Flag orders from new accounts (< 3 days) at or above ($, 0 = off)"><input type="number" min={0} className={input} value={s.moderation.riskOrderAmount} onChange={(e) => set("moderation", { riskOrderAmount: e.target.value })} /></Field>
               </div>

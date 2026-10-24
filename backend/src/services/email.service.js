@@ -515,6 +515,28 @@ async function sendOrderCancelled(to, { recipientName, gigTitle, orderId, reason
   );
 }
 
+async function sendLateOrderReminder(to, { recipientName, gigTitle, orderId, daysLate, cancelInDays, role }) {
+  const buyer = role === "buyer";
+  await sendEmail(
+    to,
+    `Order ${daysLate} days late — ${gigTitle}`,
+    emailShell({
+      preheader: buyer ? "You can cancel a very late order for a full refund." : "Deliver now to keep this order.",
+      heroEyebrow: "Late order",
+      heroTitle: `"${gigTitle}" is ${daysLate} days past its due date`,
+      intro: buyer
+        ? `Hi ${recipientName || "there"} — the seller has not delivered yet. You can cancel from the order page and get a full refund${cancelInDays ? `. If nothing is delivered, the order is cancelled automatically in ${cancelInDays} days` : ""}.`
+        : `Hi ${recipientName || "there"} — this order is overdue. Deliver or talk to the buyer${cancelInDays ? `; it is cancelled automatically in ${cancelInDays} days and the buyer is refunded` : ""}.`,
+      bodyHtml: summaryTable([
+        { label: "Order #", value: shortId(orderId) },
+        { label: "Service", value: gigTitle },
+      ]),
+      cta: { label: "Open order", url: `${FRONTEND_URL}/order/${orderId}` },
+      accent: "rose",
+    })
+  );
+}
+
 // ===========================================================================
 // DELIVERY EXTENSION
 // ===========================================================================
@@ -814,6 +836,7 @@ module.exports = {
   sendOrderDeliveredBuyer,
   sendDeliveryAcceptedSeller,
   sendOrderCancelled,
+  sendLateOrderReminder,
   // Extension
   sendExtensionRequestedBuyer,
   sendExtensionResponseSeller,
@@ -842,6 +865,7 @@ const EMAIL_CATEGORY = {
   sendOrderDeliveredBuyer: "orders",
   sendDeliveryAcceptedSeller: "orders",
   sendOrderCancelled: "orders",
+  sendLateOrderReminder: "orders",
   sendExtensionRequestedBuyer: "orders",
   sendExtensionResponseSeller: "orders",
   sendReviewReceivedSeller: "reviews",

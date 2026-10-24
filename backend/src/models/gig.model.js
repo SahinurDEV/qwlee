@@ -72,6 +72,8 @@ const gigSchema = mongoose.Schema(
     },
     // End of the current paid promotion (see promotion.service).
     promotedUntil: { type: Date, default: null, index: true },
+    // Set when a restriction paused this gig, so lifting it restores it.
+    pausedByRestriction: { type: Boolean, default: undefined },
     gigStatus: {
       type: String,
       enum: [

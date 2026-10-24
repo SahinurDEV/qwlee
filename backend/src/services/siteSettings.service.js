@@ -96,6 +96,11 @@ function defaults() {
       clearanceDays: Number(process.env.CLEARANCE_DAYS ?? (process.env.TEST_MODE === "true" ? 0 : 14)),
       clearanceDaysFast: 7,
       buyerFeePercent: 5.5,
+      // Late orders: buyer may cancel once this many hours past due ("very
+      // late"); reminder at lateReminderDays; auto-cancel at lateAutoCancelDays.
+      veryLateHours: 24,
+      lateReminderDays: 15,
+      lateAutoCancelDays: 30,
       smallOrderFee: 3.5,
       smallOrderUnder: 200,
       withdrawMinBank: 20,
@@ -116,8 +121,9 @@ function defaults() {
     features: { signups: true, buyerRequests: true, tips: true, googleLogin: true },
     security: { requireAdmin2fa: false, adminIpAllowlist: [] },
     growth: { referrals: true, refereePercent: 10, referrerReward: 10, welcomePercent: 10, welcomeDays: 30 },
-    moderation: { blockedWords: [], flaggedWords: [], flagContactInfo: true, riskOrderAmount: 500 },
+    moderation: { blockedWords: [], flaggedWords: [], flagContactInfo: true, maskContactBeforeOrder: true, riskOrderAmount: 500 },
     maintenance: { enabled: false, message: "", until: "" },
+    trust: { warningExpiryDays: 90, suspendAfterSameReason: 2, suspendAfterTotal: 3, escalateTo: "restrict", restrictionDays: 60 },
   };
 }
 
@@ -134,6 +140,7 @@ function normalise(site = {}, base = defaults()) {
   const g = { ...base.growth, ...(site.growth || {}) };
   const mod = { ...base.moderation, ...(site.moderation || {}) };
   const mt = { ...base.maintenance, ...(site.maintenance || {}) };
+  const tr = { ...base.trust, ...(site.trust || {}) };
   const until = str(mt.until, 40);
   if (until && Number.isNaN(Date.parse(until))) throw new ApiError(httpStatus.BAD_REQUEST, "Maintenance end time must be a date");
   const words = (v) => [...new Set((Array.isArray(v) ? v : String(v || "").split(/[\n,]+/)).map((x) => String(x).trim().toLowerCase().slice(0, 60)).filter(Boolean))].slice(0, 300);
@@ -150,6 +157,9 @@ function normalise(site = {}, base = defaults()) {
       // Days before earnings can be withdrawn; Fast = Top Rated / Premium.
       clearanceDays: Math.round(num(m.clearanceDays, 14, 0, 90)),
       clearanceDaysFast: Math.round(num(m.clearanceDaysFast, 7, 0, 90)),
+      veryLateHours: Math.round(num(m.veryLateHours, 24, 0, 720)),
+      lateReminderDays: Math.round(num(m.lateReminderDays, 15, 1, 180)),
+      lateAutoCancelDays: Math.round(num(m.lateAutoCancelDays, 30, 0, 365)),
       // Buyer service fee on every payment (orders, extras, tips) plus a
       // flat small-order fee on orders below smallOrderUnder.
       buyerFeePercent: num(m.buyerFeePercent, 5.5, 0, 30),
@@ -207,11 +217,20 @@ function normalise(site = {}, base = defaults()) {
       blockedWords: words(mod.blockedWords),
       flaggedWords: words(mod.flaggedWords),
       flagContactInfo: bool(mod.flagContactInfo, true),
+      maskContactBeforeOrder: bool(mod.maskContactBeforeOrder, true),
       riskOrderAmount: num(mod.riskOrderAmount, 500, 0, 1000000),
     },
     // Maintenance mode: the marketplace shows a maintenance page and the
     // API answers 503 for everyone but admins (see middlewares/maintenance).
     maintenance: { enabled: bool(mt.enabled, false), message: str(mt.message, 300), until: until ? new Date(until).toISOString() : "" },
+    trust: {
+      warningExpiryDays: Math.round(num(tr.warningExpiryDays, 90, 1, 3650)),
+      // 0 turns a rule off.
+      suspendAfterSameReason: Math.round(num(tr.suspendAfterSameReason, 2, 0, 20)),
+      suspendAfterTotal: Math.round(num(tr.suspendAfterTotal, 3, 0, 20)),
+      escalateTo: tr.escalateTo === "suspend" ? "suspend" : "restrict",
+      restrictionDays: Math.round(num(tr.restrictionDays, 60, 1, 365)),
+    },
   };
 }
 
@@ -248,6 +267,7 @@ async function getPublic() {
     seo: s.seo,
     features: s.features,
     demoPayments: s.marketplace.demoPayments,
+    orderRules: { veryLateHours: s.marketplace.veryLateHours, lateAutoCancelDays: s.marketplace.lateAutoCancelDays },
     // Public money rules (shown at checkout, earnings and policy pages).
     policy: {
       buyerFeePercent: s.marketplace.buyerFeePercent,
@@ -263,6 +283,7 @@ async function getPublic() {
     },
     growth: s.growth,
     maintenance: s.maintenance,
+    trustRules: { warningExpiryDays: s.trust.warningExpiryDays, restrictionDays: s.trust.restrictionDays },
   };
 }
 

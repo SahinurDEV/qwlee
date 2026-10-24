@@ -433,6 +433,8 @@ export default function Message() {
       toast.error(res.error?.data?.message || "Could not send");
       return;
     }
+    const sentNotice = res?.data?.data?.notice || res?.data?.data?.attributes?.notice || (/Contact details were hidden/.test(res?.data?.message || "") ? res.data.message : "");
+    if (sentNotice) toast.warning(sentNotice);
     setComposer("");
     setAttachments([]);
     setReplyingTo(null);
@@ -808,6 +810,11 @@ export default function Message() {
             placeholder="Write a message…"
             className="w-full p-3 text-sm text-gray-800 outline-none resize-none"
           />
+          {composer && contactWarnings(composer).length ? (
+            <p role="status" className="px-3 pb-2 text-xs text-amber-700">
+              Keep communication and payments on Qwlee. Contact details are hidden until you have an order together.
+            </p>
+          ) : null}
           {attachments.length > 0 && (
             <div className="flex flex-wrap gap-2 px-3 pb-2">
               {attachments.map((file, i) => (

@@ -23,6 +23,23 @@ const CONTACT = [
   ["contact:messenger", /\b(whats\s?app|telegram|t\.me\/|wa\.me\/|skype|signal\s+me|discord\.gg)\b/i],
 ];
 
+// Replace emails, phone numbers and messenger links with a placeholder.
+const MASK = [
+  /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi,
+  /(?<![\w/-])(?:\+?\d[\s().-]?){9,}\d(?![\w])/g,
+  /\b(?:t\.me|wa\.me|discord\.gg)\/\S+/gi,
+];
+function maskContact(text) {
+  let s = String(text || "");
+  for (const re of MASK) s = s.replace(re, "[contact details hidden]");
+  return s;
+}
+
+/** True when the two users have at least one order together. */
+async function haveOrder(a, b) {
+  return !!(await Payment.exists({ $or: [{ clientId: a, freelancerId: b }, { clientId: b, freelancerId: a }] }));
+}
+
 async function rules() {
   const m = (await siteSettings.get()).moderation;
   return m;
@@ -94,4 +111,6 @@ async function review(id, { status, note }, reviewer) {
   return f;
 }
 
-module.exports = { screen, screenAll, record, orderPlaced, list, review, wordRe, CONTACT };
+module.exports = {
+  maskContact,
+  haveOrder, screen, screenAll, record, orderPlaced, list, review, wordRe, CONTACT };

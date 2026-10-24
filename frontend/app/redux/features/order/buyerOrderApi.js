@@ -73,6 +73,14 @@ const buyerOrderApi = baseApi.injectEndpoints({
       query: ({ orderId }) => ({ url: `/orders/${orderId}/extend-review`, method: "POST" }),
       invalidatesTags: ["Orders"],
     }),
+    askOrderUpdate: builder.mutation({
+      query: ({ orderId, note }) => ({ url: `/orders/${orderId}/update-request`, method: "POST", body: { note } }),
+      invalidatesTags: ["Orders"],
+    }),
+    answerOrderUpdate: builder.mutation({
+      query: ({ orderId, reply }) => ({ url: `/orders/${orderId}/update-request`, method: "PATCH", body: { reply } }),
+      invalidatesTags: ["Orders"],
+    }),
     releaseMilestone: builder.mutation({
       query: ({ orderId, index }) => ({ url: `/orders/${orderId}/milestones/${index}/release`, method: "POST" }),
       invalidatesTags: ["Orders"],
@@ -102,6 +110,8 @@ const buyerOrderApi = baseApi.injectEndpoints({
 
 export const {
   useExtendOrderReviewMutation,
+  useAskOrderUpdateMutation,
+  useAnswerOrderUpdateMutation,
   useCreateBuyerOrderMutation,
   useTipOrderMutation,
   useReleaseMilestoneMutation,

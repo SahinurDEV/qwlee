@@ -397,6 +397,7 @@ const updateGigById = async (gigId, data, images, actor) => {
       (next === "paused" && gig.gigStatus === "active") ||
       (next === "active" && gig.gigStatus === "paused");
     if (!allowed) throw new ApiError(httpStatus.FORBIDDEN, "You cannot set that gig status");
+    if (next === "active" && actor?.role !== "admin") await require("./trust.service").assertNotRestricted(gig.userId, "publish gigs");
     patch.gigStatus = next;
   }
   const risk = require("./risk.service");

@@ -17,7 +17,8 @@ const getFileTypeFromMimetype = (mimeType) => {
 
 const addMessage = catchAsync(async (req, res) => {
   const sender = req.user.id;
-  const { message, receiver, offerDetails, gigReference, replyTo } = req.body;
+  const { receiver, offerDetails, gigReference, replyTo } = req.body;
+  let { message } = req.body;
 
   let parsedOfferDetails = {};
   let parsedGigReference = null;
@@ -31,6 +32,7 @@ const addMessage = catchAsync(async (req, res) => {
     console.error("Error parsing offerDetails:", error.message);
     parsedOfferDetails = {};
   }
+  if (offerDetails && parsedOfferDetails?.price != null) await require("../services/trust.service").assertNotRestricted(req.user.id, "send offers");
   if (offerDetails && parsedOfferDetails?.milestones != null) {
     const clean = require("../services/milestones.service").normalise(parsedOfferDetails.milestones, parsedOfferDetails.price);
     if (clean.length) parsedOfferDetails.milestones = clean;
@@ -58,6 +60,7 @@ const addMessage = catchAsync(async (req, res) => {
   let chatInfo = await chatService.getChatByParticipants([sender, receiver]);
 
   if (!chatInfo) {
+    await require("../services/trust.service").assertNotRestricted(sender, "start new conversations");
     chatInfo = await chatService.addChat({ participants: [sender, receiver] });
     if (!chatInfo) {
       throw new ApiError(
@@ -94,6 +97,17 @@ const addMessage = catchAsync(async (req, res) => {
     replyToId = parent._id;
   }
 
+  // Off-platform guard: before the two users have an order together,
+  // contact details are hidden from the message (and still flagged).
+  let notice = "";
+  if (message && screened.reasons.some((r) => r.startsWith("contact:"))) {
+    const mod = (await require("../services/siteSettings.service").get()).moderation;
+    if (mod.maskContactBeforeOrder && !(await risk.haveOrder(sender, receiver))) {
+      message = risk.maskContact(message);
+      notice = "Contact details were hidden. Please keep communication and payments on Qwlee until an order is placed.";
+    }
+  }
+
   // Prepare message content
   const newMessage = {
     chat: chatInfo.id,
@@ -124,7 +138,7 @@ const addMessage = catchAsync(async (req, res) => {
   const messageSent = created ? await messageService.loadForClient(created._id) : null;
 
   if (messageSent) {
-    risk.record("message", messageSent._id || messageSent.id, sender, screened.reasons, message || parsedOfferDetails?.description);
+    risk.record("message", messageSent._id || messageSent.id, sender, screened.reasons, req.body.message || parsedOfferDetails?.description);
     // Build a chat snapshot from each side's perspective. `getChat(viewer, chatId)`
     // returns the participant list as { the OTHER party, you } — so the
     // sender and receiver need different copies for their sidebars.
@@ -145,10 +159,10 @@ const addMessage = catchAsync(async (req, res) => {
 
     res.status(httpStatus.CREATED).json(
       response({
-        message: "Message added successfully",
+        message: notice || "Message added successfully",
         status: "OK",
         statusCode: httpStatus.CREATED,
-        data: messageSent,
+        data: notice ? { ...(messageSent.toJSON ? messageSent.toJSON() : messageSent), notice } : messageSent,
       })
     );
   } else {

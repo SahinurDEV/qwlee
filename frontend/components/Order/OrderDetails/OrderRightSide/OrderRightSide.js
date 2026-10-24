@@ -32,6 +32,7 @@ import TipCard from "./TipCard";
 import MilestonesCard from "./MilestonesCard";
 import CallsCard from "./CallsCard";
 import CancellationCard from "./CancellationCard";
+import UpdateRequestCard from "./UpdateRequestCard";
 import { IoStar, IoCalendarOutline, IoFlagOutline } from "react-icons/io5";
 
 export default function OrderActions({ order, orderId, isSeller }) {
@@ -322,7 +323,10 @@ export default function OrderActions({ order, orderId, isSeller }) {
         </section>
       )}
       {(status === "active" || status === "late") && (
-        <CancellationCard order={order} orderId={orderId} isSeller={isSeller} />
+        <>
+          <UpdateRequestCard order={order} orderId={orderId} isSeller={isSeller} />
+          <CancellationCard order={order} orderId={orderId} isSeller={isSeller} />
+        </>
       )}
 
       {["active", "late", "delivered"].includes(status) && (
