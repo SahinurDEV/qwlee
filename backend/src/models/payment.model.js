@@ -54,6 +54,7 @@ const ordersSchema = mongoose.Schema(
     },
     // Set when the "order is very late" reminder went out (housekeeping).
     lateReminderAt: { type: Date, default: null },
+    reviewReminderAt: { type: Date, default: null },
     // Seller-initiated delivery-date extension. Fiverr-style: seller
     // requests a new date with a reason → buyer accepts (date moves,
     // status reset to active) or declines (request marked declined,

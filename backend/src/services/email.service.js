@@ -537,6 +537,41 @@ async function sendLateOrderReminder(to, { recipientName, gigTitle, orderId, day
   );
 }
 
+async function sendReviewWindowClosing(to, { recipientName, gigTitle, orderId, daysLeft }) {
+  await sendEmail(
+    to,
+    `${daysLeft === 1 ? "1 day" : `${daysLeft} days`} left to review — ${gigTitle}`,
+    emailShell({
+      preheader: "Your review helps other buyers and the seller.",
+      heroEyebrow: "Review reminder",
+      heroTitle: `Leave a review for "${gigTitle}"`,
+      intro: `Hi ${recipientName || "there"} — reviews for this order close in ${daysLeft === 1 ? "1 day" : `${daysLeft} days`}. It only takes a minute.`,
+      bodyHtml: summaryTable([
+        { label: "Order #", value: shortId(orderId) },
+        { label: "Service", value: gigTitle },
+      ]),
+      cta: { label: "Write a review", url: `${FRONTEND_URL}/order/${orderId}` },
+      accent: "amber",
+    })
+  );
+}
+
+async function sendFundsCleared(to, { recipientName, amount }) {
+  await sendEmail(
+    to,
+    `${fmtMoney(amount)} is ready to withdraw`,
+    emailShell({
+      preheader: "Your earnings cleared.",
+      heroEyebrow: "Earnings cleared",
+      heroTitle: `${fmtMoney(amount)} is now available`,
+      intro: `Hi ${recipientName || "there"} — earnings from a completed order have cleared and joined your withdrawable balance.`,
+      bodyHtml: summaryTable([{ label: "Amount", value: fmtMoney(amount) }]),
+      cta: { label: "View earnings", url: `${FRONTEND_URL}/earnings` },
+      accent: "emerald",
+    })
+  );
+}
+
 // ===========================================================================
 // DELIVERY EXTENSION
 // ===========================================================================
@@ -843,6 +878,8 @@ module.exports = {
   // Reviews
   sendReviewReceivedSeller,
   sendReviewReplyBuyer,
+  sendReviewWindowClosing,
+  sendFundsCleared,
   // Messaging / offers
   sendCustomOfferReceivedBuyer,
   sendNewMessageEmail,
@@ -870,6 +907,7 @@ const EMAIL_CATEGORY = {
   sendExtensionResponseSeller: "orders",
   sendReviewReceivedSeller: "reviews",
   sendReviewReplyBuyer: "reviews",
+  sendReviewWindowClosing: "reviews",
   sendCustomOfferReceivedBuyer: "messages",
   sendNewMessageEmail: "messages",
   sendAnnouncement: "marketing",

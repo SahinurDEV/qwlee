@@ -97,6 +97,9 @@ function defaults() {
       successScoreDays: 90,
       successScoreMinOrders: 5,
       successScoreWeights: { privateRating: 30, rating: 20, completion: 20, onTime: 20, noDisputes: 10 },
+      // Reminder emails + in-app notices (0 / false = off).
+      reviewReminderDays: 2,
+      fundsClearedEmail: true,
       // Test stacks (TEST_MODE) credit at once so balance checks stay simple.
       clearanceDays: Number(process.env.CLEARANCE_DAYS ?? (process.env.TEST_MODE === "true" ? 0 : 14)),
       clearanceDaysFast: 7,
@@ -173,6 +176,9 @@ function normalise(site = {}, base = defaults()) {
       successScoreWeights: Object.fromEntries(
         ["privateRating", "rating", "completion", "onTime", "noDisputes"].map((k) => [k, Math.round(num((m.successScoreWeights || {})[k], { privateRating: 30, rating: 20, completion: 20, onTime: 20, noDisputes: 10 }[k], 0, 100))])
       ),
+      // Remind the buyer this many days before the review window closes (0 = off).
+      reviewReminderDays: Math.round(num(m.reviewReminderDays, 2, 0, 30)),
+      fundsClearedEmail: m.fundsClearedEmail === undefined ? true : m.fundsClearedEmail === true || m.fundsClearedEmail === "true",
       // Days before earnings can be withdrawn; Fast = Top Rated / Premium.
       clearanceDays: Math.round(num(m.clearanceDays, 14, 0, 90)),
       clearanceDaysFast: Math.round(num(m.clearanceDaysFast, 7, 0, 90)),
