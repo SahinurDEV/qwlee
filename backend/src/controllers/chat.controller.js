@@ -172,7 +172,9 @@ const chatContext = catchAsync(async (req, res) => {
     role: String(o.clientId) === String(req.user.id) ? "buyer" : "seller",
     gig: o.gigId ? { id: String(o.gigId._id), title: o.gigId.title, slug: o.gigId.slug, image: o.gigId.images?.[0] || null } : null,
   }));
-  res.status(httpStatus.OK).json(response({ message: "Chat context", status: "OK", statusCode: httpStatus.OK, data: { orders: results } }));
+  const other = chat.participants.map(String).find((id) => id !== String(req.user.id));
+  const responseTime = other ? await require("../services/message.service").responseStats(other) : null;
+  res.status(httpStatus.OK).json(response({ message: "Chat context", status: "OK", statusCode: httpStatus.OK, data: { orders: results, responseTime } }));
 });
 
 const deleteChat = catchAsync(async (req, res) => {

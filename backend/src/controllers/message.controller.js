@@ -139,6 +139,10 @@ const addMessage = catchAsync(async (req, res) => {
     io.to(sender).emit("new-chat", { chat: senderChat, lastMessage: messageSent });
     io.to(sender).emit("new-message-self", messageSent);
 
+    // Away auto-reply: when the receiver is away and left a message,
+    // answer once per conversation every 12 hours on their behalf.
+    sendAwayReply(chatInfo.id, sender, receiver).catch(() => {});
+
     res.status(httpStatus.CREATED).json(
       response({
         message: "Message added successfully",
@@ -151,6 +155,25 @@ const addMessage = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.BAD_REQUEST, "Something went wrong");
   }
 });
+
+const sendAwayReply = async (chatId, to, from) => {
+  const { User, Messages: Message } = require("../models");
+  const { isAway } = require("../utils/availability");
+  const owner = await User.findById(from).select("availability fullName").lean();
+  if (!isAway(owner) || !String(owner.availability?.message || "").trim()) return;
+  const recent = await Message.exists({ chat: chatId, sender: from, autoReply: true, createdAt: { $gte: new Date(Date.now() - 12 * 3600000) } });
+  if (recent) return;
+  const created = await messageService.addMessage({
+    chat: chatId,
+    content: { messageType: "text", message: owner.availability.message.trim(), files: [] },
+    sender: from,
+    receiver: to,
+    autoReply: true,
+  });
+  const m = await messageService.loadForClient(created._id);
+  io.to(String(to)).emit("new-message", m);
+  io.to(String(from)).emit("new-message-self", m);
+};
 
 const getMessages = catchAsync(async (req, res) => {
   const chatId = req.query.chatId;
@@ -179,6 +202,19 @@ const getMessages = catchAsync(async (req, res) => {
     })
   );
 });
+const ok = (res, message, data) =>
+  res.status(httpStatus.OK).json(response({ message, status: "OK", statusCode: httpStatus.OK, data }));
+
+const editMessage = catchAsync(async (req, res) => {
+  ok(res, "Message edited", await messageService.editMessage(req.params.messageId, req.user.id, req.body?.message));
+});
+const reactToMessage = catchAsync(async (req, res) => {
+  ok(res, "Reaction saved", await messageService.reactToMessage(req.params.messageId, req.user.id, String(req.body?.emoji || "")));
+});
+const translateMessage = catchAsync(async (req, res) => {
+  ok(res, "Translated", await messageService.translateMessage(req.params.messageId, req.user.id, req.body?.to));
+});
+
 // Search your messages: ?q=text [&chatId=] — newest first, max 50.
 const searchMessages = catchAsync(async (req, res) => {
   const q = String(req.query.q || "").trim();
@@ -294,6 +330,9 @@ const deleteMessage = catchAsync(async (req, res) => {
 });
 
 module.exports = {
+  editMessage,
+  reactToMessage,
+  translateMessage,
   searchMessages,
   addMessage,
   getMessage,
