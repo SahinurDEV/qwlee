@@ -31,6 +31,8 @@ import {
   IoTimeOutline,
   IoPricetagOutline,
   IoVideocamOutline,
+  IoMicOutline,
+  IoStopCircleOutline,
 } from "react-icons/io5";
 
 import {
@@ -40,6 +42,7 @@ import {
   useDeleteMessageMutation,
   useChatActionMutation,
   useReportChatMutation,
+  useGetChatContextQuery,
   useLazySearchMessagesQuery,
 } from "@/app/redux/features/inbox/inboxApi";
 import ChatMenu from "./ChatMenu";
@@ -340,6 +343,72 @@ export default function Message() {
     }
   }
 
+  // Merge an edited / reacted message returned by the API.
+  function applyUpdate(m) {
+    const id = String(m?._id || m?.id || "");
+    if (!id) return;
+    setMessages((prev) => prev.map((x) => (String(x._id || x.id) === id ? { ...x, ...m } : x)));
+  }
+
+  // Voice notes: record with MediaRecorder, send as an audio file.
+  const recorderRef = useRef(null);
+  const [recording, setRecording] = useState(false);
+  const [recordSecs, setRecordSecs] = useState(0);
+  useEffect(() => {
+    if (!recording) return;
+    const t = setInterval(() => setRecordSecs((s) => {
+      if (s + 1 >= 120) recorderRef.current?.stop();
+      return s + 1;
+    }), 1000);
+    return () => clearInterval(t);
+  }, [recording]);
+  async function toggleRecording() {
+    if (recording) {
+      recorderRef.current?.stop();
+      return;
+    }
+    if (typeof window === "undefined" || !navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+      toast.error("Voice notes aren't supported in this browser.");
+      return;
+    }
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch {
+      toast.error("Microphone access was denied.");
+      return;
+    }
+    const type = ["audio/webm;codecs=opus", "audio/webm", "audio/ogg", "audio/mp4"].find((t) => MediaRecorder.isTypeSupported?.(t)) || "";
+    const rec = new MediaRecorder(stream, type ? { mimeType: type } : undefined);
+    const chunks = [];
+    rec.ondataavailable = (e) => e.data?.size && chunks.push(e.data);
+    rec.onstop = async () => {
+      stream.getTracks().forEach((t) => t.stop());
+      setRecording(false);
+      const cancelled = rec._cancelled;
+      if (cancelled || !chunks.length) return;
+      const mime = (rec.mimeType || type || "audio/webm").split(";")[0];
+      const ext = mime.includes("ogg") ? "ogg" : mime.includes("mp4") ? "m4a" : "webm";
+      const blob = new Blob(chunks, { type: mime });
+      if (blob.size > 10 * 1024 * 1024) return toast.error("Voice note is too long.");
+      const fd = new FormData();
+      fd.append("receiver", receiverId);
+      fd.append("files", new File([blob], `voice-note.${ext}`, { type: mime }));
+      const res = await addMessage(fd);
+      if (res?.error) toast.error(res.error?.data?.message || "Could not send the voice note");
+    };
+    recorderRef.current = rec;
+    setRecordSecs(0);
+    rec.start();
+    setRecording(true);
+  }
+  function cancelRecording() {
+    if (recorderRef.current) {
+      recorderRef.current._cancelled = true;
+      recorderRef.current.stop();
+    }
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     const text = composer.trim();
@@ -410,6 +479,15 @@ export default function Message() {
     refetch();
     toast.success("Refreshed");
   }
+
+  const { data: chatContext } = useGetChatContextQuery(chatId, { skip: !chatId });
+  const responseLabel = useMemo(() => {
+    const m = chatContext?.responseTime?.avgMinutes;
+    if (!m) return "";
+    if (m < 60) return `Replies in ~${m} min`;
+    if (m < 60 * 24) return `Replies in ~${Math.round(m / 60)} h`;
+    return `Replies in ~${Math.round(m / 1440)} d`;
+  }, [chatContext]);
 
   // Online state — "Active now" if online, else "Last seen Xm ago".
   // Socket events override the initial server-rendered values.
@@ -540,6 +618,7 @@ export default function Message() {
           message={m}
           onReply={blocked ? undefined : startReply}
           onDelete={handleDelete}
+          onUpdated={applyUpdate}
           highlighted={highlightId === String(m._id || m.id)}
         />
         {i === lastMine ? (
@@ -591,6 +670,7 @@ export default function Message() {
               </span>
             )}
             {location && <span className="text-gray-400">· {location}</span>}
+            {responseLabel && <span className="text-gray-400 truncate">· {responseLabel}</span>}
             <span className="hidden md:inline-flex items-center gap-1 text-gray-400">
               <IoTimeOutline /> {localTime ? `${localTime} local` : ""}
             </span>
@@ -810,6 +890,23 @@ export default function Message() {
               >
                 <IoVideocamOutline className="text-lg" />
               </button>
+              <button
+                type="button"
+                onClick={toggleRecording}
+                disabled={!receiverId || sending}
+                className={`p-1.5 rounded-md disabled:opacity-50 ${recording ? "bg-rose-50 text-rose-600" : "hover:bg-gray-100"}`}
+                aria-label={recording ? "Stop and send voice note" : "Record voice note"}
+                title={recording ? "Stop and send" : "Voice note"}
+              >
+                {recording ? <IoStopCircleOutline className="text-lg" /> : <IoMicOutline className="text-lg" />}
+              </button>
+              {recording && (
+                <span className="inline-flex items-center gap-1 text-xs text-rose-600" aria-live="polite">
+                  <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                  {Math.floor(recordSecs / 60)}:{String(recordSecs % 60).padStart(2, "0")}
+                  <button type="button" onClick={cancelRecording} className="ml-1 underline text-gray-500">Cancel</button>
+                </span>
+              )}
               {isSelling && (
                 <button
                   type="button"

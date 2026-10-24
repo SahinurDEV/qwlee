@@ -62,4 +62,7 @@ async function match(requestId, viewer) {
   return { results };
 }
 
-module.exports = { gigDescription, brief, replies, match, enabled, provider };
+// Raw completion through the configured provider (null if none).
+const complete = (prompt) => remote(prompt);
+
+module.exports = { complete, gigDescription, brief, replies, match, enabled, provider };

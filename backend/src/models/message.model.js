@@ -116,6 +116,21 @@ const messageSchema = mongoose.Schema(
     // "Delete for everyone": the sender wiped the content; a tombstone
     // stays so the thread keeps its shape.
     deletedForEveryone: { type: Boolean, default: false },
+    // Set when the sender edits the text (allowed for a short window).
+    editedAt: { type: Date, default: null },
+    // One reaction per member: [{ user, emoji }].
+    reactions: {
+      type: [
+        {
+          _id: false,
+          user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+          emoji: String,
+        },
+      ],
+      default: [],
+    },
+    // Automatic "I'm away" reply sent on the seller's behalf.
+    autoReply: { type: Boolean, default: false },
     deletedAt: { type: Date, default: null },
     readed: {
       type: Boolean,

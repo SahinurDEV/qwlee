@@ -41,7 +41,16 @@ module.exports = function imgbbUpload({ optional = true } = {}) {
       }
 
       if (hasFiles) {
-        const results = await imageUploadService.uploadMany(req.files);
+        // Voice notes (audio/*) are stored locally; images go to ImgBB
+        // (or local disk when no key is set).
+        const results = [];
+        for (const f of req.files) {
+          results.push(
+            String(f.mimetype || "").startsWith("audio/")
+              ? await imageUploadService.storeAudio(f)
+              : await imageUploadService.uploadOne(f)
+          );
+        }
         results.forEach((r, i) => {
           Object.assign(req.files[i], {
             cloudUrl: r.url,
