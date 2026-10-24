@@ -10,6 +10,8 @@ const chatSchema = mongoose.Schema(
         required: false,
       },
     ],
+    // Who opened the conversation (first-message limits).
+    startedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null, index: true },
     status: {
       type: String,
       enum: ["accepted", "blocked"],
