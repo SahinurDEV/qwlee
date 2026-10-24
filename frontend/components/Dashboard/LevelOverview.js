@@ -84,7 +84,8 @@ export default function LevelOverview() {
             value={
               metrics?.successScore != null ? metrics.successScore : "—"
             }
-            max={100}
+            max={10}
+            sub={data?.success?.score != null ? `${data.success.orders} orders in the last ${data.success.windowDays} days` : `shows after ${data?.success?.minOrders || 5} closed orders in ${data?.success?.windowDays || 90} days`}
             tone="emerald"
           />
           <Metric
@@ -166,7 +167,7 @@ export default function LevelOverview() {
                 decimals={1}
               />
               {progress?.responseRate ? <Progress label="Response rate" value={progress.responseRate.value} target={progress.responseRate.target} pct /> : null}
-              {progress?.successScore ? <Progress label="Success score" value={progress.successScore.value} target={progress.successScore.target} pct /> : null}
+              {progress?.successScore ? <Progress label="Success score" value={progress.successScore.value ?? 0} target={progress.successScore.target} /> : null}
               {progress?.approval ? <p className="text-xs text-gray-500 py-2">{nextLevel?.label} also needs a review by the qwlee team.</p> : null}
             </>
           )}
@@ -178,6 +179,20 @@ export default function LevelOverview() {
           You meet the {pendingApproval.label} criteria.{" "}
           {pendingApproval.status === "declined" ? "The team reviewed your account and didn't approve it this time." : "The qwlee team is reviewing your account."}
         </p>
+      ) : null}
+      {data?.success ? (
+        <details className="mt-4 text-sm rounded-lg border border-gray-100 bg-gray-50/60 p-3">
+          <summary className="cursor-pointer font-medium text-gray-900">How your Success Score is calculated</summary>
+          <p className="text-xs text-gray-600 mt-2">
+            Only you and the qwlee team see this score. It uses orders closed in the last {data.success.windowDays} days and runs from 1 to 10.
+            Each signal below is a 0–100 value; the score is 1 + 9 × their weighted average.
+          </p>
+          <ul className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs text-gray-700">
+            {[["privateRating", "Private buyer rating"], ["rating", "Public review rating"], ["completion", "Orders completed (not cancelled)"], ["onTime", "Delivered on time"], ["noDisputes", "Orders without a dispute"]].map(([k, label]) => (
+              <li key={k} className="flex justify-between gap-2"><span>{label}</span><span className="tabular-nums">{data.success.signals?.[k] != null ? `${data.success.signals[k]}` : "no data"}</span></li>
+            ))}
+          </ul>
+        </details>
       ) : null}
       <p className="text-xs text-gray-500 mt-4">
         Tip: keep delivering on time and replying to messages quickly. See{" "}

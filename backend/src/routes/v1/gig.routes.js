@@ -45,6 +45,19 @@ router.get(
   auth("freelancer"),
   sellerLevelController.myGigsStats
 );
+// Success Score (1–10) for one gig: the gig's seller and admins only.
+router.get("/:gigId/success-score", auth("common"), async (req, res, next) => {
+  try {
+    const { Gig } = require("../../models");
+    const gig = await Gig.findById(req.params.gigId).select("userId").lean().catch(() => null);
+    if (!gig) return res.status(404).json({ code: 404, message: "Gig not found" });
+    if (String(gig.userId) !== String(req.user.id) && req.user.role !== "admin") return res.status(403).json({ code: 403, message: "Only the seller can see this" });
+    const data = await require("../../services/successScore.service").forGig(gig._id);
+    res.json({ code: 200, message: "Success score", data: { attributes: data } });
+  } catch (e) {
+    next(e);
+  }
+});
 
 // Public impression tracker — frontend fire-and-forget on a gig view.
 // Atomic $inc so concurrent views don't lose count. Kept open (no

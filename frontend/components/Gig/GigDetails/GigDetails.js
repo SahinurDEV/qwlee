@@ -25,6 +25,7 @@ import { GigFaq, GigVideo } from "./GigFaqVideo";
 import AboutCard from "./AboutCard";
 import GigReviews, { useGigReviewSummary } from "./GigReviews";
 import GigLoveReact from "./GigLoveReact";
+import GigSuccessScore from "./GigSuccessScore";
 import { useEffect } from "react";
 import useRecentlyViewed from "@/hooks/useRecentlyViewed";
 
@@ -137,6 +138,7 @@ export default function GigDetails({ slug }) {
               </div>
             </div>
           </header>
+          <GigSuccessScore gigId={result._id || result.id} sellerId={seller._id || seller.id} />
 
           <AwayBanner user={seller} />
           <GigVideo url={result.video} title={result.title} />
