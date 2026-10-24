@@ -17,7 +17,7 @@ const getFileTypeFromMimetype = (mimeType) => {
 
 const addMessage = catchAsync(async (req, res) => {
   const sender = req.user.id;
-  const { message, receiver, offerDetails, gigReference } = req.body;
+  const { message, receiver, offerDetails, gigReference, replyTo } = req.body;
 
   let parsedOfferDetails = {};
   let parsedGigReference = null;
@@ -81,6 +81,19 @@ const addMessage = catchAsync(async (req, res) => {
     await chatInfo.save();
   }
 
+  // A reply must point at a message in the same conversation.
+  let replyToId;
+  if (replyTo) {
+    const { Message } = require("../models");
+    const parent = require("mongoose").isValidObjectId(replyTo)
+      ? await Message.findById(replyTo).select("chat").lean()
+      : null;
+    if (!parent || String(parent.chat) !== String(chatInfo.id)) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "You can only reply to a message in this conversation.");
+    }
+    replyToId = parent._id;
+  }
+
   // Prepare message content
   const newMessage = {
     chat: chatInfo.id,
@@ -102,10 +115,13 @@ const addMessage = catchAsync(async (req, res) => {
     },
     sender,
     receiver,
+    ...(replyToId ? { replyTo: replyToId } : {}),
   };
 
   // Send and save the message
-  const messageSent = await messageService.addMessage(newMessage);
+  const created = await messageService.addMessage(newMessage);
+  // Send the same shape the thread API returns (sender + reply preview).
+  const messageSent = created ? await messageService.loadForClient(created._id) : null;
 
   if (messageSent) {
     risk.record("message", messageSent._id || messageSent.id, sender, screened.reasons, message || parsedOfferDetails?.description);
@@ -115,13 +131,13 @@ const addMessage = catchAsync(async (req, res) => {
     const senderChat = await chatService.getChat(sender, chatInfo.id);
     const receiverChat = await chatService.getChat(receiver, chatInfo.id);
 
-    io.to(receiver).emit("new-chat", { chat: receiverChat, lastMessage: newMessage });
-    io.to(receiver).emit("new-message", newMessage);
+    io.to(receiver).emit("new-chat", { chat: receiverChat, lastMessage: messageSent });
+    io.to(receiver).emit("new-message", messageSent);
 
     // Mirror to the sender so their own sidebar reorders without waiting
     // for a manual refresh.
-    io.to(sender).emit("new-chat", { chat: senderChat, lastMessage: newMessage });
-    io.to(sender).emit("new-message-self", newMessage);
+    io.to(sender).emit("new-chat", { chat: senderChat, lastMessage: messageSent });
+    io.to(sender).emit("new-message-self", messageSent);
 
     res.status(httpStatus.CREATED).json(
       response({
@@ -163,6 +179,15 @@ const getMessages = catchAsync(async (req, res) => {
     })
   );
 });
+// Search your messages: ?q=text [&chatId=] — newest first, max 50.
+const searchMessages = catchAsync(async (req, res) => {
+  const q = String(req.query.q || "").trim();
+  if (q.length < 2) throw new ApiError(httpStatus.BAD_REQUEST, "Type at least 2 characters to search.");
+  if (req.query.chatId) await assertChatMember(req.query.chatId, req.user.id);
+  const results = await messageService.searchMessages(req.user.id, q.slice(0, 100), req.query.chatId);
+  res.status(httpStatus.OK).json(response({ message: "Search results", status: "OK", statusCode: httpStatus.OK, data: { results } }));
+});
+
 const getMessage = catchAsync(async (req, res) => {
   const messageId = req.params.messageId;
 
@@ -252,7 +277,7 @@ const deleteMessage = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.BAD_REQUEST, "Message ID is required.");
   }
 
-  const message = await messageService.deleteMessage(messageId, req.user.id);
+  const message = await messageService.deleteMessage(messageId, req.user.id, req.query.scope === "everyone" ? "everyone" : "me");
 
   if (!message) {
     throw new ApiError(httpStatus.NOT_FOUND, "Message not found.");
@@ -269,6 +294,7 @@ const deleteMessage = catchAsync(async (req, res) => {
 });
 
 module.exports = {
+  searchMessages,
   addMessage,
   getMessage,
   getMessages,

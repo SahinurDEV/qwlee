@@ -31,9 +31,9 @@ const getChats = async (filter, options, receiver) => {
         select: "fullName image role online lastSeen",
         match: { _id: { $ne: receiver } },
       })
+      .sort({ updatedAt: -1 })
       .skip(skip)
-      .limit(limit)
-      .sort({ updatedAt: -1 });
+      .limit(limit);
 
     const data = [];
     for (const chatItem of chats) {
@@ -58,7 +58,16 @@ const getChats = async (filter, options, receiver) => {
       data.push({ chat: chatItem, lastMessage, unreadCount });
     }
 
+    const me = String(receiver);
+    for (const d of data) {
+      d.pinned = (d.chat.pinnedBy || []).map(String).includes(me);
+      d.archived = (d.chat.archivedBy || []).map(String).includes(me);
+      d.blocked = (d.chat.blockedBy || []).length > 0;
+      d.blockedByMe = (d.chat.blockedBy || []).map(String).includes(me);
+    }
+    // Pinned first, then most recent.
     data.sort((a, b) => {
+      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
       const dateA = (a.lastMessage && a.lastMessage.createdAt) || 0;
       const dateB = (b.lastMessage && b.lastMessage.createdAt) || 0;
       return dateB - dateA;
@@ -90,7 +99,7 @@ const getChat = async (userId, chatId) => {
   try {
     const chat = await Chat.findById(chatId).populate({
       path: "participants",
-      select: "fullName image role online lastSeen",
+      select: "fullName image role online lastSeen responseTime availability location",
       match: { _id: { $ne: userId } },
     });
     return chat;
