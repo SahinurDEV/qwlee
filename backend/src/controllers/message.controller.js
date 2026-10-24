@@ -31,6 +31,7 @@ const addMessage = catchAsync(async (req, res) => {
     console.error("Error parsing offerDetails:", error.message);
     parsedOfferDetails = {};
   }
+  if (offerDetails && parsedOfferDetails?.price != null) await require("../services/trust.service").assertNotRestricted(req.user.id, "send offers");
   if (offerDetails && parsedOfferDetails?.milestones != null) {
     const clean = require("../services/milestones.service").normalise(parsedOfferDetails.milestones, parsedOfferDetails.price);
     if (clean.length) parsedOfferDetails.milestones = clean;
@@ -58,6 +59,7 @@ const addMessage = catchAsync(async (req, res) => {
   let chatInfo = await chatService.getChatByParticipants([sender, receiver]);
 
   if (!chatInfo) {
+    await require("../services/trust.service").assertNotRestricted(sender, "start new conversations");
     chatInfo = await chatService.addChat({ participants: [sender, receiver] });
     if (!chatInfo) {
       throw new ApiError(

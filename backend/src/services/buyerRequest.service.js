@@ -158,6 +158,7 @@ const updateRequest = async (requestId, buyer, body) => {
 
 const createOffer = async (requestId, seller, body) => {
   if (seller.role !== "freelancer") throw new ApiError(httpStatus.FORBIDDEN, "Only sellers can send offers");
+  await require("./trust.service").assertNotRestricted(seller.id, "send offers");
   const r = await getRequestDoc(requestId);
   if (idOf(r.buyerId) === String(seller.id)) throw new ApiError(httpStatus.BAD_REQUEST, "You cannot offer on your own request");
   if (r.status !== "open" || r.expiresAt <= new Date()) throw new ApiError(httpStatus.BAD_REQUEST, "This request is no longer open");

@@ -8,6 +8,7 @@ const he = require("he");
 const { gigService } = require("../services");
 
 const createGig = catchAsync(async (req, res) => {
+  await require("../services/trust.service").assertNotRestricted(req.user.id, "publish gigs");
   const { title, package, categoriesId, description, price } = req.body;
 
   // Parse JSON fields with error handling

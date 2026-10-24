@@ -7,10 +7,16 @@ import useUser from "@/hooks/useUser";
 import useViewMode from "@/hooks/useViewMode";
 import FreelancerDashboard from "./FreelancerDashboard/FreelancerDashboard";
 import BuyerDashboard from "./BuyerDashboard/BuyerDashboard";
+import StandingBanner from "./StandingBanner";
 
 export default function Dashboard() {
   const user = useUser();
   const { isSelling, ready } = useViewMode(user);
   if (!ready) return <div className="min-h-[60vh]" aria-busy="true" />;
-  return isSelling ? <FreelancerDashboard /> : <BuyerDashboard />;
+  return (
+    <>
+      <StandingBanner />
+      {isSelling ? <FreelancerDashboard /> : <BuyerDashboard />}
+    </>
+  );
 }
