@@ -65,6 +65,8 @@ const gigSchema = mongoose.Schema(
     // could later default to "pending" once admin moderation is on.
     // Admin-curated: featured gigs sort first and get a badge.
     featured: { type: Boolean, default: false, index: true },
+    // "qwlee's Choice": best-rated gig per category (gigStats.choose).
+    choice: { type: Boolean, default: false, index: true },
     // Monthly subscriptions (seller opt-in; see subscription.service).
     subscription: {
       enabled: { type: Boolean, default: false },

@@ -28,6 +28,13 @@ async function create(userId, { gigId, days }) {
   const gig = await Gig.findOne({ _id: id, isDeleted: { $ne: true } }).lean();
   if (!gig || String(gig.userId) !== String(userId)) throw new ApiError(httpStatus.NOT_FOUND, "Gig not found");
   if (gig.gigStatus !== "active") throw new ApiError(httpStatus.BAD_REQUEST, "Only active gigs can be promoted");
+  {
+    const ORDER = ["new", "level1", "level2", "topRated"];
+    const min = (await require("./siteSettings.service").get()).marketplace.adsMinLevel || "new";
+    const u = await require("../models").User.findById(userId).select("sellerLevel").lean();
+    const have = ORDER.indexOf(u?.sellerLevel?.id || "new");
+    if (have < ORDER.indexOf(min)) throw new ApiError(httpStatus.FORBIDDEN, `Promoted gigs are available from ${{ level1: "Level 1", level2: "Level 2", topRated: "Top Rated" }[min] || min} up.`);
+  }
   const cost = money(d * dayPrice());
   // Atomic debit: parallel requests cannot overdraw the balance.
   const debited = await User.findOneAndUpdate({ _id: userId, balance: { $gte: cost } }, { $inc: { balance: -cost } });

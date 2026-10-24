@@ -90,6 +90,10 @@ export default function GigCard({ item, sponsored = false }) {
             <span className="absolute left-3 top-3 z-10 rounded-full bg-amber-400 px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-gray-900 shadow-sm">
               Featured
             </span>
+          ) : item?.choice ? (
+            <span className="absolute left-3 top-3 z-10 rounded-full bg-gray-900 px-2 py-0.5 text-xs font-bold tracking-wide text-white shadow-sm" title="Top-rated, well-reviewed gig in its category">
+              qwlee&apos;s Choice
+            </span>
           ) : null}
         </div>
 
