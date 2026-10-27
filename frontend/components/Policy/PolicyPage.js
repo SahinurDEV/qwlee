@@ -70,4 +70,5 @@ export const RELATED = [
   { label: "Refunds & cancellations", href: "/refund-policy" },
   { label: "Payment terms", href: "/payment-terms" },
   { label: "Intellectual property", href: "/intellectual-property" },
+  { label: "Cookie Policy", href: "/cookie-policy" },
 ];

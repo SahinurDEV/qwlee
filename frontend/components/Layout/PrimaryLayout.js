@@ -13,6 +13,7 @@ import CategoryBar from "./CategoryBar";
 import Footer from "./Footer/Footer";
 import useActivityTracker from "@/hooks/useActivityTracker";
 import AnnouncementBar from "@/components/common/AnnouncementBar";
+import CookieBanner from "@/components/common/CookieBanner";
 
 function Chrome({ children, isFooterAdd }) {
   useActivityTracker();
@@ -23,6 +24,7 @@ function Chrome({ children, isFooterAdd }) {
       <CategoryBar />
       {children}
       {!isFooterAdd && <Footer />}
+      <CookieBanner />
     </>
   );
 }
