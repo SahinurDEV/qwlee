@@ -19,11 +19,11 @@ const { isReserved } = require("../utils/reservedUsernames");
 const { deriveUniqueUsername } = require("../utils/deriveUsername");
 
 const siteSettings = require("../services/siteSettings.service");
+const authCookies = require("../utils/authCookies");
 // Bump when the Terms change materially; stored with each consent.
 const TERMS_VERSION = "2026-10";
 
 const register = catchAsync(async (req, res) => {
-const authCookies = require("../utils/authCookies");
   await siteSettings.assertFeature("signups", "Sign-up");
   // Consent record (validation already requires acceptTerms === true).
   delete req.body.acceptTerms;
