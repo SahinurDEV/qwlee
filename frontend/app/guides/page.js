@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-// Short link for the guides list.
+// Short link → Learn hub (guides list still at /blogs?kind=guide).
 export default function Guides() {
-  redirect("/blogs?kind=guide");
+  redirect("/learn");
 }
