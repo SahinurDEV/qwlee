@@ -1,0 +1,22 @@
+[
+  {"id":"E01","reasonCode":"no_delivery","expected":"full_refund","scenario":"Seller never delivered; deadline passed 14 days","buyerMsg":"It has been two weeks past the delivery date and I still have no files.","sellerMsg":"I have been busy, will send soon."},
+  {"id":"E02","reasonCode":"late_delivery","expected":"release_to_seller","scenario":"Delivered 2 days late; buyer accepted files","buyerMsg":"Thanks, the files look fine even though late.","sellerMsg":"Delivered the logo package yesterday."},
+  {"id":"E03","reasonCode":"not_as_described","expected":"partial_refund","scenario":"Gig promised logo + brand kit; only logo delivered","buyerMsg":"I only received the logo. Where is the brand kit?","sellerMsg":"Logo is done. Brand kit is extra."},
+  {"id":"E04","reasonCode":"low_quality","expected":"ask_for_more_info","scenario":"Buyer unhappy after revision; unclear proof","buyerMsg":"Still looks bad.","sellerMsg":"I revised as asked. Please be specific."},
+  {"id":"E05","reasonCode":"buyer_unresponsive","expected":"release_to_seller","scenario":"Seller delivered; buyer silent","buyerMsg":"","sellerMsg":"Delivered 5 days ago. Buyer has not replied."},
+  {"id":"E06","reasonCode":"scope_creep","expected":"release_to_seller","scenario":"Buyer asks for extra pages not in package","buyerMsg":"Please also redesign my entire website.","sellerMsg":"That is outside the gig package we agreed."},
+  {"id":"E07","reasonCode":"abusive_behavior","expected":"ask_for_more_info","scenario":"Buyer threats in chat","buyerMsg":"I will ruin your account if you do not refund.","sellerMsg":"Please keep this professional."},
+  {"id":"E08","reasonCode":"no_delivery","expected":"full_refund","scenario":"Seller claims files sent on WhatsApp","buyerMsg":"Nothing was delivered on Qwlee.","sellerMsg":"I sent everything on WhatsApp."},
+  {"id":"E09","reasonCode":"other","expected":"mutual_cancellation","scenario":"Both agree to cancel","buyerMsg":"Happy to cancel and get a refund.","sellerMsg":"Agreed, let's cancel mutually."},
+  {"id":"E10","reasonCode":"not_as_described","expected":"partial_refund","scenario":"Milestone released; rest undelivered","buyerMsg":"First part was ok but the rest never arrived.","sellerMsg":"I delivered the first milestone only."},
+  {"id":"E11","reasonCode":"not_as_described","expected":"release_to_seller","scenario":"Buyer brief unclear; seller followed brief","buyerMsg":"This is not what I imagined.","sellerMsg":"I followed your written brief exactly."},
+  {"id":"E12","reasonCode":"late_delivery","expected":"partial_refund","scenario":"Extension accepted; still late","buyerMsg":"Even after the extension it is late.","sellerMsg":"Sorry for the delay, files attached now."},
+  {"id":"E13","reasonCode":"no_delivery","expected":"ask_for_more_info","scenario":"Requirements never submitted","buyerMsg":"Seller did nothing.","sellerMsg":"Buyer never submitted requirements so the clock never started."},
+  {"id":"E14","reasonCode":"low_quality","expected":"full_refund","scenario":"Plagiarism evidence","buyerMsg":"This is copied from another designer. Screenshot attached.","sellerMsg":"It is my work."},
+  {"id":"E15","reasonCode":"other","expected":"ask_for_more_info","scenario":"Chargeback threat only","buyerMsg":"I will file a chargeback.","sellerMsg":"Work was delivered as agreed."},
+  {"id":"E16","reasonCode":"scope_creep","expected":"partial_refund","scenario":"Seller agreed free extras then refuses","buyerMsg":"You promised free social templates in chat.","sellerMsg":"I changed my mind; that was a favour."},
+  {"id":"E17","reasonCode":"buyer_unresponsive","expected":"ask_for_more_info","scenario":"Buyer replies once then ghosts mid-revision","buyerMsg":"Please revise the colour.","sellerMsg":"Revised. Waiting on your confirmation for a week."},
+  {"id":"E18","reasonCode":"not_as_described","expected":"partial_refund","scenario":"Language mismatch","buyerMsg":"Gig was English but delivery is only Bengali.","sellerMsg":"I can translate for an extra fee."},
+  {"id":"E19","reasonCode":"no_delivery","expected":"full_refund","scenario":"Seller banned mid-order","buyerMsg":"Seller disappeared after payment.","sellerMsg":""},
+  {"id":"E20","reasonCode":"late_delivery","expected":"release_to_seller","scenario":"Auto-complete already fired","buyerMsg":"I dispute after auto-complete.","sellerMsg":"Buyer ignored delivery until auto-complete."}
+]
