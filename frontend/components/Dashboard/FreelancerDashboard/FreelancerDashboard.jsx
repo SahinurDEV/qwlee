@@ -181,11 +181,11 @@ export default function FreelancerDashboard() {
         </aside>
 
         <section className="lg:col-span-2">
-          <div className="flex items-end justify-between mb-3">
+          <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-semibold text-gray-900">Recent orders</h2>
             <Link
               href="/order"
-              className="text-sm font-medium text-emerald-700 hover:text-emerald-800"
+              className="inline-flex items-center min-h-[44px] text-sm font-medium text-emerald-700 hover:text-emerald-800"
             >
               View all →
             </Link>

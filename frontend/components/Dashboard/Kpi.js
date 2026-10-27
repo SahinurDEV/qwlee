@@ -21,16 +21,16 @@ export default function Kpi({
   };
   return (
     <div
-      className="bg-white rounded-2xl border border-gray-200 p-4 md:p-5"
+      className="bg-white rounded-2xl border border-gray-200 p-3 sm:p-4 md:p-5 min-w-0"
       style={{ boxShadow: "0 1px 2px rgba(15,23,42,0.04)" }}
     >
-      <div className="flex items-start justify-between">
-        <div className="text-xs font-medium uppercase tracking-wider text-gray-500">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 text-[11px] sm:text-xs font-medium uppercase tracking-wide sm:tracking-wider text-gray-500 leading-snug">
           {label}
         </div>
         {Icon ? (
           <span
-            className={`w-9 h-9 inline-flex items-center justify-center rounded-xl ${
+            className={`hidden sm:inline-flex shrink-0 w-9 h-9 items-center justify-center rounded-xl ${
               tones[tone] || tones.emerald
             }`}
           >
