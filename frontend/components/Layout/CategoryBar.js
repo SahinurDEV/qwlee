@@ -85,7 +85,7 @@ export default function CategoryBar() {
           <button
             type="button"
             onClick={() => nudge(-1)}
-            className="hidden md:flex absolute left-1 top-1/2 -translate-y-1/2 w-8 h-8 items-center justify-center rounded-full bg-white border border-gray-200 shadow-sm hover:bg-gray-50"
+            className="hidden md:flex z-10 absolute left-1 top-1/2 -translate-y-1/2 w-8 h-8 items-center justify-center rounded-full bg-white border border-gray-200 shadow-sm hover:bg-gray-50"
             aria-label="Scroll categories left"
           >
             <IoChevronBack className="w-4 h-4 text-gray-700" />
@@ -109,10 +109,16 @@ export default function CategoryBar() {
           ))}
         </ul>
         {canScrollRight && (
+          <div aria-hidden className="pointer-events-none absolute inset-y-0 right-0 w-16 md:w-24 bg-gradient-to-l from-white via-white/90 to-transparent" />
+        )}
+        {canScrollLeft && (
+          <div aria-hidden className="pointer-events-none absolute inset-y-0 left-0 w-16 md:w-24 bg-gradient-to-r from-white via-white/90 to-transparent" />
+        )}
+        {canScrollRight && (
           <button
             type="button"
             onClick={() => nudge(1)}
-            className="hidden md:flex absolute right-1 top-1/2 -translate-y-1/2 w-8 h-8 items-center justify-center rounded-full bg-white border border-gray-200 shadow-sm hover:bg-gray-50"
+            className="hidden md:flex z-10 absolute right-1 top-1/2 -translate-y-1/2 w-8 h-8 items-center justify-center rounded-full bg-white border border-gray-200 shadow-sm hover:bg-gray-50"
             aria-label="Scroll categories right"
           >
             <IoChevronForward className="w-4 h-4 text-gray-700" />

@@ -331,17 +331,17 @@ export default function TopNav() {
               When hidden, the empty flex-1 spacer below still pushes the
               right nav to the right edge. */}
           {showInlineSearch && (
-            <div className="hidden md:block flex-1 min-w-0 max-w-xl">
+            <div className="hidden md:block flex-1 min-w-0 max-w-2xl mx-2 lg:mx-6">
               <SearchSuggestions size="sm" placeholder={t("findService")} />
             </div>
           )}
 
           {/* Always flex-1 so the right-side nav anchors to the right
               regardless of whether the inline search is rendered. */}
-          <div className="flex-1" />
+          <div className={showInlineSearch ? "md:hidden flex-1" : "flex-1"} />
 
           {/* Desktop right-side nav */}
-          <nav className="hidden md:flex items-center gap-1 text-sm">
+          <nav className="hidden md:flex md:ml-auto items-center gap-1 text-sm">
             <Link
               href="/gig"
               className="px-3 py-2 rounded text-gray-700 hover:text-emerald-700 hover:bg-emerald-50 transition"
