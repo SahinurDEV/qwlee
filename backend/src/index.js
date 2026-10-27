@@ -2,6 +2,8 @@ const mongoose = require("mongoose");
 const app = require("./app");
 const config = require("./config/config");
 const logger = require("./config/logger");
+const errorReporting = require("./services/errorReporting.service");
+errorReporting.initFromEnv();
 
 // Bind host. When BACKEND_IP is unset or empty we bind to all interfaces
 // (0.0.0.0) — required for local dev, Docker, and most PaaS setups.
