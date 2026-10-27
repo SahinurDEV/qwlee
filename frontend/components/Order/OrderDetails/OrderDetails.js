@@ -23,6 +23,7 @@ import useUser from "@/hooks/useUser";
 
 import OrderSummary from "./OrderLeftSide/OrderLeftSide";
 import OrderActions from "./OrderRightSide/OrderRightSide";
+import OrderTimeline from "./OrderTimeline";
 
 const STATUS_STYLE = {
   active:    { label: "In progress", dot: "bg-emerald-500", chip: "bg-emerald-50 text-emerald-700 border-emerald-100" },
@@ -114,6 +115,8 @@ export default function OrderDetails({ orderId }) {
           </p>
         </div>
       </div>
+
+      <OrderTimeline order={order} />
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         <div className="md:col-span-8 space-y-6">
