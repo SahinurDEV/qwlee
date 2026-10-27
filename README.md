@@ -16,15 +16,6 @@
 
 Full feature list: [docs/FEATURES.md](docs/FEATURES.md). Architecture and guides: [docs/](docs/).
 
-## Screenshots
-
-Captured from a running Docker stack (desktop 1440×900, mobile 390×844).
-
-| Home | Marketplace |
-|---|---|
-| ![Home — desktop](docs/screenshots/home-desktop.png) | ![Gigs — desktop](docs/screenshots/gigs-desktop.png) |
-| ![Home — mobile](docs/screenshots/home-mobile.png) | ![Gig detail](docs/screenshots/gig-detail-desktop.png) |
-
 ## Highlights
 
 Documented in the repo — not marketing claims:
