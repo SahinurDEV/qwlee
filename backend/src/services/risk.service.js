@@ -22,6 +22,11 @@ const CONTACT = [
   ["contact:phone", /(?<![\w])(?:\+?\d[\s().-]?){9,}\d(?![\w])/],
   ["contact:messenger", /\b(whats\s?app|telegram|t\.me\/|wa\.me\/|skype|signal\s+me|discord\.gg)\b/i],
 ];
+// Off-platform payment asks (rules first; LLM second-pass explains)
+const PAY_OFF = [
+  ["pay-outside", /\b(pay\s+(me\s+)?outside|outside\s+(the\s+)?platform|off[- ]?platform\s+pay)\b/i],
+  ["pay-outside", /\b(venmo|cash\s?app|paypal\.me|wire\s+transfer|gift\s*card)\b/i],
+];
 
 // Replace emails, phone numbers and messenger links with a placeholder.
 const MASK = [
@@ -54,17 +59,50 @@ async function screen(text, { contact = false } = {}) {
   if (hit) throw new ApiError(httpStatus.BAD_REQUEST, "This text contains a word that isn't allowed on this site. Please edit it and try again.");
   const reasons = m.flaggedWords.filter((w) => wordRe(w).test(s)).map((w) => `keyword:${w}`);
   if (contact && m.flagContactInfo) for (const [r, re] of CONTACT) if (re.test(s)) reasons.push(r);
+  for (const [r, re] of PAY_OFF) if (re.test(s)) reasons.push(r);
   return { reasons };
 }
 
 async function record(kind, targetId, userId, reasons, excerpt = "") {
   if (!reasons?.length) return null;
   try {
-    return await RiskFlag.create({ kind, targetId: String(targetId), userId: userId || null, reasons: [...new Set(reasons)], score: reasons.length, excerpt: String(excerpt || "").slice(0, 300) });
+    const flag = await RiskFlag.create({
+      kind,
+      targetId: String(targetId),
+      userId: userId || null,
+      reasons: [...new Set(reasons)],
+      score: reasons.length,
+      excerpt: String(excerpt || "").slice(0, 300),
+      status: "open",
+    });
+    // Fire-and-forget AI second pass — never auto-bans; status stays open.
+    setImmediate(() => {
+      enrichWithAi(flag).catch((e) => logger.warn(`fraud AI skipped: ${e.message}`));
+    });
+    return flag;
   } catch (e) {
     logger.warn(`risk flag not saved: ${e.message}`);
     return null;
   }
+}
+
+async function enrichWithAi(flag) {
+  const fraudAi = require("./fraudAi/review");
+  const patch = await fraudAi.reviewFlag(flag);
+  if (!patch) return null;
+  return RiskFlag.findByIdAndUpdate(flag._id, { $set: patch }, { new: true });
+}
+
+/** Re-run AI review on an existing open flag (admin). Status unchanged. */
+async function aiReview(id, { mock = false } = {}) {
+  const f = await RiskFlag.findById(id);
+  if (!f) throw new ApiError(httpStatus.NOT_FOUND, "Flag not found");
+  const fraudAi = require("./fraudAi/review");
+  const patch = await fraudAi.reviewFlag(f, { forceMock: mock });
+  if (!patch) throw new ApiError(httpStatus.BAD_GATEWAY, "AI fraud review unavailable");
+  Object.assign(f, patch);
+  await f.save();
+  return f;
 }
 
 // Screen several fields at once (e.g. a gig's title and description).
@@ -113,4 +151,4 @@ async function review(id, { status, note }, reviewer) {
 
 module.exports = {
   maskContact,
-  haveOrder, screen, screenAll, record, orderPlaced, list, review, wordRe, CONTACT };
+  haveOrder, screen, screenAll, record, enrichWithAi, aiReview, orderPlaced, list, review, wordRe, CONTACT };

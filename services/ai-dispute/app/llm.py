@@ -256,3 +256,64 @@ async def complete_search_parse(query: str, categories: list, *, force_mock: boo
         return s, "remote", model, int((time.time() - t0) * 1000)
     except Exception:
         return parse_search(query, categories), "mock", "mock-fallback", int((time.time() - t0) * 1000)
+
+
+FRAUD_SYSTEM = """You are a marketplace trust-and-safety reviewer. Given a flagged chat/gig/order excerpt and rule reasons, return ONLY JSON:
+{"label":"off_platform_contact|off_platform_payment|impersonation|policy_keyword|order_risk|unclear","confidence":0-1,"rationale":"...","evidence":[{"source":"excerpt|rules","quote":"...","why":"..."}],"recommendAction":"review"}
+Never recommend ban or auto-action. recommendAction must always be "review". Quote only from the provided excerpt/reasons. If unsure, label=unclear and confidence < 0.5.
+"""
+
+
+async def complete_fraud_review(excerpt: str, reasons: list, kind: str = "message", *, force_mock: bool = False):
+    from .schemas import FraudReview
+    from .fraud_mock import review_fraud
+    t0 = time.time()
+    if force_mock or not configured():
+        return review_fraud(excerpt, reasons, kind), "mock", "mock", int((time.time() - t0) * 1000)
+    url = os.environ["AI_API_URL"]
+    key = os.environ["AI_API_KEY"]
+    model = os.environ.get("AI_MODEL") or "openai/gpt-4o-mini"
+    headers = {
+        "Authorization": f"Bearer {key}",
+        "Content-Type": "application/json",
+        "HTTP-Referer": os.environ.get("OPENROUTER_HTTP_REFERER", "https://qwlee.local"),
+        "X-Title": os.environ.get("OPENROUTER_X_TITLE", "Qwlee Fraud Review"),
+    }
+    body = {
+        "model": model,
+        "temperature": 0.1,
+        "max_tokens": 500,
+        "messages": [
+            {"role": "system", "content": FRAUD_SYSTEM},
+            {"role": "user", "content": json.dumps({"excerpt": excerpt, "reasons": reasons, "kind": kind}, ensure_ascii=False)[:12000]},
+        ],
+    }
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            r = await client.post(url, headers=headers, json=body)
+            r.raise_for_status()
+            data = r.json()
+        content = (((data.get("choices") or [{}])[0].get("message") or {}).get("content")) or ""
+        content = content.strip()
+        if content.startswith("```"):
+            content = content.strip("`")
+            if content.startswith("json"):
+                content = content[4:]
+            content = content.strip()
+        parsed = coerce_llm_payload(json.loads(content))
+        if isinstance(parsed, dict):
+            for k in ("label", "rationale", "recommendAction"):
+                if parsed.get(k) is None:
+                    parsed[k] = ""
+            for e in parsed.get("evidence") or []:
+                if isinstance(e, dict):
+                    for k in ("source", "quote", "why"):
+                        if e.get(k) is None:
+                            e[k] = ""
+            # Hard rule: AI never auto-bans
+            parsed["recommendAction"] = "review"
+        s = FraudReview.model_validate(parsed)
+        s.recommendAction = "review"
+        return s, "remote", model, int((time.time() - t0) * 1000)
+    except Exception:
+        return review_fraud(excerpt, reasons, kind), "mock", "mock-fallback", int((time.time() - t0) * 1000)

@@ -113,3 +113,18 @@ def test_parse_search_maps_logo_to_graphic():
     assert p.categoryHint == "Graphic Design"
     assert p.maxPrice == 40
     assert "AI understood" in p.explanation
+
+
+def test_fraud_mock_off_platform_pay():
+    from app.fraud_mock import review_fraud
+    r = review_fraud("Pay me on Venmo outside the platform please", ["contact:messenger"], "message")
+    assert r.label in ("off_platform_payment", "off_platform_contact")
+    assert r.recommendAction == "review"
+    assert r.confidence >= 0.7
+
+
+def test_fraud_mock_unclear():
+    from app.fraud_mock import review_fraud
+    r = review_fraud("Thanks for the delivery!", [], "message")
+    assert r.label == "unclear"
+    assert r.recommendAction == "review"

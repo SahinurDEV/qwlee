@@ -285,6 +285,10 @@ router.patch("/risk-flags/:id", A, catchAsync2(async (req, res) => {
   if (!require("mongoose").isValidObjectId(req.params.id)) return res.status(400).json({ code: 400, message: "Invalid id" });
   helpOk(res, await riskSvc.review(req.params.id, req.body || {}, req.user), "Flag updated");
 }));
+router.post("/risk-flags/:id/ai-review", A, catchAsync2(async (req, res) => {
+  if (!require("mongoose").isValidObjectId(req.params.id)) return res.status(400).json({ code: 400, message: "Invalid id" });
+  helpOk(res, await riskSvc.aiReview(req.params.id, { mock: Boolean(req.body?.mock) }), "AI review attached");
+}));
 
 // Canned replies for the support inbox (support permission for writes).
 const CannedReply = require("../../models/cannedReply.model");
