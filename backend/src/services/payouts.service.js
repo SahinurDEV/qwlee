@@ -68,7 +68,10 @@ async function send(w, fetchImpl) {
   if (configured[method]()) {
     result = method === "paypal" ? await paypal(w, fetchImpl) : await payoneer(w, fetchImpl);
   } else {
-    require("../config/logger").info(`[payouts] demo ${method} payout of $${w.withdrawalAmount} to ${w.payoutAccount} (no credentials set)`);
+    const log = require("../config/logger");
+    const msg = `[payouts] demo ${method} payout of $${w.withdrawalAmount} to ${w.payoutAccount} (no credentials set)`;
+    if (process.env.NODE_ENV === "production") log.warn(msg + " — set provider credentials for live payouts");
+    else log.info(msg);
     result = { provider: "demo", id: `demo_${method}_${w._id}`, status: "succeeded" };
   }
   return { ...result, at: new Date() };

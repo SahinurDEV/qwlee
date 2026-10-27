@@ -3,14 +3,23 @@
 // normal order is created at the discounted price, so delivery, escrow and
 // payout work exactly as for a one-off order.
 //
-// Payment: each cycle is charged through the demo provider when demo
-// payments are on. Recurring card billing (Stripe Billing, off-session
-// charges) is not implemented, so subscriptions are refused (503) when
-// demo payments are off.
+// Payment: demo provider when DEMO_PAYMENTS=true. When Stripe is configured
+// but demo is off, subscribe is allowed for catalog/setup; automated
+// billDue cycles are skipped until Stripe Billing is wired (clear skip
+// reason on the cycle). One-off Stripe checkout remains the live path
+// for the first month via the normal order flow.
 const httpStatus = require("http-status");
 const mongoose = require("mongoose");
 const crypto = require("crypto");
 const ApiError = require("../utils/ApiError");
+const paymentsConfig = require("./paymentsConfig.service");
+function billingProvider() {
+  const pay = paymentsConfig.readiness();
+  if (pay.mode === "stripe") return "stripe-pending"; // recurring Stripe Billing not wired; first month uses checkout
+  if (pay.demoPayments || pay.mode === "demo") return "demo";
+  return null;
+}
+
 const logger = require("../config/logger");
 const { Gig, Subscription } = require("../models");
 
@@ -27,8 +36,12 @@ const oid = (id, what) => {
 
 async function assertPayments() {
   const site = await require("./siteSettings.service").get();
-  if (!site.marketplace.demoPayments) {
-    throw new ApiError(httpStatus.SERVICE_UNAVAILABLE, "Subscriptions need recurring billing, which is only available with demo payments for now");
+  const pay = require("./paymentsConfig.service").readiness();
+  if (!site.marketplace.demoPayments && pay.mode !== "stripe") {
+    throw new ApiError(
+      httpStatus.SERVICE_UNAVAILABLE,
+      "Subscriptions need DEMO_PAYMENTS=true or STRIPE_SECRET_KEY configured for checkout."
+    );
   }
 }
 
@@ -58,6 +71,18 @@ async function bill(sub, at = new Date()) {
   const orderLifecycle = require("./orderLifecycle.service");
   try {
     await assertPayments();
+    const site = await require("./siteSettings.service").get();
+    const pay = paymentsConfig.readiness();
+    // Live Stripe Billing (off-session) is not wired yet — never mint a
+    // free "demo" order when DEMO_PAYMENTS is off.
+    if (!site.marketplace.demoPayments) {
+      const msg = pay.mode === "stripe"
+        ? "Stripe Billing not configured; cycle skipped (buyer must check out)"
+        : "Payments not in demo mode; cycle skipped";
+      logger.warn(`[subscriptions] ${msg} sub=${sub._id}`);
+      sub.cycles.push({ at, amount: sub.price, status: "failed", error: msg.slice(0, 200) });
+      return null;
+    }
     const quote = await quoteCycle(sub);
     const order = await orderLifecycle.createOrderFromQuote(quote, { sessionId: `demo_sub_${sub._id}_${crypto.randomUUID()}`, provider: "demo" });
     sub.cycles.push({ at, orderId: order._id, amount: quote.total, status: "paid" });
