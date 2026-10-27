@@ -142,9 +142,11 @@ app.get("/health", (req, res) => {
     req.headers["x-real-ip"] ||
     req.headers["x-forwarded-for"] ||
     req.connection.remoteAddress;
+  const payments = require("./services/paymentsConfig.service").readiness();
   res.send({
     message: "Qwlee API health check",
     userIP,
+    payments,
     // Lets the test-suite confirm it is talking to a throw-away instance.
     ...(process.env.TEST_MODE === "true" ? { testMode: true } : {}),
   });

@@ -81,8 +81,12 @@ test("audit log exports CSV; repeated denials alert super admins", async () => {
   const fin = await login("finance@example.com", "Admin123!");
   for (let i = 0; i < 5; i++) await call("PATCH", "/admin/settings/site", { token: fin.token, body: {} });
   await new Promise((r) => setTimeout(r, 800));
-  const notes = await call("GET", "/notification/admin", { token: sup.token });
-  const all = JSON.stringify(notes.json);
+  let all = "";
+  for (let page = 1; page <= 5; page++) {
+    const notes = await call("GET", `/notification/admin?limit=50&page=${page}`, { token: sup.token });
+    all += JSON.stringify(notes.json);
+    if (/finance@example\.com was refused 5 admin actions/.test(all)) break;
+  }
   assert.match(all, /finance@example\.com was refused 5 admin actions/);
 });
 
