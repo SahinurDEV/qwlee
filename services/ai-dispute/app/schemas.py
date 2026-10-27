@@ -10,16 +10,33 @@ Outcome = Literal[
 ]
 
 
+def _null_to_str(v: Any) -> str:
+    """OpenRouter often returns JSON null for unused string fields."""
+    if v is None:
+        return ""
+    return v if isinstance(v, str) else str(v)
+
+
 class Evidence(BaseModel):
     source: str
     quote: str
     why: str = ""
+
+    @field_validator("source", "quote", "why", mode="before")
+    @classmethod
+    def coerce_str(cls, v: Any) -> str:
+        return _null_to_str(v)
 
 
 class Partial(BaseModel):
     amount: Optional[float] = None
     percent: Optional[float] = None
     note: str = ""
+
+    @field_validator("note", mode="before")
+    @classmethod
+    def coerce_note(cls, v: Any) -> str:
+        return _null_to_str(v)
 
 
 class Suggestion(BaseModel):
@@ -30,6 +47,11 @@ class Suggestion(BaseModel):
     draftNoteToParties: str = ""
     draftAskMoreInfo: str = ""
     evidence: list[Evidence] = Field(default_factory=list)
+
+    @field_validator("rationale", "draftNoteToParties", "draftAskMoreInfo", mode="before")
+    @classmethod
+    def coerce_str(cls, v: Any) -> str:
+        return _null_to_str(v)
 
     @field_validator("confidence")
     @classmethod

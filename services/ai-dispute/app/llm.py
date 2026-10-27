@@ -49,6 +49,28 @@ def _sanitize(s: Suggestion, context: dict) -> Suggestion:
     return s
 
 
+def coerce_llm_payload(parsed: Any) -> Any:
+    """Normalize LLM JSON so Pydantic never sees null for string fields.
+
+    Models frequently emit `"draftAskMoreInfo": null` when the outcome is not
+    ask_for_more_info; without this, ValidationError triggers mock-fallback.
+    """
+    if not isinstance(parsed, dict):
+        return parsed
+    for k in ("draftAskMoreInfo", "draftNoteToParties", "rationale"):
+        if parsed.get(k) is None:
+            parsed[k] = ""
+    partial = parsed.get("partial")
+    if isinstance(partial, dict) and partial.get("note") is None:
+        partial["note"] = ""
+    for e in parsed.get("evidence") or []:
+        if isinstance(e, dict):
+            for k in ("source", "quote", "why"):
+                if e.get(k) is None:
+                    e[k] = ""
+    return parsed
+
+
 async def complete(context: dict, *, force_mock: bool = False) -> tuple[Suggestion, str, str, int]:
     """Returns suggestion, source, model, latencyMs."""
     t0 = time.time()
@@ -97,7 +119,7 @@ async def complete(context: dict, *, force_mock: bool = False) -> tuple[Suggesti
             if content.startswith("json"):
                 content = content[4:]
             content = content.strip()
-        parsed: Any = json.loads(content)
+        parsed: Any = coerce_llm_payload(json.loads(content))
         s = _sanitize(Suggestion.model_validate(parsed), context)
         return s, "remote", model, int((time.time() - t0) * 1000)
     except Exception:
