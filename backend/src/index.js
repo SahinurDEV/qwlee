@@ -31,6 +31,19 @@ mongoose.connect(config.mongoose.url, config.mongoose.options).then(() => {
     } catch (e) {
       logger.warn(`payments readiness: ${e.message}`);
     }
+
+    try {
+      const smtp = require("./services/smtpConfig.service").readiness();
+      if (config.env === "production" && smtp.mode !== "configured") {
+        logger.warn(
+          `SMTP not ready for live mail (mode=${smtp.mode}). Set SMTP_HOST, SMTP_PORT, SMTP_USER/SMTP_USERNAME, SMTP_PASS/SMTP_PASSWORD, and EMAIL_FROM/SMTP_FROM.`
+        );
+      } else {
+        logger.info(`SMTP mode: ${smtp.mode} (liveReady=${smtp.readyForLiveMail})`);
+      }
+    } catch (e) {
+      logger.warn(`smtp readiness: ${e.message}`);
+    }
   });
 });
 

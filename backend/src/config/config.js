@@ -22,9 +22,13 @@ const envVarsSchema = Joi.object()
     CORS_ORIGINS: Joi.string().allow('').default(''),
     SMTP_HOST: Joi.string().description('server that will send the emails'),
     SMTP_PORT: Joi.number().description('port to connect to the email server'),
-    SMTP_USERNAME: Joi.string().description('username for email server'),
-    SMTP_PASSWORD: Joi.string().description('password for email server'),
-    EMAIL_FROM: Joi.string().description('the from field in the emails sent by the app'),
+    SMTP_USERNAME: Joi.string().allow('').description('username for email server'),
+    SMTP_PASSWORD: Joi.string().allow('').description('password for email server'),
+    SMTP_USER: Joi.string().allow('').description('alias for SMTP_USERNAME'),
+    SMTP_PASS: Joi.string().allow('').description('alias for SMTP_PASSWORD'),
+    SMTP_FROM: Joi.string().allow('').description('alias for EMAIL_FROM'),
+    SMTP_FROM_EMAIL: Joi.string().allow('').description('alias for EMAIL_FROM'),
+    EMAIL_FROM: Joi.string().allow('').description('the from field in the emails sent by the app'),
     CLOUDINARY_CLOUD_NAME: Joi.string().allow('').default(''),
     CLOUDINARY_API_KEY: Joi.string().allow('').default(''),
     CLOUDINARY_API_SECRET: Joi.string().allow('').default(''),
@@ -83,10 +87,13 @@ module.exports = {
       host: envVars.SMTP_HOST,
       port: envVars.SMTP_PORT,
       // Local catchers such as Mailpit accept unauthenticated mail.
-      auth: envVars.SMTP_USERNAME
-        ? { user: envVars.SMTP_USERNAME, pass: envVars.SMTP_PASSWORD }
+      auth: (envVars.SMTP_USERNAME || envVars.SMTP_USER)
+        ? {
+            user: envVars.SMTP_USERNAME || envVars.SMTP_USER,
+            pass: envVars.SMTP_PASSWORD || envVars.SMTP_PASS,
+          }
         : undefined,
     },
-    from: envVars.EMAIL_FROM,
+    from: envVars.EMAIL_FROM || envVars.SMTP_FROM || envVars.SMTP_FROM_EMAIL,
   },
 };
