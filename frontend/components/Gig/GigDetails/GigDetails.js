@@ -71,7 +71,7 @@ export default function GigDetails({ slug }) {
   return (
     <div className="container mx-auto px-4 py-6 md:py-10">
       {/* Breadcrumb */}
-      <nav className="text-xs md:text-sm text-gray-500 flex items-center flex-wrap gap-1 mb-3">
+      <nav className="text-xs md:text-sm text-gray-500 flex items-center flex-wrap gap-x-1 mb-3 [&_a]:inline-flex [&_a]:items-center [&_a]:min-h-[36px] md:[&_a]:min-h-0">
         <Link href="/gig" className="hover:text-emerald-700">Marketplace</Link>
         {category?.name && (
           <>

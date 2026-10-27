@@ -258,3 +258,9 @@ html.dark .from-emerald-50, html.dark .from-emerald-100 { --tw-gradient-from: #0
 html.dark .via-white { --tw-gradient-stops: var(--tw-gradient-from), #0b1220, var(--tw-gradient-to) !important; }
 html.dark .to-cyan-50 { --tw-gradient-to: #0b2430 !important; }
 html.dark .to-white, html.dark .to-gray-100 { --tw-gradient-to: #0b1220 !important; }
+
+/* Mobile tap targets: antd checkbox labels are the hit area, so give the
+   whole label a 44px row instead of relying on the 16px box. */
+@media (max-width: 639px) {
+  .ant-checkbox-wrapper { min-height: 44px; align-items: center; }
+}

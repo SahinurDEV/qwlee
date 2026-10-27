@@ -173,7 +173,7 @@ export default function Footer() {
           <div className="flex items-center gap-4">
             <a
               href="mailto:info@qwlee.com"
-              className="inline-flex items-center gap-1.5 hover:text-gray-200 transition"
+              className="inline-flex items-center gap-1.5 min-h-[44px] hover:text-gray-200 transition"
             >
               <HiOutlineMailOpen className="w-4 h-4" />
               info@qwlee.com

@@ -211,7 +211,7 @@ function GigContent() {
                 <button
                   type="button"
                   onClick={clearSearch}
-                  className="px-3 text-gray-400 hover:text-gray-600"
+                  className="px-3 min-h-[44px] inline-flex items-center text-gray-400 hover:text-gray-600"
                   aria-label="Clear search"
                 >
                   <IoClose className="w-5 h-5" />
