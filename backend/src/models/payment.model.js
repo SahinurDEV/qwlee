@@ -177,6 +177,15 @@ const ordersSchema = mongoose.Schema(
 // add plugin that converts mongoose to json
 ordersSchema.plugin(paginate);
 
+// Query paths used by buyer/seller lists, Late tab counts, and admin.
+ordersSchema.index({ clientId: 1, status: 1, createdAt: -1 });
+ordersSchema.index({ freelancerId: 1, status: 1, createdAt: -1 });
+ordersSchema.index({ status: 1, deliveryDate: 1 });
+ordersSchema.index({ clientId: 1, deliveryDate: 1, status: 1 });
+ordersSchema.index({ freelancerId: 1, deliveryDate: 1, status: 1 });
+ordersSchema.index({ sessionId: 1 }, { unique: true, sparse: true });
+
+
 const Payment = mongoose.model("Payment", ordersSchema);
 
 module.exports = Payment;
