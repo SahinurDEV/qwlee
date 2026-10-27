@@ -135,6 +135,8 @@ export default function GigWizard({ mode = "create", gig = null }) {
   const dragIdx = useRef(null);
   const fileInput = useRef(null);
   const hydrated = useRef(false);
+  // Last persisted snapshot; autosave only runs when the form changed.
+  const lastSaved = useRef(null);
 
   const [addGig] = useAddGigMutation();
   const [editGig] = useEditGigMutation();
@@ -184,16 +186,20 @@ export default function GigWizard({ mode = "create", gig = null }) {
         setRestored(true);
       }
     } catch {}
+    lastSaved.current = JSON.stringify(base);
     setData(base);
   }, [gig, mode, draftKey]);
 
   // Autosave (debounced).
   useEffect(() => {
     if (!hydrated.current) return;
+    const snapshot = JSON.stringify(data);
+    if (snapshot === lastSaved.current) return;
     const t = setTimeout(() => {
       const at = new Date().toISOString();
       try {
         localStorage.setItem(draftKey, JSON.stringify({ at, data }));
+        lastSaved.current = snapshot;
         setSavedAt(at);
       } catch {}
     }, 600);
@@ -337,7 +343,7 @@ export default function GigWizard({ mode = "create", gig = null }) {
         </div>
         <div className="flex items-center gap-3 text-xs text-gray-500" data-testid="autosave">
           {savedAt ? <span className="inline-flex items-center gap-1"><IoCheckmarkCircle className="text-emerald-500" />Draft saved {new Date(savedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span> : <span>Autosave on</span>}
-          {restored && <button type="button" onClick={discardDraft} className="text-rose-600 hover:underline">Discard draft</button>}
+          {restored && <button type="button" onClick={discardDraft} className="inline-flex items-center min-h-[44px] px-1 text-rose-600 hover:underline">Discard draft</button>}
         </div>
       </div>
 
@@ -350,7 +356,8 @@ export default function GigWizard({ mode = "create", gig = null }) {
         <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
           <div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: `${progress}%` }} />
         </div>
-        <ol className="mt-4 flex gap-1 overflow-x-auto">
+        <div className="relative">
+        <ol className="mt-4 flex gap-1 overflow-x-auto pr-8 sm:pr-0 [scrollbar-width:none]">
           {STEPS.map((s, i) => {
             const ok = i < 5 && stepOk(i);
             const bad = i < 5 && attempted[i] && !ok;
@@ -359,7 +366,7 @@ export default function GigWizard({ mode = "create", gig = null }) {
                 <button
                   type="button"
                   onClick={() => go(i)}
-                  className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                  className={`flex items-center gap-2 rounded-full px-3 min-h-[44px] text-xs font-semibold transition ${
                     i === step ? "bg-gray-900 text-white" : bad ? "bg-rose-50 text-rose-700" : ok ? "bg-emerald-50 text-emerald-800" : "text-gray-500 hover:bg-gray-100"
                   }`}
                 >
@@ -372,6 +379,8 @@ export default function GigWizard({ mode = "create", gig = null }) {
             );
           })}
         </ol>
+        <div aria-hidden className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-white to-transparent sm:hidden" />
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
@@ -447,7 +456,7 @@ export default function GigWizard({ mode = "create", gig = null }) {
                           {p.features.map((f, k) => (
                             <div key={k} className="flex gap-1">
                               <input value={f} maxLength={120} placeholder={`Feature ${k + 1}`} onBlur={() => touch(`feat${i}`)} onChange={(e) => setPkg(i, { features: p.features.map((x, j) => (j === k ? e.target.value : x)) })} className={inputCls(false)} />
-                              {p.features.length > 1 && <button type="button" aria-label="Remove feature" onClick={() => setPkg(i, { features: p.features.filter((_, j) => j !== k) })} className="px-1 text-gray-400 hover:text-rose-600"><IoClose /></button>}
+                              {p.features.length > 1 && <button type="button" aria-label="Remove feature" onClick={() => setPkg(i, { features: p.features.filter((_, j) => j !== k) })} className="inline-flex h-9 w-9 items-center justify-center text-gray-400 hover:text-rose-600"><IoClose /></button>}
                             </div>
                           ))}
                           {p.features.length < 10 && <button type="button" onClick={() => setPkg(i, { features: [...p.features, ""] })} className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700"><IoAdd />Add feature</button>}
@@ -731,7 +740,7 @@ function TagInput({ tags, onChange, err }) {
         {tags.map((t) => (
           <span key={t} className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800">
             {t}
-            <button type="button" aria-label={`Remove ${t}`} onClick={() => onChange(tags.filter((x) => x !== t))}><IoClose /></button>
+            <button type="button" aria-label={`Remove ${t}`} onClick={() => onChange(tags.filter((x) => x !== t))} className="-my-2 -mr-2 inline-flex h-8 w-8 items-center justify-center rounded-full hover:bg-emerald-100"><IoClose /></button>
           </span>
         ))}
         <input
