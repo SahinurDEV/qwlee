@@ -143,3 +143,30 @@ class SearchParseResponse(BaseModel):
     model: str = ""
     latencyMs: int = 0
     configured: bool = True
+
+
+class ModerateMessageRequest(BaseModel):
+    text: str
+    heuristic: dict[str, Any] = Field(default_factory=dict)
+    mock: bool = False
+
+
+class ModerateMessageResult(BaseModel):
+    reasons: list[str] = Field(default_factory=list)
+    score: float = 0
+    summary: str = ""
+
+    @field_validator("summary", mode="before")
+    @classmethod
+    def coerce_summary(cls, v: Any) -> str:
+        return _null_to_str(v)
+
+
+class ModerateMessageResponse(BaseModel):
+    reasons: list[str] = Field(default_factory=list)
+    score: float = 0
+    summary: str = ""
+    source: Literal["remote", "mock"] = "mock"
+    model: str = ""
+    latencyMs: int = 0
+    configured: bool = True

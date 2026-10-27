@@ -87,6 +87,7 @@ router.post(
 // moderation. No write endpoints — admins observe, they don't post.
 const adminChatsController = require("../../controllers/adminChats.controller");
 router.get("/chats", auth("admin"), adminChatsController.listDirectChats);
+router.get("/chats/flagged", auth("admin"), adminChatsController.listFlagged);
 router.get(
   "/chats/:chatId/messages",
   auth("admin"),
@@ -347,5 +348,6 @@ router.post("/email-templates/:key/preview", A, catchAsync2(async (req, res) => 
 router.put("/email-templates/:key", A, catchAsync2(async (req, res) => helpOk(res, { template: await tplSvc.save(req.params.key, req.body, req.user._id) }, "Template saved")));
 router.delete("/email-templates/:key", A, catchAsync2(async (req, res) => helpOk(res, await tplSvc.reset(req.params.key), "Template reset")));
 router.post("/email-templates/:key/test", A, catchAsync2(async (req, res) => helpOk(res, await tplSvc.testSend(req.params.key, req.user.email), "Test email sent")));
+router.post("/email-templates/:key/restore", A, catchAsync2(async (req, res) => helpOk(res, { template: await tplSvc.restore(req.params.key, req.body?.index ?? 0, req.user._id) }, "Version restored")));
 
 module.exports = router;

@@ -19,6 +19,12 @@ router
     blogController.createBlog
   );
 
+
+router.post("/suggest", auth("admin"), (req, res) => {
+  const blogAi = require("../../services/blogAi.service");
+  res.status(200).json({ code: 200, message: "OK", data: blogAi.suggest(req.body || {}) });
+});
+
 router
   .route("/:blogId")
   .get(blogController.getBlog)

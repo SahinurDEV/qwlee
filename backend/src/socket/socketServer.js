@@ -84,6 +84,8 @@ io.on("connection", async (socket) => {
   if (socket.verifiedUserId) {
     socket.userId = socket.verifiedUserId;
     socket.join(socket.userId);
+    // Admins join a shared room so risk flags arrive in real time.
+    isAdminSocket(socket).then((ok) => { if (ok) socket.join("admins"); }).catch(() => {});
     await presence.addConnection(socket.userId, socket.id);
     socket.broadcast.emit("user/connect", socket.userId);
   }
@@ -127,9 +129,18 @@ io.on("connection", async (socket) => {
   });
 });
 
-server.listen(PORT, () => {
-  logger.info(`Socket server is running on port ${PORT}`);
-});
+if (!server.listening) {
+  server.once("error", (err) => {
+    if (err && err.code === "EADDRINUSE") {
+      logger.warn(`Socket port ${PORT} already in use — reusing existing listener`);
+      return;
+    }
+    throw err;
+  });
+  server.listen(PORT, () => {
+    logger.info(`Socket server is running on port ${PORT}`);
+  });
+}
 
 const initSocket = () => {
   logger.info("Socket server initialized");

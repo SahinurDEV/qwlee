@@ -7,7 +7,7 @@
 // This service exposes paginated lists + full thread reads for both,
 // scoped admin-only via the route guard. No writes — moderation only.
 
-const { Chats, Messages, OrderMessage, Payment } = require("../models");
+const { Chats, Messages, OrderMessage, Payment, RiskFlag } = require("../models");
 
 async function listDirectChats({ search = "", limit = 100, page = 1 } = {}) {
   const items = await Chats.find({ isDeleted: { $ne: true } })
@@ -26,7 +26,8 @@ async function listDirectChats({ search = "", limit = 100, page = 1 } = {}) {
         .sort({ createdAt: -1 })
         .populate({ path: "sender", select: "fullName username role" });
       const count = await Messages.countDocuments({ chat: chat._id });
-      return { chat, lastMessage: last, messageCount: count };
+      const openFlags = await RiskFlag.countDocuments({ kind: "message", chatId: chat._id, status: "open" });
+      return { chat, lastMessage: last, messageCount: count, openFlags, flagged: openFlags > 0 };
     })
   );
 
@@ -123,9 +124,27 @@ async function getOrderChat(orderId) {
   return { order, messages };
 }
 
+
+async function listFlaggedMessages({ status = "open", limit = 50, page = 1 } = {}) {
+  const filter = { kind: "message" };
+  if (status && status !== "all") filter.status = status;
+  const result = await RiskFlag.paginate(filter, {
+    sortBy: "createdAt:desc",
+    page: Number(page) || 1,
+    limit: Math.min(Number(limit) || 50, 200),
+    populate: [
+      { path: "userId", select: "fullName username email image role" },
+      { path: "chatId", select: "participants", populate: { path: "participants", select: "fullName username image role" } },
+    ],
+  });
+  return result;
+}
+
 module.exports = {
   listDirectChats,
   getDirectChat,
   listOrderChats,
   getOrderChat,
+  listFlaggedMessages,
 };
+

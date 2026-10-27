@@ -1,4 +1,5 @@
 const { Chats, Messages, Inboxes } = require("../src/models");
+const risk = require("../src/services/risk.service");
 const { pick, rand, daysAgo } = require("./utils/random");
 
 // Realistic-feeling thread for each buyer/seller pair we've already
@@ -6,6 +7,12 @@ const { pick, rand, daysAgo } = require("./utils/random");
 // Inbox row (which carries the "last message" preview the UI shows).
 
 const THREAD_TEMPLATES = [
+  // Risky off-platform (seeded for admin Flagged queue demos)
+  [
+    { from: "buyer", text: "Hi! Can we continue on WhatsApp? My number is +8801712345678 or email me at buyer.demo@gmail.com" },
+    { from: "seller", text: "Sure — or pay via paypal.me/demoseller outside the platform if you prefer." },
+    { from: "buyer", text: "Also reach john at gmail dot com if the chat is slow." },
+  ],
   // Web dev / SaaS
   [
     { from: "buyer", text: "Hi! I read your gig — looks like exactly what we need. Can we talk scope?" },
@@ -101,6 +108,15 @@ async function seedChats({ buyers, sellers, gigs }) {
         updatedAt: createdAt,
       });
       messageDocs.push(msg);
+      // Auto-flag contact / off-platform seed messages for the Flagged queue.
+      try {
+        const screened = await risk.screen(entry.text, { contact: true });
+        if (screened.reasons.length) {
+          await risk.record("message", msg._id, sender._id, screened.reasons, entry.text, {
+            spans: screened.spans, score: screened.score, chatId: chat._id, aiSource: "seed",
+          });
+        }
+      } catch (_) {}
       lastMessage = { msg, sender, entry, createdAt };
     }
 
