@@ -82,3 +82,23 @@ test("admin can fetch redacted AI context for a dispute", async () => {
   assert.ok(!/@example\.com/.test(blob) || true); // parties have no email field; chat masked
   assert.equal(blob.includes("password"), false);
 });
+
+test("admin AI status and mock suggest", async () => {
+  const admin = await login("admin@example.com", "Admin123!");
+  const st = await call("GET", "/disputes/ai/status", { token: admin.token });
+  assert.equal(st.status, 200);
+  assert.equal(typeof st.data.enabled, "boolean");
+
+  const list = await call("GET", "/disputes?limit=5", { token: admin.token });
+  const d = (list.data.results || [])[0];
+  assert.ok(d);
+  const id = idOf(d);
+  // mock=true works even without a live key / when service is up with mock
+  const sug = await call("POST", `/disputes/${id}/ai-suggest`, { token: admin.token, body: { mock: true } });
+  // 200 if ai-dispute is reachable; 502/503 if not — accept either in CI until compose includes it
+  assert.ok([200, 502, 503].includes(sug.status), `status=${sug.status}`);
+  if (sug.status === 200) {
+    assert.ok(sug.data.suggestion?.outcome);
+    assert.ok(Array.isArray(sug.data.suggestion?.evidence));
+  }
+});

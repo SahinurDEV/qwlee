@@ -49,6 +49,15 @@ services:
       # Load the demo data when the API starts against an empty database
       # (fresh install or lost volume). Set to false in production.
       SEED_DEMO_IF_EMPTY: ${SEED_DEMO_IF_EMPTY:-true}
+      AI_HELPERS: ${AI_HELPERS:-on}
+      AI_API_URL: ${AI_API_URL:-https://openrouter.ai/api/v1/chat/completions}
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_MODEL: ${AI_MODEL:-meta-llama/llama-3.3-70b-instruct:free}
+      AI_DISPUTE_ASSISTANT: ${AI_DISPUTE_ASSISTANT:-on}
+      AI_DISPUTE_URL: ${AI_DISPUTE_URL:-http://ai-dispute:7190}
+      AI_DISPUTE_TOKEN: ${AI_DISPUTE_TOKEN:-local-ai-dispute-token-change-me}
+      OPENROUTER_HTTP_REFERER: ${OPENROUTER_HTTP_REFERER:-https://qwlee.local}
+      OPENROUTER_X_TITLE: ${OPENROUTER_X_TITLE:-Qwlee Dispute Assistant}
     ports:
       - "${BACKEND_PORT:-7171}:7171"
       - "${SOCKET_PORT:-8181}:8181"
@@ -121,6 +130,23 @@ services:
         condition: service_healthy
     ports:
       - "${ADMIN_PORT:-4000}:80"
+
+  # Dispute AI assistant (Python FastAPI). Internal only.
+  # Needs AI_API_URL / AI_API_KEY / AI_MODEL (OpenRouter by default).
+  ai-dispute:
+    build: ./services/ai-dispute
+    restart: unless-stopped
+    environment:
+      PORT: 7190
+      AI_API_URL: ${AI_API_URL:-https://openrouter.ai/api/v1/chat/completions}
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_MODEL: ${AI_MODEL:-meta-llama/llama-3.3-70b-instruct:free}
+      AI_DISPUTE_TOKEN: ${AI_DISPUTE_TOKEN:-local-ai-dispute-token-change-me}
+      OPENROUTER_HTTP_REFERER: ${OPENROUTER_HTTP_REFERER:-https://qwlee.local}
+      OPENROUTER_X_TITLE: ${OPENROUTER_X_TITLE:-Qwlee Dispute Assistant}
+    # Published on host for hostnet mode; compose network uses service DNS.
+    ports:
+      - "${AI_DISPUTE_PORT:-7190}:7190"
 
 volumes:
   uploads:
