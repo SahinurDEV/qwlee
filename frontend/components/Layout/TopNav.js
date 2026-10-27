@@ -23,6 +23,7 @@ import {
   IoBagHandleOutline,
   IoChevronForward,
   IoHelpCircleOutline,
+  IoShieldCheckmarkOutline,
   IoSettingsOutline,
   IoStatsChartOutline,
   IoGiftOutline,
@@ -160,6 +161,7 @@ export default function TopNav() {
     { icon: IoSparklesOutline, label: "Seller Plus", href: "/seller-plan" },
     { icon: IoSparklesOutline, label: "Apply for Pro", href: "/pro" },
     { icon: IoListOutline, label: "Manage orders", href: "/order" },
+    { icon: IoShieldCheckmarkOutline, label: "Resolution Center", href: "/resolution" },
     { icon: IoListOutline, label: "Hourly contracts", href: "/hourly" },
     { icon: IoSparklesOutline, label: "Contests", href: "/contests" },
     { icon: IoSparklesOutline, label: "Create a new gig", href: "/gig/add" },
@@ -175,6 +177,7 @@ export default function TopNav() {
   const buyingLinks = [
     { icon: IoStorefrontOutline, label: "Dashboard", href: "/dashboard" },
     { icon: IoListOutline, label: "Orders", href: "/order" },
+    { icon: IoShieldCheckmarkOutline, label: "Resolution Center", href: "/resolution" },
     { icon: IoListOutline, label: "Hourly contracts", href: "/hourly" },
     { icon: IoSparklesOutline, label: "Contests", href: "/contests" },
     { icon: IoHeartOutline, label: "Wishlist", href: "/list" },
