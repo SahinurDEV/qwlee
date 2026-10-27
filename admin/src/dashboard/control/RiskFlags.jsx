@@ -37,7 +37,7 @@ const TABS = [
 const KINDS = ["", "chat", "message", "offer", "gig", "request", "order"];
 const REASON = (r) =>
   r.startsWith("keyword:") ? `Word “${r.slice(8)}”` :
-  ({ "contact:email": "Email address", "contact:phone": "Phone number", "contact:messenger": "Messenger link", "new-account-large-order": "Large order, new account", "order-burst": "3+ orders in an hour" })[r] || (r.startsWith("report:") ? `Reported: ${r.slice(7)}` : r);
+  ({ "contact:email": "Email address", "contact:phone": "Phone number", "contact:messenger": "Messenger link", "pay-outside": "Pay outside platform", "new-account-large-order": "Large order, new account", "order-burst": "3+ orders in an hour" })[r] || (r.startsWith("report:") ? `Reported: ${r.slice(7)}` : r);
 
 function targetLink(f) {
   if (f.kind === "chat") return `/dashboard/conversations?chat=${f.targetId}`;
@@ -54,9 +54,18 @@ export default function RiskFlags() {
   const { data, error, loading, reload } = useAdminQuery(`/admin/risk-flags${qs({ status, kind, page })}`);
   const review = (f, next, title) =>
     act({ title, askReason: next === "open" ? undefined : "Note (optional)", description: next === "open" ? "Move it back to the open queue." : undefined, method: "PATCH", path: `/admin/risk-flags/${f.id}`, body: { status: next }, done: reload, success: "Updated" });
+  const askAi = async (f) => {
+    try {
+      await adminFetch(`/admin/risk-flags/${f.id}/ai-review`, { method: "POST", body: {} });
+      toast.success("AI review attached — still needs a human");
+      reload();
+    } catch (e) {
+      toast.error(e.message);
+    }
+  };
   return (
     <div>
-      <PageHeader title="Risk flags" subtitle="Messages, listings and orders caught by the keyword filters and risk rules." />
+      <PageHeader title="Risk flags" subtitle="Messages, listings and orders caught by keyword filters, pay-outside rules, and an AI second pass (never auto-bans)." />
       <ErrorNote error={error} />
       <Card bodyClassName="p-0">
         <div className="p-4 border-b border-ink-100 flex flex-wrap gap-3 items-center">
@@ -79,12 +88,24 @@ export default function RiskFlags() {
                       <div className="text-xs text-ink-400 font-mono">{f.targetId}</div>
                       {to ? <Link to={to} className="text-xs text-primary-700 underline">Open</Link> : null}
                     </Td>
-                    <Td><div className="flex flex-wrap gap-1">{f.reasons.map((r) => <span key={r} className="text-xs bg-amber-50 text-amber-800 border border-amber-200 rounded px-1.5 py-0.5">{REASON(r)}</span>)}</div></Td>
+                    <Td>
+                      <div className="flex flex-wrap gap-1">{f.reasons.map((r) => <span key={r} className="text-xs bg-amber-50 text-amber-800 border border-amber-200 rounded px-1.5 py-0.5">{REASON(r)}</span>)}</div>
+                      {f.aiLabel ? (
+                        <div className="mt-2 rounded-lg border border-violet-200 bg-violet-50/70 p-2 text-left max-w-sm">
+                          <div className="text-[10px] font-semibold uppercase tracking-wide text-violet-800">AI · {f.aiLabel}{f.aiConfidence != null ? ` · ${Math.round(Number(f.aiConfidence) * 100)}%` : ""}{f.aiSource ? ` · ${f.aiSource}` : ""}</div>
+                          <p className="text-xs text-ink-700 mt-0.5">{f.aiRationale}</p>
+                          {(f.aiEvidence || []).slice(0, 2).map((e, i) => (
+                            <div key={i} className="text-[11px] text-ink-500 mt-1 border-l-2 border-violet-300 pl-1.5">“{e.quote}” — {e.why}</div>
+                          ))}
+                        </div>
+                      ) : null}
+                    </Td>
                     <Td><div className="text-sm">{f.userId?.fullName || "—"}</div><div className="text-xs text-ink-500">{f.userId?.email}</div>{f.reportedBy ? <div className="text-xs text-ink-500">Reported by {f.reportedBy.fullName || f.reportedBy.email}</div> : null}<div className="text-xs text-ink-500">{timeAgo(f.createdAt)}</div></Td>
                     <Td><StatusPill status={f.status === "open" ? "pending" : f.status === "actioned" ? "error" : "ok"} label={f.status} />{f.note ? <div className="text-xs text-ink-500 mt-1">{f.note}</div> : null}</Td>
                     <Td className="text-right whitespace-nowrap">
                       {f.status === "open" ? (
-                        <div className="flex gap-2 justify-end">
+                        <div className="flex gap-2 justify-end flex-wrap">
+                          <Button size="sm" variant="secondary" onClick={() => askAi(f)}>Ask AI</Button>
                           <Button size="sm" variant="secondary" onClick={() => review(f, "dismissed", "Dismiss flag")}>Dismiss</Button>
                           {f.userId ? <Button size="sm" variant="secondary" onClick={() => warnFromFlag(f, reload)}>Warn user</Button> : null}
                           <Button size="sm" variant="danger" onClick={() => review(f, "actioned", "Mark as actioned")}>Actioned</Button>

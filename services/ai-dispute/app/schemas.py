@@ -143,3 +143,47 @@ class SearchParseResponse(BaseModel):
     model: str = ""
     latencyMs: int = 0
     configured: bool = True
+
+
+class FraudEvidence(BaseModel):
+    source: str
+    quote: str
+    why: str = ""
+
+    @field_validator("source", "quote", "why", mode="before")
+    @classmethod
+    def coerce_fraud_cite(cls, v: Any) -> str:
+        return _null_to_str(v)
+
+
+class FraudReview(BaseModel):
+    label: str = "unclear"
+    confidence: float = Field(ge=0, le=1)
+    rationale: str = ""
+    evidence: list[FraudEvidence] = Field(default_factory=list)
+    recommendAction: str = "review"  # always review; never auto-ban from AI
+
+    @field_validator("label", "rationale", "recommendAction", mode="before")
+    @classmethod
+    def coerce_fraud_str(cls, v: Any) -> str:
+        return _null_to_str(v)
+
+    @field_validator("confidence")
+    @classmethod
+    def clamp_fraud_conf(cls, v: float) -> float:
+        return max(0.0, min(1.0, float(v)))
+
+
+class FraudReviewRequest(BaseModel):
+    excerpt: str = ""
+    reasons: list[str] = Field(default_factory=list)
+    kind: str = "message"
+    mock: bool = False
+
+
+class FraudReviewResponse(BaseModel):
+    review: FraudReview
+    source: Literal["remote", "mock"]
+    model: str = ""
+    latencyMs: int = 0
+    configured: bool = True
