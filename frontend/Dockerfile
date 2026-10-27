@@ -27,7 +27,17 @@ RUN npm run build && npm prune --omit=dev
 
 FROM node:22-alpine
 WORKDIR /app
-ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1
+# `next start` re-reads next.config.mjs at runtime, so the image allowlist
+# inputs must exist here too (not only in the build stage).
+ARG NEXT_PUBLIC_BACKEND_API_URL=http://localhost:7171
+ARG NEXT_PUBLIC_IMAGE_HOSTS=
+ARG NEXT_IMAGE_OPTIMIZE=true
+ARG NEXT_IMAGE_ALLOW_LOCAL_IP=false
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 \
+    NEXT_PUBLIC_BACKEND_API_URL=$NEXT_PUBLIC_BACKEND_API_URL \
+    NEXT_PUBLIC_IMAGE_HOSTS=$NEXT_PUBLIC_IMAGE_HOSTS \
+    NEXT_IMAGE_OPTIMIZE=$NEXT_IMAGE_OPTIMIZE \
+    NEXT_IMAGE_ALLOW_LOCAL_IP=$NEXT_IMAGE_ALLOW_LOCAL_IP
 COPY --from=build --chown=node:node /app ./
 USER node
 EXPOSE 8000
