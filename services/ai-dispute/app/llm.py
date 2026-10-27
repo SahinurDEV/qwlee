@@ -243,9 +243,16 @@ async def complete_search_parse(query: str, categories: list, *, force_mock: boo
         parsed = coerce_llm_payload(json.loads(content))
         s = SearchParse.model_validate(parsed)
         if s.categoryHint and categories and s.categoryHint not in categories:
-            # fuzzy contain
-            hit = next((c for c in categories if s.categoryHint.lower() in c.lower() or c.lower() in s.categoryHint.lower()), "")
-            s.categoryHint = hit
+            hint = s.categoryHint.lower()
+            # Prefer catalogue names that share a meaningful token (e.g. "Logo Design" → "Graphic Design")
+            hit = next((c for c in categories if hint == c.lower() or hint in c.lower() or c.lower() in hint), "")
+            if not hit:
+                # Fall back to deterministic mock category from the raw query
+                hit = parse_search(query, categories).categoryHint
+            s.categoryHint = hit if hit in (categories or [hit]) else hit
+        # Always give the UI a human-readable explanation
+        if not (s.explanation or "").strip():
+            s.explanation = parse_search(query, categories).explanation
         return s, "remote", model, int((time.time() - t0) * 1000)
     except Exception:
         return parse_search(query, categories), "mock", "mock-fallback", int((time.time() - t0) * 1000)
