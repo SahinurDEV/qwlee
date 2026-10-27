@@ -11,6 +11,38 @@ An open-source, Fiverr-style freelance services marketplace: sellers publish gig
 
 Full feature list: [docs/FEATURES.md](docs/FEATURES.md). Architecture and developer guides: [docs/](docs/).
 
+## Case study: AI Dispute Assistant
+
+**Problem.** Admins resolving marketplace disputes had to dig through order chat, delivery events, and policy pages by hand. That was slow, easy to miss evidence, and hard to keep consistent with published refund rules.
+
+**How it works.** On **Admin → Disputes**, an admin opens a case and clicks **Suggest resolution**. Express assembles a redacted context pack (dispute thread, order events, last ~80 order messages, gig package, top policy chunks) with PII masked. A small FastAPI sidecar (`services/ai-dispute`) calls OpenRouter, validates the JSON against a strict schema, and drops any citation that was not in the prompt. The admin sees outcome, confidence, evidence quotes, and an optional partial-refund amount — then must Accept, edit, copy an ask-more draft, or Dismiss. The model never refunds or releases escrow on its own.
+
+```mermaid
+flowchart LR
+  Admin[Admin Disputes UI] -->|suggest| API[Express API]
+  API -->|read case| Mongo[(MongoDB)]
+  API -->|redacted context| Py[ai-dispute FastAPI]
+  Policies[Policy corpus] --> Py
+  Py -->|prompt| LLM[OpenRouter]
+  LLM -->|JSON suggestion| Py
+  Py --> API
+  API -->|suggestion card| Admin
+```
+
+**Eval.** Offline mock harness: **100%** exact outcome match on 20 seeded cases. Live OpenRouter (`openai/gpt-4o-mini`): **90%** (18/20). Misses E11 and E20 returned the safer `ask_for_more_info` instead of `release_to_seller`.
+
+**Human approval.** Every suggestion is logged on `DisputeAiSuggestion` (model, latency, source). Accept runs the existing resolve endpoint only after the admin confirms. Ask-for-more is draft-only (copy/paste). Partial refunds carry a real amount field.
+
+**Screenshots** (desktop suggestion card, evidence close-up, 375px):
+
+![AI suggestion — desktop](docs/ai-dispute/example-suggest-desktop.png)
+
+![AI suggestion — evidence](docs/ai-dispute/example-evidence-desktop.png)
+
+![AI suggestion — 375px](docs/ai-dispute/example-suggest-375.png)
+
+Operational env vars and eval commands: [Admin Dispute AI assistant](#admin-dispute-ai-assistant) below.
+
 ## Demo video
 
 **qwlee – Full User Manual: Open-Source Freelance Marketplace (Buyer, Seller & Admin Walkthrough)**
