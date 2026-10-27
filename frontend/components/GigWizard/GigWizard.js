@@ -24,6 +24,7 @@ import { useGetAllCategoryQuery } from "@/app/redux/features/getAllCategoryApi";
 import { useAddGigMutation } from "@/app/redux/features/addGigApi";
 import { useEditGigMutation } from "@/app/redux/features/editGigApi";
 import { usePostGigImageUpoadMutation } from "@/app/redux/features/postGigImageUpoadApi";
+import { usePostGigVideoMutation } from "@/app/redux/features/postGigVideoApi";
 import { cleanGigExtras } from "@/components/common/GigExtrasEditor";
 import { imgUrl } from "@/lib/constant";
 
@@ -138,6 +139,7 @@ export default function GigWizard({ mode = "create", gig = null }) {
   const [addGig] = useAddGigMutation();
   const [editGig] = useEditGigMutation();
   const [uploadImages] = usePostGigImageUpoadMutation();
+  const [uploadVideo, { isLoading: videoUploading }] = usePostGigVideoMutation();
   const { data: catData } = useGetAllCategoryQuery({ limit: 100 });
   const { data: subData } = useGetAllCategoryQuery({ parentId: data.categoryId, limit: 100 }, { skip: !data.categoryId });
   const categories = catData?.results || [];
@@ -571,8 +573,53 @@ export default function GigWizard({ mode = "create", gig = null }) {
                   </ul>
                 )}
               </Field>
-              <Field label="Video (optional)" hint="A YouTube or Vimeo link, or an https .mp4/.webm URL. Gigs with a video tend to convert better." err={show(4, "video")}>
-                <input value={data.video} onBlur={() => touch("video")} onChange={(e) => set({ video: e.target.value })} placeholder="https://www.youtube.com/watch?v=…" className={inputCls(show(4, "video"))} />
+              <Field label="Video (optional)" hint="Upload an MP4/WebM (up to 50MB) or paste a YouTube/Vimeo / https .mp4 link. Gigs with a video tend to convert better." err={show(4, "video")}>
+                <div className="space-y-2" data-testid="gig-video-field">
+                  <input value={data.video} onBlur={() => touch("video")} onChange={(e) => set({ video: e.target.value })} placeholder="https://www.youtube.com/watch?v=… or uploaded URL" className={inputCls(show(4, "video"))} />
+                  <div className="flex flex-wrap items-center gap-2">
+                    <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50">
+                      <input
+                        type="file"
+                        accept="video/mp4,video/webm,video/quicktime"
+                        className="sr-only"
+                        disabled={videoUploading}
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          e.target.value = "";
+                          if (!file) return;
+                          if (file.size > 50 * 1024 * 1024) {
+                            toast.error("Videos can be up to 50MB");
+                            return;
+                          }
+                          const fd = new FormData();
+                          fd.append("video", file);
+                          try {
+                            const r = await uploadVideo({ gigId: mode === "edit" ? idOf(gig) : undefined, formData: fd });
+                            const url = r?.data?.attributes?.url || r?.data?.data?.url || r?.data?.url;
+                            if (r?.error || !url) {
+                              toast.error(r?.error?.data?.message || "Video upload failed");
+                              return;
+                            }
+                            set({ video: url });
+                            touch("video");
+                            toast.success("Video uploaded");
+                          } catch (err) {
+                            toast.error(err?.message || "Video upload failed");
+                          }
+                        }}
+                      />
+                      {videoUploading ? "Uploading…" : "Upload video"}
+                    </label>
+                    {data.video ? (
+                      <button type="button" className="text-xs text-rose-700 hover:underline" onClick={() => set({ video: "" })}>
+                        Clear
+                      </button>
+                    ) : null}
+                  </div>
+                  {data.video && /\.(mp4|webm)(\?|$)/i.test(data.video) ? (
+                    <video src={data.video} controls playsInline className="mt-1 max-h-48 w-full rounded-lg border border-gray-200 bg-black" />
+                  ) : null}
+                </div>
               </Field>
               {mode === "create" && gallery.some((g) => g.file) && <p className="rounded-lg bg-amber-50 p-3 text-xs text-amber-800">Images are uploaded when you publish. Unlike the text fields, they aren&apos;t part of the autosaved draft.</p>}
             </>

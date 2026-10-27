@@ -143,4 +143,29 @@ async function uploadMany(files) {
   return out;
 }
 
-module.exports = { storeAudio, sniffAudio, uploadOne, uploadMany, ALLOWED_MIME, MAX_BYTES, UPLOAD_DIR, sniff };
+
+// Gig preview videos: local disk only (ImgBB is images-only). Cap keeps
+// marketplace previews short; sellers can still paste YouTube/Vimeo links.
+const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
+function sniffVideo(buf) {
+  if (!buf || buf.length < 12) return null;
+  if (buf[0] === 0x1a && buf[1] === 0x45 && buf[2] === 0xdf && buf[3] === 0xa3) return "webm";
+  // ISO BMFF (mp4/m4v): ....ftyp
+  if (buf.slice(4, 8).toString("ascii") === "ftyp") return "mp4";
+  return null;
+}
+async function storeVideo(file) {
+  if (!file?.buffer?.length) throw new ApiError(httpStatus.BAD_REQUEST, "Empty video file");
+  if (file.buffer.length > MAX_VIDEO_BYTES) throw new ApiError(httpStatus.PAYLOAD_TOO_LARGE, "Videos can be up to 50MB");
+  const ext = sniffVideo(file.buffer);
+  if (!ext) throw new ApiError(httpStatus.BAD_REQUEST, "Upload an MP4 or WebM video");
+  const fs = require("fs/promises");
+  const name = `${require("crypto").randomBytes(16).toString("hex")}.${ext}`;
+  await fs.mkdir(UPLOAD_DIR, { recursive: true });
+  await fs.writeFile(require("path").join(UPLOAD_DIR, name), file.buffer, { flag: "wx" });
+  const base = (process.env.PUBLIC_API_URL || "http://localhost:7171").replace(/\/+$/, "");
+  const url = `${base}/uploads/${name}`;
+  return { url, displayUrl: url, thumbUrl: url, deleteUrl: null, raw: { local: true, kind: "video" } };
+}
+
+module.exports = { storeAudio, sniffAudio, storeVideo, sniffVideo, uploadOne, uploadMany, ALLOWED_MIME, MAX_BYTES, MAX_VIDEO_BYTES, UPLOAD_DIR, sniff };

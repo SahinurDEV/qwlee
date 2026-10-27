@@ -96,7 +96,7 @@ export default function GigExtrasEditor({ value, onChange }) {
       />
       <section className="space-y-2">
         <h3 className="text-sm font-semibold text-gray-900">Video (optional)</h3>
-        <input className={input} placeholder="YouTube or Vimeo link, or https .mp4 URL" value={v.video} onChange={(ev) => set({ video: ev.target.value })} />
+        <input className={input} placeholder="YouTube/Vimeo link, https .mp4/.webm, or upload via gig wizard" value={v.video} onChange={(ev) => set({ video: ev.target.value })} />
       </section>
     </div>
   );
