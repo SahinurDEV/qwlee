@@ -115,3 +115,31 @@ class SupportAskResponse(BaseModel):
     model: str = ""
     latencyMs: int = 0
     configured: bool = True
+
+
+class SearchParse(BaseModel):
+    keywords: str = ""
+    categoryHint: str = ""
+    maxPrice: Optional[float] = None
+    minPrice: Optional[float] = None
+    sortBy: str = ""
+    explanation: str = ""
+
+    @field_validator("keywords", "categoryHint", "sortBy", "explanation", mode="before")
+    @classmethod
+    def coerce_search_str(cls, v: Any) -> str:
+        return _null_to_str(v)
+
+
+class SearchParseRequest(BaseModel):
+    query: str
+    categories: list[str] = Field(default_factory=list)
+    mock: bool = False
+
+
+class SearchParseResponse(BaseModel):
+    parse: SearchParse
+    source: Literal["remote", "mock"]
+    model: str = ""
+    latencyMs: int = 0
+    configured: bool = True

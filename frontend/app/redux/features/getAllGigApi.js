@@ -56,7 +56,12 @@ const getAllGigApi = baseApi.injectEndpoints({
       keepUnusedDataFor: 0,
       providesTags: ["Gigs"],
     }),
+    smartSearchGigs: builder.mutation({
+      query: (body) => ({ url: "/gig/smart-search", method: "POST", body }),
+      transformResponse: (res) => res?.data?.attributes,
+    }),
   }),
 });
 
-export const { useGetAllGigQuery } = getAllGigApi;
+export const { useGetAllGigQuery, useSmartSearchGigsMutation } = getAllGigApi;
+

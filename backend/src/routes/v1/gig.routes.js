@@ -8,6 +8,10 @@ const imgbbUpload = require("../../middlewares/imgbbUpload");
 
 const upload = userFileUploadMiddleware();
 const router = express.Router();
+const searchAiController = require("../../controllers/searchAi.controller");
+router.post("/smart-search", searchAiController.smartSearch);
+router.post("/parse-search", searchAiController.parse);
+
 
 // Wishlist works in both modes — a freelancer browsing as a buyer (via
 // the navbar mode toggle) should also be able to save gigs. Gate by

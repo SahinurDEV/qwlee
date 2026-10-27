@@ -97,3 +97,11 @@ def test_support_mock_escalates_when_thin():
     s = answer_support("xyzzy unexplained purple widgets?", [])
     assert s.escalate is True
     assert s.confidence < 0.55
+
+
+def test_search_mock_logo_under_50():
+    from app.search_mock import parse_search
+    p = parse_search("logo for my bakery under $50", ["Graphic Design", "Web Development"])
+    assert p.categoryHint == "Graphic Design"
+    assert p.maxPrice == 50
+    assert "logo" in p.keywords

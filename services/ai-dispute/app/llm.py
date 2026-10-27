@@ -196,3 +196,56 @@ async def complete_support(question: str, chunks: list, *, force_mock: bool = Fa
     except Exception:
         s = _sanitize_support(answer_support(question, chunks), chunks)
         return s, "mock", "mock-fallback", int((time.time() - t0) * 1000)
+
+
+SEARCH_SYSTEM = """Parse a marketplace search query into JSON filters only:
+{"keywords":"...","categoryHint":"","maxPrice":null,"minPrice":null,"sortBy":"","explanation":"..."}
+categoryHint must be empty or one of the provided catalogue names. keywords are short search terms. Never invent categories.
+"""
+
+
+async def complete_search_parse(query: str, categories: list, *, force_mock: bool = False):
+    from .schemas import SearchParse
+    from .search_mock import parse_search
+    t0 = time.time()
+    if force_mock or not configured():
+        return parse_search(query, categories), "mock", "mock", int((time.time() - t0) * 1000)
+    url = os.environ["AI_API_URL"]
+    key = os.environ["AI_API_KEY"]
+    model = os.environ.get("AI_MODEL") or "openai/gpt-4o-mini"
+    headers = {
+        "Authorization": f"Bearer {key}",
+        "Content-Type": "application/json",
+        "HTTP-Referer": os.environ.get("OPENROUTER_HTTP_REFERER", "https://qwlee.local"),
+        "X-Title": os.environ.get("OPENROUTER_X_TITLE", "Qwlee Search Parser"),
+    }
+    body = {
+        "model": model,
+        "temperature": 0,
+        "max_tokens": 300,
+        "messages": [
+            {"role": "system", "content": SEARCH_SYSTEM},
+            {"role": "user", "content": json.dumps({"query": query, "categories": categories})},
+        ],
+    }
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            r = await client.post(url, headers=headers, json=body)
+            r.raise_for_status()
+            data = r.json()
+        content = (((data.get("choices") or [{}])[0].get("message") or {}).get("content")) or ""
+        content = content.strip()
+        if content.startswith("```"):
+            content = content.strip("`")
+            if content.startswith("json"):
+                content = content[4:]
+            content = content.strip()
+        parsed = coerce_llm_payload(json.loads(content))
+        s = SearchParse.model_validate(parsed)
+        if s.categoryHint and categories and s.categoryHint not in categories:
+            # fuzzy contain
+            hit = next((c for c in categories if s.categoryHint.lower() in c.lower() or c.lower() in s.categoryHint.lower()), "")
+            s.categoryHint = hit
+        return s, "remote", model, int((time.time() - t0) * 1000)
+    except Exception:
+        return parse_search(query, categories), "mock", "mock-fallback", int((time.time() - t0) * 1000)

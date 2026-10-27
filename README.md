@@ -47,6 +47,10 @@ Operational env vars and eval commands: [Admin Dispute AI assistant](#admin-disp
 
 Buyers and sellers can ask policy questions on **Help & support**. Express retrieves policy chunks, the FastAPI sidecar answers with citations, and anything under 55% confidence (or an explicit “talk to a human”) opens a `SupportTicket` tagged `aiEscalated` for the admin queue. Rate-limited (20/hour), PII-masked, mock mode when `AI_API_KEY` is unset.
 
+## Case study: Smart NL gig search
+
+Type something like “logo for my bakery under $50” and hit **Smart** on `/gig`. The AI parses category, price cap, and keywords; results show why each gig matched. If the AI is down, search falls back to ordinary title matching.
+
 ## Demo video
 
 **qwlee – Full User Manual: Open-Source Freelance Marketplace (Buyer, Seller & Admin Walkthrough)**

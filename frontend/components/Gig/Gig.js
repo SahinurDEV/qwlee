@@ -16,9 +16,9 @@ import { Pagination } from "antd";
 import Image from "next/image";
 import Link from "next/link";
 import { toast } from "sonner";
-import { IoSearch, IoClose } from "react-icons/io5";
+import { IoSearch, IoClose, IoSparklesOutline } from "react-icons/io5";
 
-import { useGetAllGigQuery } from "@/app/redux/features/getAllGigApi";
+import { useGetAllGigQuery, useSmartSearchGigsMutation } from "@/app/redux/features/getAllGigApi";
 import { useGetAllCategoryQuery } from "@/app/redux/features/getAllCategoryApi";
 import AllCard from "./AllCard";
 import AllCardTopFilters from "./AllCardTopFilters";
@@ -53,6 +53,8 @@ function GigContent() {
 
   const [searchInput, setSearchInput] = useState(title);
   const [currentPage, setCurrentPage] = useState(1);
+  const [aiBanner, setAiBanner] = useState(null);
+  const [smartSearch, { isLoading: smartLoading }] = useSmartSearchGigsMutation();
 
   useEffect(() => {
     setSearchInput(title);
@@ -120,6 +122,41 @@ function GigContent() {
     if (isError && error?.message) toast.error(error.message);
   }, [isError, error]);
 
+  async function runSmartSearch() {
+    const q = searchInput.trim();
+    if (q.length < 3) {
+      toast.warning("Type a bit more for smart search");
+      return;
+    }
+    const res = await smartSearch({ query: q, limit: LIMIT });
+    const attrs = res?.data;
+    if (res?.error || !attrs?.parse) {
+      toast.message("AI unavailable — using normal search");
+      const next = new URLSearchParams(paramsString);
+      next.set("title", q);
+      router.push(`/gig?${next.toString()}`, { scroll: false });
+      setAiBanner(null);
+      return;
+    }
+    const p = attrs.parse;
+    const next = new URLSearchParams();
+    if (p.keywords) next.set("title", p.keywords);
+    if (p.maxPrice != null) next.set("maxPrice", String(p.maxPrice));
+    if (p.minPrice != null) next.set("minPrice", String(p.minPrice));
+    if (p.categoryHint) next.set("categories", p.categoryHint);
+    if (p.sortBy === "price") next.set("sortBy", "price");
+    setAiBanner({
+      explanation: p.explanation || attrs.source,
+      source: attrs.source,
+      fallback: attrs.fallback,
+      sampleReasons: (attrs.results || []).slice(0, 3).map((g) => ({
+        title: g.title,
+        reasons: g.matchReasons || [],
+      })),
+    });
+    router.push(`/gig?${next.toString()}`, { scroll: false });
+  }
+
   function clearSearch() {
     setSearchInput("");
   }
@@ -160,6 +197,16 @@ function GigContent() {
                 aria-label="Search gigs"
                 className="flex-1 px-3 py-3.5 bg-transparent outline-none text-base"
               />
+              <button
+                type="button"
+                onClick={runSmartSearch}
+                disabled={smartLoading || !searchInput.trim()}
+                className="hidden sm:inline-flex items-center gap-1 px-3 py-2 mr-1 text-xs font-medium text-violet-800 bg-violet-50 border border-violet-200 rounded-xl disabled:opacity-50"
+                title="Parse with AI into filters"
+              >
+                <IoSparklesOutline className="w-4 h-4" />
+                {smartLoading ? "…" : "Smart"}
+              </button>
               {searchInput && (
                 <button
                   type="button"
@@ -171,6 +218,15 @@ function GigContent() {
                 </button>
               )}
             </div>
+            <button
+              type="button"
+              onClick={runSmartSearch}
+              disabled={smartLoading || !searchInput.trim()}
+              className="sm:hidden mt-3 w-full inline-flex items-center justify-center gap-1.5 px-3 py-2.5 text-sm font-medium text-violet-800 bg-violet-50 border border-violet-200 rounded-xl disabled:opacity-50"
+            >
+              <IoSparklesOutline className="w-4 h-4" />
+              {smartLoading ? "Parsing…" : "Smart search (AI filters)"}
+            </button>
           </div>
         </div>
       </section>
@@ -179,6 +235,25 @@ function GigContent() {
       <section className="container mx-auto px-4 py-8 md:py-10">
         <FilterBar />
         <ActiveFilterChips />
+        {aiBanner ? (
+          <div className="mb-4 rounded-2xl border border-violet-200 bg-violet-50/60 p-3 sm:p-4 text-left">
+            <div className="text-xs font-semibold uppercase tracking-wide text-violet-800 flex items-center gap-1.5">
+              <IoSparklesOutline /> Smart search
+              {aiBanner.source ? <span className="font-normal normal-case text-violet-600">· {aiBanner.source}</span> : null}
+            </div>
+            <p className="text-sm text-gray-800 mt-1">{aiBanner.explanation}</p>
+            {aiBanner.sampleReasons?.length ? (
+              <ul className="mt-2 space-y-1">
+                {aiBanner.sampleReasons.map((s, i) => (
+                  <li key={i} className="text-xs text-gray-600">
+                    <span className="font-medium text-gray-800">{s.title}</span>
+                    {s.reasons?.length ? ` — ${s.reasons.join("; ")}` : ""}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+        ) : null}
         <AllCardTopFilters totalResults={total} />
 
         {isFetching && gigs.length === 0 ? (
