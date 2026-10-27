@@ -16,9 +16,27 @@ const ApiError = require("./utils/ApiError");
 
 const app = express();
 
-// Honour X-Forwarded-For headers when behind a proxy so req.ip reflects
-// the real client (used for the per-user activity log).
-app.set("trust proxy", true);
+// Honour X-Forwarded-For only for the configured number of proxy hops.
+// Blind `true` lets clients spoof X-Forwarded-For and bypass IP rate limits.
+// TRUST_PROXY=1 (default) = one reverse proxy; set 0 to disable; or a
+// subnet/IP list Express understands.
+(() => {
+  const raw = process.env.TRUST_PROXY;
+  if (raw === undefined || raw === "") {
+    app.set("trust proxy", 1);
+    return;
+  }
+  if (raw === "true") {
+    app.set("trust proxy", 1);
+    return;
+  }
+  if (raw === "false" || raw === "0") {
+    app.set("trust proxy", false);
+    return;
+  }
+  const asNum = Number(raw);
+  app.set("trust proxy", Number.isFinite(asNum) ? asNum : raw);
+})();
 
 if (config.env !== "test") {
   app.use(morgan.successHandler);
