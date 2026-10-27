@@ -301,6 +301,10 @@ router.post("/ai-insights", A, catchAsync2(async (req, res) => {
   }
 }));
 
+const aiObs = require("../../services/aiObservability/log");
+router.get("/ai-call-logs", A, catchAsync2(async (req, res) => helpOk(res, await aiObs.list(req.query))));
+router.get("/ai-call-logs/summary", A, catchAsync2(async (req, res) => helpOk(res, await aiObs.summary({ hours: req.query.hours }))));
+
 
 // Canned replies for the support inbox (support permission for writes).
 const CannedReply = require("../../models/cannedReply.model");

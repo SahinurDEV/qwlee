@@ -49,3 +49,5 @@ module.exports.Team = require('./team.model');
 module.exports.OrderCall = require('./orderCall.model');
 module.exports.BuyerReview = require('./buyerReview.model');
 module.exports.DisputeAiSuggestion = require('./disputeAiSuggestion.model');
+
+module.exports.AiCallLog = require('./aiCallLog.model');

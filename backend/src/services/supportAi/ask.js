@@ -96,6 +96,7 @@ async function ask(user, { question, audience = "all", escalate = false } = {}) 
     });
   }
 
+  try { require("../aiObservability/log").logAiCall({ feature: "support", source: j.source, model: j.model, latencyMs: j.latencyMs, ok: true }); } catch (_) {}
   return {
     answer: answer.answer || "",
     confidence: answer.confidence,

@@ -145,6 +145,13 @@ flowchart LR
 
 **How it works.** `POST /admin/ai-insights` gathers aggregate counts only (no PII), then the AI dispute sidecar returns a summary and prioritized bullets. The Analytics page shows a Generate button. AI never refunds, bans, or messages users.
 
+## Case study: AI observability
+
+**Problem.** After shipping several AI helpers, ops needs a single place to see call volume, mock vs remote mix, and latency — without storing prompts or PII.
+
+**How it works.** Each Node AI caller writes an `AiCallLog` row (`feature`, `source`, `model`, `latencyMs`, `ok`). Admin → AI observability shows 24h totals and a recent table.
+
+
 ## Case study: AI Dispute Assistant
 
 **Problem.** Admins resolving marketplace disputes had to dig through order chat, delivery events, and policy pages by hand. That was slow, easy to miss evidence, and hard to keep consistent with published refund rules.
