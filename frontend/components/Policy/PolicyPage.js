@@ -33,9 +33,9 @@ export default function PolicyPage({ title, updated, intro, sections, related = 
         {intro ? <p className="mt-4 text-gray-700 leading-relaxed">{intro}</p> : null}
         <nav aria-label="Contents" className="mt-6 rounded-xl border border-gray-200 bg-gray-50 p-4">
           <div className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Contents</div>
-          <ol className="list-decimal pl-5 space-y-1 text-sm">
+          <ol className="list-decimal pl-5 text-sm">
             {sections.map((s, i) => (
-              <li key={i}><a href={`#s${i + 1}`} className="text-emerald-700 hover:underline">{s.heading}</a></li>
+              <li key={i}><a href={`#s${i + 1}`} className="inline-flex items-center min-h-[40px] text-emerald-700 hover:underline">{s.heading}</a></li>
             ))}
           </ol>
         </nav>
@@ -53,8 +53,8 @@ export default function PolicyPage({ title, updated, intro, sections, related = 
         {related.length ? (
           <div className="mt-10 border-t border-gray-200 pt-6 text-sm">
             <div className="font-semibold text-gray-900 mb-2">Related policies</div>
-            <div className="flex flex-wrap gap-x-4 gap-y-2">
-              {related.map((r) => <Link key={r.href} href={r.href} className="text-emerald-700 hover:underline">{r.label}</Link>)}
+            <div className="flex flex-wrap gap-x-4">
+              {related.map((r) => <Link key={r.href} href={r.href} className="inline-flex items-center min-h-[44px] text-emerald-700 hover:underline">{r.label}</Link>)}
             </div>
           </div>
         ) : null}

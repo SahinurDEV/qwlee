@@ -113,7 +113,7 @@ export default function ActiveFilterChips() {
       <button
         type="button"
         onClick={clearAll}
-        className="text-xs text-gray-500 hover:text-gray-800 underline ml-1"
+        className="inline-flex items-center min-h-[44px] px-1 text-xs text-gray-500 hover:text-gray-800 underline ml-1"
       >
         Clear all
       </button>

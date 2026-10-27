@@ -71,7 +71,7 @@ export default function GigReviews({ id, sellerRating = 0, sellerReviewTotal = 0
               disabled={!b.count}
               aria-pressed={star === b.n}
               aria-label={`${b.n} star reviews: ${b.count}`}
-              className={`w-full flex items-center gap-2 text-xs rounded px-1 py-0.5 disabled:cursor-default ${star === b.n ? "bg-amber-50 ring-1 ring-amber-300" : "hover:bg-gray-50"}`}
+              className={`w-full flex items-center gap-2 text-xs rounded px-1 py-0.5 min-h-[36px] md:min-h-0 disabled:cursor-default ${star === b.n ? "bg-amber-50 ring-1 ring-amber-300" : "hover:bg-gray-50"}`}
             >
               <span className="w-3 text-gray-500">{b.n}</span>
               <IoStar className="text-amber-500" />
