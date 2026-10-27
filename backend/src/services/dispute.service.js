@@ -154,7 +154,7 @@ const escalateDispute = async (userId, disputeId) => {
 };
 
 const resolveDispute = async (adminId, disputeId, body) => {
-  const { resolution, resolutionNote = "" } = body;
+  const { resolution, resolutionNote = "", partialAmount = null } = body;
   const allowed = ["full_refund", "partial_refund", "release_to_seller", "mutual_cancellation"];
   if (!allowed.includes(resolution)) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Invalid resolution");
@@ -170,6 +170,16 @@ const resolveDispute = async (adminId, disputeId, body) => {
 
   dispute.resolution = resolution;
   dispute.resolutionNote = resolutionNote;
+  if (resolution === "partial_refund" && partialAmount != null && partialAmount !== "") {
+    const amt = Number(partialAmount);
+    if (!Number.isFinite(amt) || amt < 0) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "partialAmount must be a non-negative number");
+    }
+    dispute.partialAmount = amt;
+    if (!resolutionNote) {
+      dispute.resolutionNote = `Partial refund amount: $${amt.toFixed(2)}`;
+    }
+  }
   dispute.status = "resolved";
   dispute.resolvedByAdminId = adminId;
   dispute.resolvedAt = new Date();
