@@ -183,6 +183,7 @@ export default function TopNav() {
     { icon: IoSparklesOutline, label: "Teams", href: "/teams" },
     { icon: IoSparklesOutline, label: "Find talent", href: "/talent" },
     { icon: IoSparklesOutline, label: "AI assistant", href: "/ai-assistant" },
+    { icon: IoListOutline, label: "Project brief", href: "/briefs" },
   ];
 
   const sharedLinks = [

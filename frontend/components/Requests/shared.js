@@ -26,6 +26,7 @@ export function RequestsNav({ active }) {
   const tabs = [
     { href: "/requests", key: "board", label: "Browse requests" },
     { href: "/requests/mine", key: "mine", label: "My requests & offers" },
+    { href: "/briefs", key: "briefs", label: "Project brief" },
     { href: "/requests/new", key: "new", label: "Post a request" },
   ];
   return (
