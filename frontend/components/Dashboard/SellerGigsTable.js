@@ -208,9 +208,9 @@ export default function SellerGigsTable() {
                     </div>
                   </td>
                   <td className="px-5 md:px-6 py-4 text-right">
-                    <div className="inline-flex items-center gap-3 text-xs">
+                    <div className="inline-flex items-center gap-1 sm:gap-3 text-xs">
                       {(g.status === "requires-modification" || g.status === "denied") && (
-                        <button type="button" disabled={resubmitting} onClick={() => onResubmit(g)} className="text-emerald-700 hover:text-emerald-800 font-medium disabled:opacity-50" title="Send back for review after editing">
+                        <button type="button" disabled={resubmitting} onClick={() => onResubmit(g)} className="text-emerald-700 hover:text-emerald-800 font-medium disabled:opacity-50 min-h-[44px] px-2" title="Send back for review after editing">
                           Resubmit
                         </button>
                       )}
@@ -218,7 +218,7 @@ export default function SellerGigsTable() {
                         <Link
                           href={`/gig/${g.slug}`}
                           target="_blank"
-                          className="text-emerald-700 hover:text-emerald-800 inline-flex items-center gap-1"
+                          className="text-emerald-700 hover:text-emerald-800 inline-flex items-center gap-1 min-h-[44px] px-2"
                           title="View live gig"
                         >
                           <IoEyeOutline className="w-3.5 h-3.5" />
@@ -228,7 +228,7 @@ export default function SellerGigsTable() {
                       {g.status === "active" && (
                         <Link
                           href={`/promotions?gig=${g._id}`}
-                          className="text-amber-700 hover:text-amber-800 inline-flex items-center gap-1"
+                          className="text-amber-700 hover:text-amber-800 inline-flex items-center gap-1 min-h-[44px] px-2"
                           title="Promote this gig"
                         >
                           <IoMegaphoneOutline className="w-3.5 h-3.5" />
@@ -237,7 +237,7 @@ export default function SellerGigsTable() {
                       )}
                       <Link
                         href={`/gig/edit?id=${g._id}`}
-                        className="text-gray-700 hover:text-gray-900 inline-flex items-center gap-1"
+                        className="text-gray-700 hover:text-gray-900 inline-flex items-center gap-1 min-h-[44px] px-2"
                         title="Edit gig"
                       >
                         <IoCreateOutline className="w-3.5 h-3.5" />

@@ -13,7 +13,7 @@ export default function SavedListsCard({ user }) {
     <div className="bg-white rounded-2xl border border-gray-200 p-5 md:p-6">
       <div className="flex items-center justify-between">
         <h2 className="font-semibold text-gray-900">Saved lists</h2>
-        <Link href="/list" className="text-sm font-medium text-emerald-700 hover:text-emerald-800">All saved →</Link>
+        <Link href="/list" className="inline-flex items-center min-h-[44px] text-sm font-medium text-emerald-700 hover:text-emerald-800">All saved →</Link>
       </div>
       {isLoading ? (
         <p className="mt-3 text-sm text-gray-500">Loading…</p>
@@ -38,7 +38,7 @@ export default function SavedListsCard({ user }) {
         </ul>
       )}
       <hr className="my-4 border-gray-100" />
-      <Link href="/history" className="flex items-center gap-2 text-sm text-gray-800 hover:text-emerald-700">
+      <Link href="/history" className="flex items-center gap-2 min-h-[44px] text-sm text-gray-800 hover:text-emerald-700">
         <IoTimeOutline aria-hidden /> Browsing history
         <span className="ml-auto text-xs text-gray-500">{recent.length ? `${recent.length} viewed` : ""}</span>
       </Link>
