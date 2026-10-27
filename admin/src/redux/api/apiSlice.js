@@ -811,16 +811,53 @@ updateProfielPicture: builder.mutation({
       providesTags: ["disputes"],
     }),
     resolveDispute: builder.mutation({
-      query: ({ disputeId, resolution, resolutionNote }) => ({
+      query: ({ disputeId, resolution, resolutionNote, partialAmount }) => ({
         url: `/disputes/${disputeId}/resolve`,
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        body: { resolution, resolutionNote },
+        body: {
+          resolution,
+          resolutionNote,
+          ...(partialAmount != null && partialAmount !== ""
+            ? { partialAmount: Number(partialAmount) }
+            : {}),
+        },
       }),
       invalidatesTags: ["disputes", "orders"],
+    }),
+    getDisputeAiStatus: builder.query({
+      query: () => ({
+        url: `/disputes/ai/status`,
+        headers: { authorization: `Bearer ${localStorage.getItem("token")}` },
+      }),
+      transformResponse: (res) => res?.data?.attributes,
+    }),
+    suggestDisputeAi: builder.mutation({
+      query: ({ disputeId, mock }) => ({
+        url: `/disputes/${disputeId}/ai-suggest`,
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: { mock: Boolean(mock) },
+      }),
+      transformResponse: (res) => res?.data?.attributes,
+    }),
+    feedbackDisputeAi: builder.mutation({
+      query: ({ disputeId, ...body }) => ({
+        url: `/disputes/${disputeId}/ai-feedback`,
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body,
+      }),
+      transformResponse: (res) => res?.data?.attributes,
     }),
 
   }),
@@ -896,5 +933,8 @@ updateProfielPicture: builder.mutation({
       useGetAdminDisputesQuery,
       useGetDisputeDetailQuery,
       useResolveDisputeMutation,
+      useGetDisputeAiStatusQuery,
+      useSuggestDisputeAiMutation,
+      useFeedbackDisputeAiMutation,
 
  } = apiSlice;
