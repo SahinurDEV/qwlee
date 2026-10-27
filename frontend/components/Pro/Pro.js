@@ -33,21 +33,26 @@ export default function Pro() {
   });
   const gigs = data?.data?.attributes?.results || [];
   const total = data?.data?.attributes?.totalResults || 0;
+  // Until the first Pros are approved, show top marketplace gigs so the
+  // catalog never looks empty.
+  const noPros = !isFetching && gigs.length === 0;
+  const { data: topData } = useGetAllGigQuery({ limit: 8, page: 1 }, { skip: !noPros });
+  const topGigs = topData?.data?.attributes?.results || [];
 
   return (
     <div className="container py-12 space-y-10">
-      <header className="rounded-2xl bg-gray-900 text-white p-10">
+      <header className="rounded-2xl bg-gray-900 text-white p-6 sm:p-10">
         <div className="text-sm uppercase tracking-widest text-emerald-300">Qwlee Pro</div>
-        <h1 className="mt-2 text-4xl font-semibold">Hand-vetted talent for serious projects</h1>
+        <h1 className="mt-2 text-3xl sm:text-4xl font-semibold">Hand-vetted talent for serious projects</h1>
         <p className="mt-3 text-gray-300 max-w-2xl">
           Every Pro seller is reviewed by our team for experience, portfolio and track record.
           Need help choosing? Our hiring concierge sends you a shortlist.
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
-          <a href="#pro-catalog" className="inline-block px-5 py-2.5 rounded-lg bg-emerald-500 text-gray-900 font-medium">
+          <a href="#pro-catalog" className="inline-flex items-center min-h-[44px] px-5 rounded-lg bg-emerald-500 text-gray-900 font-medium">
             Browse Pro catalog
           </a>
-          <Link href="/gig?pro=true" className="inline-block px-5 py-2.5 rounded-lg border border-white/30 text-white font-medium hover:bg-white/10">
+          <Link href="/gig?pro=true" className="inline-flex items-center min-h-[44px] px-5 rounded-lg border border-white/30 text-white font-medium hover:bg-white/10">
             Open full Pro search
           </Link>
         </div>
@@ -72,15 +77,24 @@ export default function Pro() {
             ))}
           </div>
         ) : gigs.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center text-sm text-gray-600">
-            No Pro gigs yet. Sellers can apply below — approved Pros appear here automatically.
+          <div className="space-y-4">
+            <div className="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-5 flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
+              <p className="text-sm text-emerald-900">
+                <span className="font-semibold">Pro sellers are being vetted.</span>{" "}
+                Meanwhile, browse top-rated gigs or ask our concierge for a shortlist.
+              </p>
+              <a href="#concierge" className="inline-flex items-center justify-center min-h-[44px] px-4 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 shrink-0">
+                Get a shortlist
+              </a>
+            </div>
+            {topGigs.length ? <AllCard data={topGigs} /> : null}
           </div>
         ) : (
           <AllCard data={gigs} />
         )}
       </section>
 
-      <div className="grid md:grid-cols-2 gap-6">
+      <div id="concierge" className="grid md:grid-cols-2 gap-6 scroll-mt-28">
         <Concierge user={user} />
         {user?.role === "freelancer" ? (
           <Apply />
@@ -103,7 +117,7 @@ function Concierge({ user }) {
       <div className="bg-white border border-gray-200 rounded-xl p-6">
         <h2 className="font-semibold">Hiring concierge</h2>
         <p className="text-sm text-gray-600 mt-1">
-          <Link className="text-emerald-700" href="/signin">Sign in</Link> to send a request.
+          <Link className="text-emerald-700" href="/sign-in?from=/pro">Sign in</Link> to send a request.
         </p>
       </div>
     );
