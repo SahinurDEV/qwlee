@@ -179,6 +179,9 @@ Admin → Privacy / Terms editors can still override the text afterward.
 
 ## Configuration
 
+> **Order indexes.** After deploy, run once against a maintained DB copy (or live with `ALLOW_LIVE_INDEX=true`): `node backend/scripts/ensure-payment-indexes.js`. Back up first (`mongodump`). Schema indexes cover `clientId`/`freelancerId`/`status`/`deliveryDate`.
+
+
 > **Auth cookies.** Access and refresh tokens are stored as **HttpOnly** `SameSite` cookies (set by the API and mirrored on the site origin via `/api/auth/set-session`). Do not put JWTs in `document.cookie`. Optional: `COOKIE_SECURE`, `COOKIE_SAMESITE`, `COOKIE_DOMAIN`.
 
 > **Launch email.** Set `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME` (or `SMTP_USER`), `SMTP_PASSWORD` (or `SMTP_PASS`), and `EMAIL_FROM` (or `SMTP_FROM`). `GET /health` exposes a non-secret `smtp` readiness object. Mailpit (`127.0.0.1:1025`) is fine for demos only.
