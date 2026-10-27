@@ -33,6 +33,14 @@ async function check({ seed = runSeeder } = {}) {
   if (users > 0) return lastStatus;
   logger.warn("Database has no users. If this is unexpected, restore a backup (see README → Backups).");
   if (!enabled()) return lastStatus;
+  // Never auto-seed a production database unless explicitly overridden.
+  const allowProd = String(process.env.ALLOW_DEMO_SEED_IN_PROD || "").toLowerCase() === "true";
+  if (process.env.NODE_ENV === "production" && !allowProd) {
+    logger.error(
+      "SEED_DEMO_IF_EMPTY=true but NODE_ENV=production — refusing to seed. Set ALLOW_DEMO_SEED_IN_PROD=true to override (demo hosts only)."
+    );
+    return lastStatus;
+  }
   // Re-check right before seeding so two replicas don't both seed.
   const again = await mongoose.connection.db.collection("users").estimatedDocumentCount();
   if (again > 0) return lastStatus;
