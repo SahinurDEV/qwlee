@@ -17,7 +17,8 @@
     "eval:dispute-ai": "node scripts/eval-dispute-ai.js --mock",
     "eval:dispute-ai:live": "node scripts/eval-dispute-ai.js --live",
     "check:policies": "node scripts/check-policy-corpus.js",
-    "eval:support-ai": "node scripts/eval-support-ai.js"
+    "eval:support-ai": "node scripts/eval-support-ai.js",
+    "eval:search-ai": "node scripts/eval-search-ai.js"
   },
   "author": "Sahinur Islam",
   "license": "MIT",
