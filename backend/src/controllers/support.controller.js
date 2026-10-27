@@ -28,6 +28,7 @@ const listMyTickets = catchAsync(async (req, res) => {
     viewerId: req.user.id,
     viewer: isAdmin(req) ? "admin" : "user",
     status: req.query.status,
+    aiEscalated: req.query.aiEscalated,
     limit: Number(req.query.limit) || 50,
     page: Number(req.query.page) || 1,
   });

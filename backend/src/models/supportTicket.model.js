@@ -67,6 +67,12 @@ const ticketSchema = mongoose.Schema(
     unreadByUser: { type: Number, default: 0 },
     unreadByAdmin: { type: Number, default: 1 }, // initial message is unread
     isDeleted: { type: Boolean, default: false },
+    // AI support inbox: set when the assistant escalates to a human
+    aiEscalated: { type: Boolean, default: false, index: true },
+    aiConfidence: { type: Number, default: null },
+    aiCitations: { type: [{ source: String, quote: String, why: String }], default: [] },
+    aiDraftAnswer: { type: String, default: "" },
+    aiSource: { type: String, default: "" },
   },
   { timestamps: true }
 );

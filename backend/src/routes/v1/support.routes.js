@@ -6,10 +6,14 @@
 const express = require("express");
 const auth = require("../../middlewares/auth");
 const supportController = require("../../controllers/support.controller");
+const supportAiController = require("../../controllers/supportAi.controller");
 
 const router = express.Router();
 
 router.use(auth("common"));
+
+router.get("/ai/status", supportAiController.status);
+router.post("/ai/ask", supportAiController.ask);
 
 router
   .route("/tickets")

@@ -125,3 +125,74 @@ async def complete(context: dict, *, force_mock: bool = False) -> tuple[Suggesti
     except Exception:
         s = _sanitize(mock_suggest(context), context)
         return s, "mock", "mock-fallback", int((time.time() - t0) * 1000)
+
+
+SUPPORT_SYSTEM = """You are qwlee Help Centre. Answer ONLY from the provided policy chunks.
+Return ONLY JSON:
+{"answer":"...","confidence":0-1,"citations":[{"source":"policy:doc§n","quote":"...","why":"..."}],"escalate":false,"draftTicketSubject":"","draftTicketBody":""}
+Cite only chunk IDs present in the prompt. If unsure, set confidence < 0.55 and escalate=true with a short draftTicketSubject/Body for a human admin. Never invent policy text. Never ask for passwords or payment details.
+"""
+
+
+def _sanitize_support(ans: "SupportAnswer", chunks: list) -> "SupportAnswer":
+    from .schemas import SupportAnswer  # noqa: F811
+    allowed = {c.get("id") for c in (chunks or []) if c.get("id")}
+    ans.citations = [c for c in ans.citations if c.source in allowed] if allowed else ans.citations
+    if ans.confidence < 0.55:
+        ans.escalate = True
+    return ans
+
+
+async def complete_support(question: str, chunks: list, *, force_mock: bool = False):
+    from .schemas import SupportAnswer
+    from .support_mock import answer_support
+    t0 = time.time()
+    if force_mock or not configured():
+        s = _sanitize_support(answer_support(question, chunks), chunks)
+        return s, "mock", "mock", int((time.time() - t0) * 1000)
+
+    url = os.environ["AI_API_URL"]
+    key = os.environ["AI_API_KEY"]
+    model = os.environ.get("AI_MODEL") or "openai/gpt-4o-mini"
+    headers = {
+        "Authorization": f"Bearer {key}",
+        "Content-Type": "application/json",
+        "HTTP-Referer": os.environ.get("OPENROUTER_HTTP_REFERER", "https://qwlee.local"),
+        "X-Title": os.environ.get("OPENROUTER_X_TITLE", "Qwlee Support Assistant"),
+    }
+    body = {
+        "model": model,
+        "temperature": 0.1,
+        "max_tokens": 700,
+        "messages": [
+            {"role": "system", "content": SUPPORT_SYSTEM},
+            {"role": "user", "content": json.dumps({"question": question, "policyChunks": chunks}, ensure_ascii=False)[:20000]},
+        ],
+    }
+    try:
+        async with httpx.AsyncClient(timeout=45.0) as client:
+            r = await client.post(url, headers=headers, json=body)
+            r.raise_for_status()
+            data = r.json()
+        content = (((data.get("choices") or [{}])[0].get("message") or {}).get("content")) or ""
+        content = content.strip()
+        if content.startswith("```"):
+            content = content.strip("`")
+            if content.startswith("json"):
+                content = content[4:]
+            content = content.strip()
+        parsed = coerce_llm_payload(json.loads(content))
+        if isinstance(parsed, dict):
+            for k in ("answer", "draftTicketSubject", "draftTicketBody"):
+                if parsed.get(k) is None:
+                    parsed[k] = ""
+            for e in parsed.get("citations") or []:
+                if isinstance(e, dict):
+                    for k in ("source", "quote", "why"):
+                        if e.get(k) is None:
+                            e[k] = ""
+        s = _sanitize_support(SupportAnswer.model_validate(parsed), chunks)
+        return s, "remote", model, int((time.time() - t0) * 1000)
+    except Exception:
+        s = _sanitize_support(answer_support(question, chunks), chunks)
+        return s, "mock", "mock-fallback", int((time.time() - t0) * 1000)

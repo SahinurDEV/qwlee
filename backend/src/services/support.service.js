@@ -146,13 +146,14 @@ function escapeHtml(s) {
 // Lists tickets for either the current user (`viewer="user"`) or the
 // admin (`viewer="admin"`). Admin view exposes every non-deleted
 // ticket; user view restricts to their own.
-async function listTickets({ viewerId, viewer, status, limit = 50, page = 1 }) {
+async function listTickets({ viewerId, viewer, status, aiEscalated, limit = 50, page = 1 }) {
   const query = { isDeleted: false };
   if (viewer === "user") {
     // Show every ticket the user is a participant in, plus legacy
     // single-user tickets where they're the creator.
     query.$or = [{ participants: viewerId }, { userId: viewerId }];
   }
+  if (aiEscalated === true || aiEscalated === "true" || aiEscalated === 1) query.aiEscalated = true;
   if (status && status !== "all") query.status = status;
 
   const items = await SupportTicket.find(query)

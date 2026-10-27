@@ -70,3 +70,48 @@ class SuggestResponse(BaseModel):
     model: str = ""
     latencyMs: int = 0
     configured: bool = True
+
+
+class SupportCitation(BaseModel):
+    source: str
+    quote: str
+    why: str = ""
+
+    @field_validator("source", "quote", "why", mode="before")
+    @classmethod
+    def coerce_cite_str(cls, v: Any) -> str:
+        return _null_to_str(v)
+
+
+class SupportAnswer(BaseModel):
+    answer: str
+    confidence: float = Field(ge=0, le=1)
+    citations: list[SupportCitation] = Field(default_factory=list)
+    escalate: bool = False
+    draftTicketSubject: str = ""
+    draftTicketBody: str = ""
+
+    @field_validator("answer", "draftTicketSubject", "draftTicketBody", mode="before")
+    @classmethod
+    def coerce_ans_str(cls, v: Any) -> str:
+        return _null_to_str(v)
+
+    @field_validator("confidence")
+    @classmethod
+    def clamp_ans_conf(cls, v: float) -> float:
+        return max(0.0, min(1.0, float(v)))
+
+
+class SupportAskRequest(BaseModel):
+    question: str
+    audience: Literal["buyer", "seller", "all"] = "all"
+    policyChunks: list[dict[str, Any]] = Field(default_factory=list)
+    mock: bool = False
+
+
+class SupportAskResponse(BaseModel):
+    answer: SupportAnswer
+    source: Literal["remote", "mock"]
+    model: str = ""
+    latencyMs: int = 0
+    configured: bool = True

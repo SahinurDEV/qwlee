@@ -31,6 +31,7 @@ const STATUS_TABS = [
   { v: "pending", label: "Pending" },
   { v: "resolved", label: "Resolved" },
   { v: "closed", label: "Closed" },
+  { v: "ai-escalated", label: "AI escalated" },
 ];
 
 const STATUS_TO_PILL = {
@@ -46,7 +47,8 @@ export default function Support() {
   const [activeId, setActiveId] = useState(null);
 
   const { data, isFetching } = useGetSupportTicketsQuery({
-    status: tab === "all" ? undefined : tab,
+    status: tab === "all" || tab === "ai-escalated" ? undefined : tab,
+    aiEscalated: tab === "ai-escalated" ? true : undefined,
   });
   const tickets = data?.results || [];
 
@@ -169,6 +171,9 @@ export default function Support() {
                             )}
                           >
                             {t.subject}
+                          {t.aiEscalated ? (
+                            <span className="ml-1 text-[10px] uppercase tracking-wide text-violet-700 bg-violet-50 border border-violet-200 rounded px-1">AI</span>
+                          ) : null}
                           </span>
                           <StatusPill status={STATUS_TO_PILL[t.status]} label={t.status} />
                         </div>

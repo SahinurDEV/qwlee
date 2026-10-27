@@ -393,9 +393,10 @@ reviewVerification: builder.mutation({
 
 // Support tickets — admin view.
 getSupportTickets: builder.query({
-  query: ({ status } = {}) => {
+  query: ({ status, aiEscalated } = {}) => {
     const qs = new URLSearchParams();
     if (status) qs.append("status", status);
+    if (aiEscalated) qs.append("aiEscalated", "true");
     qs.append("limit", 200);
     return {
       url: `/support/tickets?${qs.toString()}`,
