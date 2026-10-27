@@ -23,7 +23,7 @@ export default function ResolutionCenter() {
   const uid = idOf(user);
   const skip = !user;
   const { data: buyerData, isLoading: bLoad } = useGetBuyerAllOrderQuery({ limit: 100 }, { skip });
-  const { data: sellerData, isLoading: sLoad } = useGetFreelancerAllOrderQuery({ limit: 100 }, { skip });
+  const { data: sellerData, isLoading: sLoad } = useGetFreelancerAllOrderQuery({ limit: 100 }, { skip: skip || user?.role !== "freelancer" });
   const { data: disputesData, isLoading: dLoad } = useGetMyDisputesQuery({ limit: 50 }, { skip });
   const [respondCancel] = useRespondCancellationMutation();
   const [respondExt] = useRespondOrderExtensionMutation();
@@ -94,10 +94,10 @@ export default function ResolutionCenter() {
         <p className="mt-2 text-sm text-gray-600 max-w-2xl">
           Handle cancellation requests, delivery extensions and disputes without waiting on support. Open an order for full chat and delivery tools.
         </p>
-        <div className="mt-4 flex flex-wrap gap-3 text-sm">
-          <Link href="/order" className="text-emerald-700 font-medium hover:underline">All orders →</Link>
-          <Link href="/help/how-do-i-cancel-an-order" className="text-gray-600 hover:underline">Cancel help</Link>
-          <Link href="/learn" className="text-gray-600 hover:underline">Learn</Link>
+        <div className="mt-4 flex flex-wrap gap-x-4 text-sm">
+          <Link href="/order" className="inline-flex items-center min-h-[44px] text-emerald-700 font-medium hover:underline">All orders →</Link>
+          <Link href="/help/how-do-i-cancel-an-order" className="inline-flex items-center min-h-[44px] text-gray-600 hover:underline">Cancel help</Link>
+          <Link href="/learn" className="inline-flex items-center min-h-[44px] text-gray-600 hover:underline">Learn</Link>
         </div>
       </header>
 
@@ -127,8 +127,8 @@ export default function ResolutionCenter() {
                   </div>
                   {!mine && (
                     <div className="flex gap-2">
-                      <button onClick={() => onCancelRespond(oid, "accept")} className="rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white">Accept cancel</button>
-                      <button onClick={() => onCancelRespond(oid, "decline")} className="rounded-lg border px-3 py-1.5 text-xs font-semibold">Decline</button>
+                      <button onClick={() => onCancelRespond(oid, "accept")} className="rounded-lg bg-rose-600 px-3 min-h-[44px] text-xs font-semibold text-white">Accept cancel</button>
+                      <button onClick={() => onCancelRespond(oid, "decline")} className="rounded-lg border px-3 min-h-[44px] text-xs font-semibold">Decline</button>
                     </div>
                   )}
                   {mine && <span className="text-xs text-gray-500">Waiting on the other party</span>}
@@ -155,8 +155,8 @@ export default function ResolutionCenter() {
                   </div>
                   {!mine && (
                     <div className="flex gap-2">
-                      <button onClick={() => onExtRespond(oid, "accept")} className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white">Accept</button>
-                      <button onClick={() => onExtRespond(oid, "decline")} className="rounded-lg border px-3 py-1.5 text-xs font-semibold">Decline</button>
+                      <button onClick={() => onExtRespond(oid, "accept")} className="rounded-lg bg-emerald-600 px-3 min-h-[44px] text-xs font-semibold text-white">Accept</button>
+                      <button onClick={() => onExtRespond(oid, "decline")} className="rounded-lg border px-3 min-h-[44px] text-xs font-semibold">Decline</button>
                     </div>
                   )}
                 </div>
@@ -185,7 +185,7 @@ export default function ResolutionCenter() {
                     <div className="font-medium text-gray-900 capitalize">{String(d.reasonCode || "dispute").replace(/_/g, " ")}</div>
                     <p className="text-xs text-gray-500 mt-0.5">Status: {d.status} · opened {fmt(d.createdAt)}</p>
                     {oid && oid !== "undefined" && (
-                      <Link href={`/order/${oid}`} className="text-sm text-emerald-700 hover:underline">View order →</Link>
+                      <Link href={`/order/${oid}`} className="inline-flex items-center min-h-[44px] text-sm text-emerald-700 hover:underline">View order →</Link>
                     )}
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -195,7 +195,7 @@ export default function ResolutionCenter() {
                         if (r.error) toast.error(r.error?.data?.message || "Could not escalate");
                         else toast.success("Escalated to support");
                       }}
-                      className="rounded-lg border px-3 py-1.5 text-xs font-semibold"
+                      className="rounded-lg border px-3 min-h-[44px] text-xs font-semibold"
                     >
                       Escalate
                     </button>
@@ -206,7 +206,7 @@ export default function ResolutionCenter() {
                         if (r.error) toast.error(r.error?.data?.message || "Could not cancel");
                         else toast.success("Dispute cancelled");
                       }}
-                      className="rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-700"
+                      className="rounded-lg border border-rose-200 px-3 min-h-[44px] text-xs font-semibold text-rose-700"
                     >
                       Cancel dispute
                     </button>
@@ -215,12 +215,12 @@ export default function ResolutionCenter() {
                 {d.description ? <p className="text-sm text-gray-700">{d.description}</p> : null}
                 <div className="flex flex-col sm:flex-row gap-2">
                   <input
-                    className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                    className="flex-1 rounded-lg border border-gray-200 px-3 min-h-[44px] text-sm"
                     placeholder="Reply to the other party…"
                     value={reply[did] || ""}
                     onChange={(e) => setReply((x) => ({ ...x, [did]: e.target.value }))}
                   />
-                  <button onClick={() => onDisputeReply(did)} className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white">
+                  <button onClick={() => onDisputeReply(did)} className="rounded-lg bg-emerald-600 px-4 min-h-[44px] text-sm font-semibold text-white">
                     Send reply
                   </button>
                 </div>
