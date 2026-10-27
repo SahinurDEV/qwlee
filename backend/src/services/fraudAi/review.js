@@ -1,5 +1,3 @@
-const { maskContact } = require("../risk.service");
-
 function enabled() {
   return String(process.env.AI_FRAUD_ASSISTANT || process.env.AI_DISPUTE_ASSISTANT || "on").toLowerCase() !== "off";
 }
@@ -18,6 +16,7 @@ async function reviewFlag(flag, { forceMock = false } = {}) {
   if (!enabled()) return null;
   const url = serviceUrl();
   if (!url) return null;
+  const { maskContact } = require("../risk.service");
   const excerpt = maskContact(String(flag.excerpt || "").slice(0, 800));
   const reasons = Array.isArray(flag.reasons) ? flag.reasons : [];
   try {
