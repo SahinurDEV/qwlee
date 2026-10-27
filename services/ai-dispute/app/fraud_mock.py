@@ -3,7 +3,7 @@ from .schemas import FraudEvidence, FraudReview
 
 OFF_PLATFORM = ("whatsapp", "telegram", "t.me", "wa.me", "signal", "discord.gg", "skype")
 PAY_OFF = ("pay outside", "pay me outside", "venmo", "cashapp", "cash app", "paypal.me", "wire transfer", "gift card")
-IMPERSONATE = ("i am admin", "i'm admin", "qwlee support", "verify your account", "send password")
+IMPERSONATE = ("i am admin", "i'm admin", "i am qwlee", "i'm qwlee", "qwlee admin", "qwlee support", "verify your account", "send password", "send your password")
 
 
 def review_fraud(excerpt: str, reasons: list[str] | None = None, kind: str = "message") -> FraudReview:
