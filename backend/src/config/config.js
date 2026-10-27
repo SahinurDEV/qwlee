@@ -30,6 +30,7 @@ const envVarsSchema = Joi.object()
     CLOUDINARY_API_SECRET: Joi.string().allow('').default(''),
     STRIPE_SECRET_KEY: Joi.string().allow('').default(''),
     STRIPE_WEBHOOK_SECRET: Joi.string().allow('').default(''),
+    STRIPE_PUBLISHABLE_KEY: Joi.string().allow('').default(''),
     IMGBB_API_KEY: Joi.string().allow('').default(''),
     MAX_IMAGE_SIZE_MB: Joi.number().default(32),
   })
@@ -56,6 +57,7 @@ module.exports = {
   stripe: {
     secretKey: envVars.STRIPE_SECRET_KEY,
     webhookSecret: envVars.STRIPE_WEBHOOK_SECRET,
+    publishableKey: envVars.STRIPE_PUBLISHABLE_KEY,
   },
   imgbb: {
     apiKey: envVars.IMGBB_API_KEY,

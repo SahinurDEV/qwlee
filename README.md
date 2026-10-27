@@ -178,6 +178,8 @@ cd backend && npm run legal:upsert
 Admin → Privacy / Terms editors can still override the text afterward.
 
 ## Configuration
+> **Launch payments.** Checkout uses Stripe when `STRIPE_SECRET_KEY` is set (webhook needs `STRIPE_WEBHOOK_SECRET`; frontend needs `STRIPE_PUBLISHABLE_KEY` / `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`). Keep `DEMO_PAYMENTS=true` until those keys exist — setting `DEMO_PAYMENTS=false` with no Stripe key makes checkout return 503. `GET /health` includes a non-secret `payments` readiness object.
+
 
 All Docker config lives in the root `.env` (see [.env.example](.env.example)).
 
@@ -192,7 +194,7 @@ All Docker config lives in the root `.env` (see [.env.example](.env.example)).
 | `SMTP_*`, `EMAIL_FROM` | for email | OTP and password-reset email |
 | `ENABLE_API_DOCS` | no | Serve Swagger UI at `/v1/docs` outside development |
 | `PLATFORM_FEE_PERCENT` | no | Commission on completed orders (default 5). Admin can override in Settings > Misc with key `platformFeePercent` |
-| `DEMO_PAYMENTS` | no | When no `STRIPE_SECRET_KEY` is set, place orders without charging (default `true` in compose). **Set to `false` in production.** |
+| `DEMO_PAYMENTS` | no | Fallback demo checkout when Stripe is unset (default `true` in compose). Keep `true` until `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET` (+ publishable key) are set; only then set `false` in production. |
 | `AUTO_COMPLETE_DAYS` | no | Days after a delivery before the order auto-completes and escrow is released (default 3) |
 | `REQUEST_TTL_DAYS` | no | Days a buyer request stays open for offers (default 14) |
 | `ORDER_HOUSEKEEPING_MS` | no | Interval of the auto-complete / late-marking job (default 600000) |

@@ -4,8 +4,7 @@ const pick = require("../utils/pick");
 const ApiError = require("../utils/ApiError");
 const catchAsync = require("../utils/catchAsync");
 const response = require("../config/response");
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
-const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+const paymentsConfig = require("../services/paymentsConfig.service");
 const { ordersService } = require("../services");
 const orderLifecycle = require("../services/orderLifecycle.service");
 const { Payment, User } = require("../models");
@@ -42,9 +41,8 @@ const orderCreate = catchAsync(async (req, res) => {
   const quote = await orderLifecycle.quoteCheckout(checkoutBody(req));
   const frontend = process.env.FRONTEND_URL || "http://localhost:8000";
 
-  const stripeSecret = process.env.STRIPE_SECRET_KEY;
-  if (stripeSecret) {
-    const stripeClient = require("stripe")(stripeSecret);
+  const stripeClient = paymentsConfig.getStripe();
+  if (stripeClient) {
     const session = await stripeClient.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
@@ -79,7 +77,7 @@ const orderCreate = catchAsync(async (req, res) => {
     return res.status(200).send({ url: session.url, provider: "stripe" });
   }
 
-  if ((await require("../services/siteSettings.service").get()).marketplace.demoPayments) {
+  if (paymentsConfig.demoPaymentsEnabled() || (await require("../services/siteSettings.service").get()).marketplace.demoPayments) {
     const crypto = require("crypto");
     const order = await orderLifecycle.createOrderFromQuote(quote, {
       sessionId: `demo_${crypto.randomUUID()}`,
@@ -93,19 +91,16 @@ const orderCreate = catchAsync(async (req, res) => {
     });
   }
 
-  throw new ApiError(
-    httpStatus.SERVICE_UNAVAILABLE,
-    "Payments are not configured. Set STRIPE_SECRET_KEY, or DEMO_PAYMENTS=true for a demo."
-  );
+  paymentsConfig.assertCheckoutAvailable();
 });
 
 const orderTip = catchAsync(async (req, res) => {
   await require("../services/siteSettings.service").assertFeature("tips", "Tipping");
   const { order, amount, serviceFee } = await orderLifecycle.quoteTip(req.params.orderId, req.user.id, Number(req.body?.amount));
   const frontend = process.env.FRONTEND_URL || "http://localhost:8000";
-  if (process.env.STRIPE_SECRET_KEY) {
-    const stripeClient = require("stripe")(process.env.STRIPE_SECRET_KEY);
-    const session = await stripeClient.checkout.sessions.create({
+  const tipStripe = paymentsConfig.getStripe();
+  if (tipStripe) {
+    const session = await tipStripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
       line_items: [{ price_data: { currency: "usd", product_data: { name: `Tip for order ${order._id}` }, unit_amount: Math.round(amount * 100) }, quantity: 1 }].concat(serviceFee > 0 ? [{ price_data: { currency: "usd", product_data: { name: "Service fee" }, unit_amount: Math.round(serviceFee * 100) }, quantity: 1 }] : []),
@@ -115,7 +110,7 @@ const orderTip = catchAsync(async (req, res) => {
     });
     return res.status(200).send({ url: session.url, provider: "stripe" });
   }
-  if ((await require("../services/siteSettings.service").get()).marketplace.demoPayments) {
+  if (paymentsConfig.demoPaymentsEnabled() || (await require("../services/siteSettings.service").get()).marketplace.demoPayments) {
     const crypto = require("crypto");
     await orderLifecycle.recordTip(order._id, amount, { provider: "demo", sessionId: `demo_tip_${crypto.randomUUID()}` });
     Promise.resolve()
@@ -129,7 +124,7 @@ const orderTip = catchAsync(async (req, res) => {
       .catch(() => null);
     return res.status(200).send({ url: `${frontend}/order/${order._id}?tipped=1`, provider: "demo" });
   }
-  throw new ApiError(httpStatus.SERVICE_UNAVAILABLE, "Payments are not configured");
+  paymentsConfig.assertCheckoutAvailable();
 });
 
 // Notifications + confirmation emails for a newly paid order. Never throws.
@@ -167,8 +162,9 @@ const orderPlaced = async (req, res) => {
   const sig = req.headers["stripe-signature"];
   try {
     let event;
-
-    if (!endpointSecret) {
+    const endpointSecret = paymentsConfig.stripeWebhookSecret();
+    const stripe = paymentsConfig.getStripe();
+    if (!stripe || !endpointSecret) {
       throw new Error("Stripe webhook secret not configured.");
     }
 
