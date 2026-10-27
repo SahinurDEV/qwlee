@@ -52,6 +52,11 @@ const CONTACT = [
   ["contact:obfuscated-email", /\b[\w.+-]+\s*(?:\[|\(|\s)?(?:at|@)(?:\]|\)|\s)?\s*[\w-]+\s*(?:\[|\(|\s)?(?:dot|\.)(?:\]|\)|\s)?\s*(?:com|net|org|io|co)\b/i],
   ["contact:obfuscated-phone", /\b(?:zero|oh|one|two|three|four|five|six|seven|eight|nine)(?:[\s\-]+(?:zero|oh|o|one|two|three|four|five|six|seven|eight|nine)){6,}\b/i],
 ];
+// Off-platform payment asks (rules first; LLM second-pass explains)
+const PAY_OFF = [
+  ["pay-outside", /\b(pay\s+(me\s+)?outside|outside\s+(the\s+)?platform|off[- ]?platform\s+pay)\b/i],
+  ["pay-outside", /\b(venmo|cash\s?app|paypal\.me|wire\s+transfer|gift\s*card)\b/i],
+];
 
 const MASK = [
   /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi,
@@ -110,8 +115,13 @@ async function screen(text, { contact = false } = {}) {
   if (hit) throw new ApiError(httpStatus.BAD_REQUEST, "This text contains a word that isn't allowed on this site. Please edit it and try again.");
   const reasons = m.flaggedWords.filter((w) => wordRe(w).test(s)).map((w) => `keyword:${w}`);
   if (contact && m.flagContactInfo !== false) reasons.push(...detectContact(s));
+  // Legacy pay-outside tags from main (in addition to contact:payment / offplatform).
+  try {
+    for (const [r, re] of PAY_OFF) if (re.test(s)) reasons.push(r);
+  } catch (_) { /* PAY_OFF may be absent in older deploys */ }
   const uniq = [...new Set(reasons)];
   return { reasons: uniq, spans: findSpans(s, uniq), score: uniq.length };
+
 }
 
 async function record(kind, targetId, userId, reasons, excerpt = "", extra = {}) {
@@ -127,9 +137,15 @@ async function record(kind, targetId, userId, reasons, excerpt = "", extra = {})
       spans: extra.spans || [],
       chatId: extra.chatId || null,
       aiSource: extra.aiSource || "",
+      status: "open",
     });
     // Fire-and-forget admin notify (never fail the user send).
     notifyAdmins(flag).catch((e) => logger.warn(`risk notify failed: ${e.message}`));
+    // Fire-and-forget fraud AI second pass — never auto-bans; status stays open.
+    setImmediate(() => {
+      enrichFraudAi(flag).catch((e) => logger.warn(`fraud AI skipped: ${e.message}`));
+    });
+
     return flag;
   } catch (e) {
     logger.warn(`risk flag not saved: ${e.message}`);
@@ -230,6 +246,26 @@ async function notifyAdmins(flag) {
   }
 }
 
+async function enrichFraudAi(flag) {
+  const fraudAi = require("./fraudAi/review");
+  const patch = await fraudAi.reviewFlag(flag);
+  if (!patch) return null;
+  return RiskFlag.findByIdAndUpdate(flag._id, { $set: patch }, { new: true });
+}
+
+/** Re-run AI review on an existing open flag (admin). Status unchanged. */
+async function aiReview(id, { mock = false } = {}) {
+  const f = await RiskFlag.findById(id);
+  if (!f) throw new ApiError(httpStatus.NOT_FOUND, "Flag not found");
+  const fraudAi = require("./fraudAi/review");
+  const patch = await fraudAi.reviewFlag(f, { forceMock: mock });
+  if (!patch) throw new ApiError(httpStatus.BAD_GATEWAY, "AI fraud review unavailable");
+  Object.assign(f, patch);
+  await f.save();
+  return f;
+}
+
+// Screen several fields at once (e.g. a gig's title and description).
 async function screenAll(parts, opts) {
   const reasons = [];
   const spans = [];
@@ -325,6 +361,8 @@ module.exports = {
   screen,
   screenAll,
   enrichWithAi,
+  enrichFraudAi,
+  aiReview,
   record,
   notifyAdmins,
   orderPlaced,

@@ -15,11 +15,18 @@ const riskFlagSchema = new mongoose.Schema(
     note: { type: String, default: "" },
     reviewedBy: { type: mongoose.SchemaTypes.ObjectId, ref: "User", default: null },
     reviewedAt: { type: Date, default: null },
-    // Optional highlights from the scanner / AI.
+    // Highlights from the contact scanner / message AI.
     spans: [{ _id: false, start: Number, end: Number, reason: String, text: String }],
     chatId: { type: mongoose.SchemaTypes.ObjectId, ref: "Chat", default: null },
-    aiSource: { type: String, default: "" },
     aiSummary: { type: String, default: "" },
+    // AI second-pass fraud review (never auto-bans; status stays open for a human)
+    aiLabel: { type: String, default: "" },
+    aiConfidence: { type: Number, default: null },
+    aiRationale: { type: String, default: "" },
+    aiEvidence: [{ source: String, quote: String, why: String }],
+    aiSource: { type: String, default: "" },
+    aiModel: { type: String, default: "" },
+    aiReviewedAt: { type: Date, default: null },
   },
   { timestamps: true }
 );

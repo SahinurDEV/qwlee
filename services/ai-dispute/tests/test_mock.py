@@ -105,3 +105,34 @@ def test_search_mock_logo_under_50():
     assert p.categoryHint == "Graphic Design"
     assert p.maxPrice == 50
     assert "logo" in p.keywords
+
+
+def test_parse_search_maps_logo_to_graphic():
+    from app.search_mock import parse_search
+    p = parse_search("logo design under $40", ["Graphic Design", "Web Development", "UI/UX Design"])
+    assert p.categoryHint == "Graphic Design"
+    assert p.maxPrice == 40
+    assert "AI understood" in p.explanation
+
+
+def test_fraud_mock_off_platform_pay():
+    from app.fraud_mock import review_fraud
+    r = review_fraud("Pay me on Venmo outside the platform please", ["contact:messenger"], "message")
+    assert r.label in ("off_platform_payment", "off_platform_contact")
+    assert r.recommendAction == "review"
+    assert r.confidence >= 0.7
+
+
+def test_fraud_mock_unclear():
+    from app.fraud_mock import review_fraud
+    r = review_fraud("Thanks for the delivery!", [], "message")
+    assert r.label == "unclear"
+    assert r.recommendAction == "review"
+
+
+def test_insights_mock_warns_on_open_queues():
+    from app.insights_mock import build_insights
+    r = build_insights({"openDisputes": 2, "openRiskFlags": 3, "aiEscalatedTickets": 1, "ordersLast7d": 10})
+    assert r.bullets
+    assert r.confidence >= 0.5
+    assert "dispute" in r.summary.lower() or "Trust" in r.summary

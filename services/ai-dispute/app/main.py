@@ -1,6 +1,6 @@
 import os
 from fastapi import FastAPI, Header, HTTPException
-from .llm import complete, complete_support, complete_search_parse, configured
+from .llm import complete, complete_support, complete_search_parse, complete_fraud_review, complete_insights, configured
 from .moderation_mock import moderate as moderate_mock
 from .schemas import (
     SuggestRequest,
@@ -11,6 +11,10 @@ from .schemas import (
     SearchParseResponse,
     ModerateMessageRequest,
     ModerateMessageResponse,
+    FraudReviewRequest,
+    FraudReviewResponse,
+    InsightsRequest,
+    InsightsResponse,
 )
 
 app = FastAPI(title="qwlee ai-dispute", version="1.1.0")
@@ -90,10 +94,7 @@ async def moderate_message(req: ModerateMessageRequest, x_internal_token: str | 
     """
     _check_token(x_internal_token)
     text = (req.text or "").strip()
-    # Prefer the Node heuristic; mock AI only adds light confirmation.
     result = moderate_mock(text, req.heuristic or {})
-    # When a real key is present we still return the heuristic quickly —
-    # full LLM scoring can be layered later without changing the contract.
     source = "mock" if (req.mock or not configured()) else "remote"
     return ModerateMessageResponse(
         reasons=result["reasons"],
@@ -104,3 +105,24 @@ async def moderate_message(req: ModerateMessageRequest, x_internal_token: str | 
         latencyMs=0,
         configured=configured(),
     )
+
+
+@app.post("/v1/fraud-review", response_model=FraudReviewResponse)
+async def fraud_review(req: FraudReviewRequest, x_internal_token: str | None = Header(default=None)):
+    _check_token(x_internal_token)
+    if not configured() and not req.mock:
+        raise HTTPException(status_code=503, detail="AI not configured")
+    review, source, model, latency = await complete_fraud_review(
+        req.excerpt, req.reasons, req.kind, force_mock=req.mock
+    )
+    return FraudReviewResponse(review=review, source=source, model=model, latencyMs=latency, configured=configured())
+
+
+@app.post("/v1/insights", response_model=InsightsResponse)
+async def insights(req: InsightsRequest, x_internal_token: str | None = Header(default=None)):
+    _check_token(x_internal_token)
+    if not configured() and not req.mock:
+        raise HTTPException(status_code=503, detail="AI not configured")
+    result, source, model, latency = await complete_insights(req.stats or {}, force_mock=req.mock)
+    return InsightsResponse(insights=result, source=source, model=model, latencyMs=latency, configured=configured())
+
