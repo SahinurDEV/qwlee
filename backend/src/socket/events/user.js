@@ -1,25 +1,25 @@
 // Legacy user/connect handler — kept for the existing frontend which
-// emits `user/connect` with a client-supplied userId after socket open.
-// New clients should put their access-token in the socket handshake auth
-// payload (see socketServer.js) and skip this event entirely; presence
-// flips automatically once the handshake JWT is verified.
-//
-// All presence writes flow through socket/presence.js so the multi-tab
-// connection counter and lastSeen update stay correct regardless of which
-// path the client takes. socketServer.js owns the disconnect lifecycle.
+// emits `user/connect` after socket open. New clients put their access
+// token in the handshake auth payload (see socketServer.js); presence
+// then binds automatically. Client-supplied userId is NEVER trusted:
+// without a verified handshake JWT we refuse the bind so a stranger
+// cannot join another user's room. When verified, we always bind the
+// JWT subject and ignore any client-supplied id.
 
 const mongoose = require("mongoose");
 const presence = require("../presence");
 
 module.exports = (socket) => {
-  socket.on("user/connect", async (data) => {
+  socket.on("user/connect", async () => {
     try {
-      const { userId } = data || {};
-      if (!mongoose.Types.ObjectId.isValid(userId)) {
-        throw new Error(`Invalid user ID: ${userId}`);
+      if (!socket.verifiedUserId) {
+        socket.emit("auth/required", { event: "user/connect" });
+        return;
       }
-      // Handshake-verified userId wins over client-supplied.
-      const id = socket.verifiedUserId || String(userId);
+      const id = String(socket.verifiedUserId);
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        throw new Error(`Invalid user ID: ${id}`);
+      }
       socket.join(id);
       socket.userId = id;
       await presence.addConnection(id, socket.id);
