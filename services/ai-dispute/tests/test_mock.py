@@ -1,4 +1,7 @@
 from app.mock import suggest
+from app.schemas import Suggestion
+from app.llm import coerce_llm_payload, _sanitize
+
 
 def test_no_delivery_full_refund():
     ctx = {
@@ -12,3 +15,68 @@ def test_no_delivery_full_refund():
     assert s.outcome == "full_refund"
     assert s.confidence >= 0.7
     assert s.evidence
+
+
+def test_suggestion_accepts_null_draft_ask_more_info():
+    """Regression: OpenRouter often returns draftAskMoreInfo: null for partial_refund.
+    That must not raise ValidationError (which used to force mock-fallback)."""
+    payload = {
+        "outcome": "partial_refund",
+        "confidence": 0.9,
+        "rationale": "Buyer got logo only; brand kit missing.",
+        "partial": {"amount": 50, "percent": 50, "note": None},
+        "draftNoteToParties": None,
+        "draftAskMoreInfo": None,
+        "evidence": [
+            {"source": "dispute.response[0]", "quote": "Where is the brand kit?", "why": None},
+        ],
+    }
+    coerced = coerce_llm_payload(payload)
+    s = Suggestion.model_validate(coerced)
+    assert s.outcome == "partial_refund"
+    assert s.draftAskMoreInfo == ""
+    assert s.draftNoteToParties == ""
+    assert s.partial is not None and s.partial.note == ""
+    assert s.evidence[0].why == ""
+
+
+def test_suggestion_schema_alone_coerces_null_strings():
+    """Schema-level before validators also accept null without coerce helper."""
+    s = Suggestion.model_validate(
+        {
+            "outcome": "ask_for_more_info",
+            "confidence": 0.4,
+            "rationale": None,
+            "draftAskMoreInfo": None,
+            "draftNoteToParties": None,
+            "evidence": [],
+        }
+    )
+    assert s.rationale == ""
+    assert s.draftAskMoreInfo == ""
+
+
+def test_sanitize_keeps_valid_citations_after_null_coerce():
+    ctx = {
+        "dispute": {"responses": [{"id": "dispute.response[0]"}]},
+        "order": {"events": [{"id": "order.event:created"}], "price": 100},
+        "chat": [],
+        "policyChunks": [],
+        "gig": {},
+    }
+    payload = coerce_llm_payload(
+        {
+            "outcome": "partial_refund",
+            "confidence": 0.85,
+            "rationale": "Incomplete delivery",
+            "partial": {"amount": 50, "percent": 50, "note": None},
+            "draftAskMoreInfo": None,
+            "draftNoteToParties": "Partial refund of $50.",
+            "evidence": [
+                {"source": "dispute.response[0]", "quote": "Where is the brand kit?", "why": "Buyer"},
+                {"source": "invented.source", "quote": "nope", "why": "drop me"},
+            ],
+        }
+    )
+    s = _sanitize(Suggestion.model_validate(payload), ctx)
+    assert [e.source for e in s.evidence] == ["dispute.response[0]"]
