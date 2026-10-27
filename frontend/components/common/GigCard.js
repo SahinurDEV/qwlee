@@ -117,6 +117,11 @@ export default function GigCard({ item, sponsored = false }) {
               <div className="text-sm font-medium text-gray-900 truncate inline-flex items-center gap-1">
                 <span className="truncate">{seller.fullName || "Seller"}</span>
                 <VerifiedBadge user={seller} size={12} />
+                {seller.isPro ? (
+                  <span className="shrink-0 rounded bg-gray-900 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white" title="Qwlee Pro — hand-vetted seller">
+                    Pro
+                  </span>
+                ) : null}
               </div>
               <div className="flex items-center gap-1.5 min-w-0">
                 <LevelBadge seller={seller} />
