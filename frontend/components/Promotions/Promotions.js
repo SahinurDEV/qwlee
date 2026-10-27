@@ -83,6 +83,26 @@ export default function Promotions() {
         </button>
       </form>
 
+      {data?.results?.length ? (
+        <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3" data-testid="promo-summary">
+          {[
+            ["Active", data.results.filter((p) => p.status === "running" || p.status === "scheduled").length],
+            ["Impressions", data.results.reduce((s, p) => s + (p.impressions || 0), 0)],
+            ["Clicks", data.results.reduce((s, p) => s + (p.clicks || 0), 0)],
+            ["Avg CTR", (() => {
+              const im = data.results.reduce((s, p) => s + (p.impressions || 0), 0);
+              const cl = data.results.reduce((s, p) => s + (p.clicks || 0), 0);
+              return im ? `${Math.round((cl / im) * 1000) / 10}%` : "—";
+            })()],
+          ].map(([label, value]) => (
+            <div key={label} className="rounded-xl border border-gray-200 bg-white p-3">
+              <div className="text-xs uppercase tracking-wide text-gray-500">{label}</div>
+              <div className="mt-1 text-lg font-semibold tabular-nums text-gray-900">{value}</div>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
       <h2 className="mt-8 text-lg font-semibold text-gray-900">Your promotions</h2>
       {isLoading ? (
         <p className="mt-3 text-sm text-gray-500">Loading…</p>
@@ -98,6 +118,7 @@ export default function Promotions() {
                 <th className="px-3 py-3 text-right">Cost</th>
                 <th className="px-3 py-3 text-right">Impressions</th>
                 <th className="px-3 py-3 text-right">Clicks</th>
+                <th className="px-3 py-3 text-right">CTR</th>
                 <th className="px-3 py-3">Status</th>
                 <th className="px-4 py-3" />
               </tr>
@@ -112,6 +133,7 @@ export default function Promotions() {
                   <td className="px-3 py-3 text-right tabular-nums">${p.cost}</td>
                   <td className="px-3 py-3 text-right tabular-nums">{p.impressions}</td>
                   <td className="px-3 py-3 text-right tabular-nums">{p.clicks}</td>
+                  <td className="px-3 py-3 text-right tabular-nums">{typeof p.ctr === "number" ? `${p.ctr}%` : "—"}</td>
                   <td className="px-3 py-3"><span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS[p.status] || ""}`}>{p.status}</span></td>
                   <td className="px-4 py-3 text-right">
                     {(p.status === "running" || p.status === "scheduled") && (

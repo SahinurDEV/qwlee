@@ -83,6 +83,7 @@ async function list(userId) {
     endsAt: p.endsAt,
     impressions: p.impressions,
     clicks: p.clicks,
+    ctr: p.impressions > 0 ? Math.round((p.clicks / p.impressions) * 1000) / 10 : 0,
     status: p.status === "active" ? (p.endsAt <= now ? "ended" : p.startsAt > now ? "scheduled" : "running") : p.status,
   }));
 }
