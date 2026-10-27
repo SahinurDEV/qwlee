@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import PrimaryLayout from "@/components/Layout/PrimaryLayout";
 import AiAssistant from "@/components/AiAssistant/AiAssistant";
 
-export const metadata = { title: "AI assistant" };
+export const metadata = { title: "AI workspace" };
 
 export default function Page() {
   return (
