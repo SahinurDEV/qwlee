@@ -1,0 +1,212 @@
+[
+  {
+    "id": "policy:refund\u00a71",
+    "doc": "refund",
+    "n": 1,
+    "heading": "Before work starts",
+    "text": "If an order asks for requirements and you haven't sent them yet, you can cancel it yourself from the order page and receive a full refund, including the service fee."
+  },
+  {
+    "id": "policy:refund\u00a72",
+    "doc": "refund",
+    "n": 2,
+    "heading": "Mutual cancellation",
+    "text": "Either side can ask to cancel an order that is in progress, with a reason. The other side has 48 hours to accept or decline. If they don't answer, the cancellation goes through automatically. Only one request can be open on an order at a time."
+  },
+  {
+    "id": "policy:refund\u00a73",
+    "doc": "refund",
+    "n": 3,
+    "heading": "Late orders",
+    "text": "An order becomes late when the delivery date passes without a delivery. If it is still not delivered 24 hours later, the buyer can cancel it straight away, without the seller's agreement. If nothing is delivered within 30 days of the order, it is cancelled and refunded automatically. Sellers who need more time should ask for an extension before the deadline; the buyer can accept or decline it."
+  },
+  {
+    "id": "policy:refund\u00a74",
+    "doc": "refund",
+    "n": 4,
+    "heading": "After delivery",
+    "text": "When the seller delivers, the buyer can accept, ask for a revision (within the revisions included), or ask for more time to review. If the buyer does nothing for a few days, the order completes automatically. Completed orders can't be cancelled from the order page; contact support if something is seriously wrong, for example if the delivery is not what was ordered."
+  },
+  {
+    "id": "policy:refund\u00a75",
+    "doc": "refund",
+    "n": 5,
+    "heading": "Disputes",
+    "text": "If you and the other side can't agree, open a dispute from the order page. Our team reviews the order chat, the gig description and the delivery, and decides whether to complete, partly refund or cancel the order. Keeping all communication on Qwlee helps us decide fairly."
+  },
+  {
+    "id": "policy:refund\u00a76",
+    "doc": "refund",
+    "n": 6,
+    "heading": "How refunds are paid",
+    "text": "A cancelled order is refunded to the original payment method; for card payments this usually takes 5\u201310 business days to appear. The service fee is refunded when the whole order is cancelled. If part of an order (a milestone) was already released to the seller, only the unreleased part is refunded. Tips can be refunded only by our support team, in cases of error or fraud."
+  },
+  {
+    "id": "policy:refund\u00a77",
+    "doc": "refund",
+    "n": 7,
+    "heading": "Effect on sellers",
+    "text": "Cancellations count against a seller's completion rate and may affect their level, unless our team decides the seller was not at fault. Refunds after completion are taken from the seller's pending or available balance."
+  },
+  {
+    "id": "policy:payment-terms\u00a71",
+    "doc": "payment-terms",
+    "n": 1,
+    "heading": "What buyers pay",
+    "text": "Buyers pay the price of the gig package and any extras, plus a service fee. Orders under a threshold also carry a small order fee. Tips carry the percentage service fee. All fees are shown before you pay."
+  },
+  {
+    "id": "policy:payment-terms\u00a72",
+    "doc": "payment-terms",
+    "n": 2,
+    "heading": "Payment protection",
+    "text": "Your payment is held by Qwlee, not the seller, until the order completes. If an order is cancelled, see Refunds & cancellations for what is returned."
+  },
+  {
+    "id": "policy:payment-terms\u00a73",
+    "doc": "payment-terms",
+    "n": 3,
+    "heading": "What sellers earn",
+    "text": "Sellers receive the order price minus Qwlee's commission, which is shown in the seller's earnings for each order. The commission also applies to tips and to extras added during an order."
+  },
+  {
+    "id": "policy:payment-terms\u00a74",
+    "doc": "payment-terms",
+    "n": 4,
+    "heading": "Clearance period",
+    "text": "Earnings become available to withdraw after a clearance period. Until then they show as pending clearance. This gives time to deal with refunds and chargebacks."
+  },
+  {
+    "id": "policy:payment-terms\u00a75",
+    "doc": "payment-terms",
+    "n": 5,
+    "heading": "Withdrawals",
+    "text": "Minimums apply per payout method. After you add or change payout details, you can withdraw to them after a hold period. Your payout provider may charge its own fees or currency conversion."
+  },
+  {
+    "id": "policy:payment-terms\u00a76",
+    "doc": "payment-terms",
+    "n": 6,
+    "heading": "Chargebacks and negative balances",
+    "text": "If a buyer's payment is reversed after the seller was paid, the amount is deducted from the seller's pending or available balance, which may become negative until new earnings cover it. Filing a chargeback for an order you received can lead to account restrictions."
+  },
+  {
+    "id": "policy:payment-terms\u00a77",
+    "doc": "payment-terms",
+    "n": 7,
+    "heading": "Taxes",
+    "text": "You are responsible for any taxes on what you buy or earn. Qwlee may collect tax details where the law requires it."
+  },
+  {
+    "id": "policy:community-standards\u00a71",
+    "doc": "community-standards",
+    "n": 1,
+    "heading": "Be honest about who you are",
+    "text": "Use one personal account, with your real name and accurate details. Sellers may be asked to verify their identity. Do not create accounts for someone else, share your login, or buy, sell or rent accounts."
+  },
+  {
+    "id": "policy:community-standards\u00a72",
+    "doc": "community-standards",
+    "n": 2,
+    "heading": "Keep work and payments on Qwlee",
+    "text": "Do not take payments or deliverables off Qwlee to avoid fees. Off-platform contact details in messages may be hidden or flagged."
+  },
+  {
+    "id": "policy:community-standards\u00a73",
+    "doc": "community-standards",
+    "n": 3,
+    "heading": "Communicate with respect",
+    "text": "No harassment, threats, hate speech, discrimination or sexual content in messages, gigs, reviews or profiles. Don't send bulk unsolicited messages."
+  },
+  {
+    "id": "policy:community-standards\u00a74",
+    "doc": "community-standards",
+    "n": 4,
+    "heading": "Offer real services, described accurately",
+    "text": "Gigs must describe a service you will personally deliver, at the price and within the time shown. Don't promise results you can't control."
+  },
+  {
+    "id": "policy:community-standards\u00a75",
+    "doc": "community-standards",
+    "n": 5,
+    "heading": "Services we don't allow",
+    "text": "Illegal services, academic cheating, spam, malware, weapons, adult sexual services, and impersonating a person, brand or government body are not allowed."
+  },
+  {
+    "id": "policy:community-standards\u00a76",
+    "doc": "community-standards",
+    "n": 6,
+    "heading": "Reviews must be genuine",
+    "text": "Only buyers who completed an order can leave a public review. Offering money or extras in exchange for a good review is not allowed."
+  },
+  {
+    "id": "policy:community-standards\u00a77",
+    "doc": "community-standards",
+    "n": 7,
+    "heading": "How we enforce these standards",
+    "text": "We may warn, restrict, suspend or permanently ban accounts that break these rules. Serious cases may be reported to authorities."
+  },
+  {
+    "id": "policy:community-standards\u00a78",
+    "doc": "community-standards",
+    "n": 8,
+    "heading": "Age",
+    "text": "You must be at least 18 to use Qwlee."
+  },
+  {
+    "id": "policy:intellectual-property\u00a71",
+    "doc": "intellectual-property",
+    "n": 1,
+    "heading": "Buyer rights after delivery",
+    "text": "When an order completes and is paid, the buyer receives the commercial rights described in the gig package, unless the parties agreed otherwise in writing on Qwlee."
+  },
+  {
+    "id": "policy:intellectual-property\u00a72",
+    "doc": "intellectual-property",
+    "n": 2,
+    "heading": "Seller portfolio use",
+    "text": "Sellers may show completed work in their portfolio unless the buyer asks them not to for confidential projects."
+  },
+  {
+    "id": "policy:intellectual-property\u00a73",
+    "doc": "intellectual-property",
+    "n": 3,
+    "heading": "Infringement reports",
+    "text": "If you believe content on Qwlee infringes your rights, contact support with the URL and proof of ownership. We may remove content while we review."
+  },
+  {
+    "id": "policy:intellectual-property\u00a74",
+    "doc": "intellectual-property",
+    "n": 4,
+    "heading": "Original work",
+    "text": "Sellers must deliver original work or properly licensed materials. Plagiarism or unlicensed stock can lead to a full refund and account action."
+  },
+  {
+    "id": "policy:terms-excerpt\u00a71",
+    "doc": "terms-excerpt",
+    "n": 1,
+    "heading": "Escrow",
+    "text": "Buyer payments are held by Qwlee until an order completes, is cancelled, or a dispute is resolved."
+  },
+  {
+    "id": "policy:terms-excerpt\u00a72",
+    "doc": "terms-excerpt",
+    "n": 2,
+    "heading": "Disputes",
+    "text": "Disputes should first be raised with the other party. Unresolved disputes can be escalated to Qwlee's trust & safety team for mediation. Admin resolutions are binding on the order."
+  },
+  {
+    "id": "policy:terms-excerpt\u00a73",
+    "doc": "terms-excerpt",
+    "n": 3,
+    "heading": "Evidence",
+    "text": "Communication and files kept on Qwlee are the primary evidence for dispute decisions. Off-platform claims are harder to verify."
+  },
+  {
+    "id": "policy:terms-excerpt\u00a74",
+    "doc": "terms-excerpt",
+    "n": 4,
+    "heading": "Admin authority",
+    "text": "Qwlee may refund the buyer in full or in part, release funds to the seller, or cancel an order when mediating a dispute."
+  }
+]
