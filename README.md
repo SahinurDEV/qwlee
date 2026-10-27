@@ -167,6 +167,16 @@ flowchart LR
 
 Operational env vars and eval commands: [Admin Dispute AI assistant](#admin-dispute-ai-assistant) below.
 
+## Legal content (Privacy / Terms)
+
+Privacy Policy and Terms of Service HTML live in `backend/data/legal/` and are loaded by the content seeder. To push the files into Mongo without a full re-seed:
+
+```sh
+cd backend && npm run legal:upsert
+```
+
+Admin → Privacy / Terms editors can still override the text afterward.
+
 ## Configuration
 
 All Docker config lives in the root `.env` (see [.env.example](.env.example)).
