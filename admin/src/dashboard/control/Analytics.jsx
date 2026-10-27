@@ -18,6 +18,20 @@ export default function Analytics() {
   const { data, error } = useAdminQuery(`/admin/analytics?days=${days}`);
   const t = data?.totals;
   const short = (d) => d.slice(5);
+  const [insights, setInsights] = useState(null);
+  const [insightLoading, setInsightLoading] = useState(false);
+  const loadInsights = async () => {
+    setInsightLoading(true);
+    try {
+      const r = await adminFetch("/admin/ai-insights", { method: "POST", body: {} });
+      setInsights(r);
+      toast.success("AI insights ready");
+    } catch (e) {
+      toast.error(e.message);
+    } finally {
+      setInsightLoading(false);
+    }
+  };
   return (
     <div>
       <PageHeader title="Analytics" subtitle="Marketplace activity over time." actions={<Tabs tabs={[{ v: "7", label: "7 days" }, { v: "30", label: "30 days" }, { v: "90", label: "90 days" }, { v: "365", label: "1 year" }]} value={days} onChange={setDays} />} />
@@ -31,6 +45,27 @@ export default function Analytics() {
             <Kpi label="Platform fees" value={formatMoney(t.fees, { maxFractionDigits: 2 })} tone="amber" />
             <Kpi label="New gigs" value={formatNumber(t.gigs)} tone="slate" />
           </div>
+          <Card title="AI insights" actions={<Button size="sm" onClick={loadInsights} disabled={insightLoading}>{insightLoading ? "…" : "Generate"}</Button>}>
+            {insights?.insights ? (
+              <div className="space-y-2 text-left" data-testid="ai-insights">
+                <p className="text-sm text-ink-700">{insights.insights.summary}</p>
+                <div className="text-[10px] uppercase tracking-wide text-violet-800 font-semibold">
+                  {insights.source}{insights.insights.confidence != null ? ` · ${Math.round(Number(insights.insights.confidence) * 100)}%` : ""}
+                </div>
+                <ul className="space-y-1.5">
+                  {(insights.insights.bullets || []).map((b, i) => (
+                    <li key={i} className="rounded-lg border border-violet-100 bg-violet-50/50 px-2.5 py-1.5">
+                      <div className="text-xs font-medium text-ink-900">{b.title}</div>
+                      <div className="text-xs text-ink-600">{b.detail}</div>
+                    </li>
+                  ))}
+                </ul>
+                <p className="text-[11px] text-ink-500">AI never refunds, bans, or messages users — insights are for prioritization only.</p>
+              </div>
+            ) : (
+              <p className="text-sm text-ink-500">Generate a short priority brief from open disputes, risk flags, and AI support escalations (aggregates only, no PII).</p>
+            )}
+          </Card>
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
             <Card title="GMV & fees">
               <ResponsiveContainer width="100%" height={260}>

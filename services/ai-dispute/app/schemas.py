@@ -187,3 +187,43 @@ class FraudReviewResponse(BaseModel):
     model: str = ""
     latencyMs: int = 0
     configured: bool = True
+
+
+class InsightBullet(BaseModel):
+    title: str = ""
+    detail: str = ""
+    tone: str = "info"  # ok|warn|info
+
+    @field_validator("title", "detail", "tone", mode="before")
+    @classmethod
+    def coerce_ins(cls, v: Any) -> str:
+        return _null_to_str(v)
+
+
+class InsightsResult(BaseModel):
+    summary: str = ""
+    bullets: list[InsightBullet] = Field(default_factory=list)
+    confidence: float = Field(ge=0, le=1, default=0.7)
+
+    @field_validator("summary", mode="before")
+    @classmethod
+    def coerce_sum(cls, v: Any) -> str:
+        return _null_to_str(v)
+
+    @field_validator("confidence")
+    @classmethod
+    def clamp_ins(cls, v: float) -> float:
+        return max(0.0, min(1.0, float(v)))
+
+
+class InsightsRequest(BaseModel):
+    stats: dict[str, Any] = Field(default_factory=dict)
+    mock: bool = False
+
+
+class InsightsResponse(BaseModel):
+    insights: InsightsResult
+    source: Literal["remote", "mock"]
+    model: str = ""
+    latencyMs: int = 0
+    configured: bool = True
