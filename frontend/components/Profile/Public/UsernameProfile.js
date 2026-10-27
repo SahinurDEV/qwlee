@@ -205,6 +205,7 @@ export default function UsernameProfile({ user }) {
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div className="lg:col-span-8 space-y-10">
           {/* In-page jump bar — scrolls, doesn't hide content */}
+          {(isFreelancer || user.skills?.length || user.portfolios?.length) ? (
           <nav className="sticky top-16 z-10 -mx-2 px-2 py-2 bg-white/85 backdrop-blur border-b border-gray-200 flex gap-5 overflow-x-auto text-sm">
             <a href="#about" className="py-1.5 text-gray-600 hover:text-emerald-700 whitespace-nowrap">About</a>
             {user.skills?.length ? (
@@ -226,6 +227,7 @@ export default function UsernameProfile({ user }) {
               </a>
             ) : null}
           </nav>
+          ) : null}
 
           <Section id="about" title="About">
             <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
@@ -349,7 +351,7 @@ function Section({ id, title, count, children }) {
   );
 }
 
-// Two-column About details strip (Languages / Location / Rate / Response time)
+// Two-column About details strip (Rate / Response time)
 // Measured from chat (minutes); falls back to the stored hours.
 function formatResponse(user) {
   const m = Number(user.responseMinutes);
@@ -370,8 +372,7 @@ const languageText = (user) =>
 
 function SideDetails({ user }) {
   const rows = [
-    { label: "Languages", value: languageText(user) },
-    { label: "Location", value: user.location },
+    // Languages and location already show in the side card.
     {
       label: "Rate",
       value: user.perHourRate ? `$${user.perHourRate}/hr` : null,
