@@ -16,21 +16,21 @@ mongoose.connect(config.mongoose.url, config.mongoose.options).then(() => {
   server = app.listen(config.port, bindHost, () => {
     logger.info(`Listening on http://${bindHost}:${config.port}`);
 
-  // Payment mode: warn loudly in production when only demo checkout works.
-  try {
-    const pay = require("./services/paymentsConfig.service").readiness();
-    if (config.env === "production" && pay.mode === "demo") {
-      logger.warn(
-        "DEMO_PAYMENTS=true in production — card charges are disabled. Set STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PUBLISHABLE_KEY, then DEMO_PAYMENTS=false."
-      );
-    } else if (pay.mode === "stripe" && !pay.webhookConfigured) {
-      logger.warn("STRIPE_SECRET_KEY is set but STRIPE_WEBHOOK_SECRET is missing — checkout sessions will not create orders.");
-    } else {
-      logger.info(`Payments mode: ${pay.mode} (liveReady=${pay.readyForLiveCharges})`);
+    // Payment mode: warn loudly in production when only demo checkout works.
+    try {
+      const pay = require("./services/paymentsConfig.service").readiness();
+      if (config.env === "production" && pay.mode === "demo") {
+        logger.warn(
+          "DEMO_PAYMENTS=true in production — card charges are disabled. Set STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PUBLISHABLE_KEY, then DEMO_PAYMENTS=false."
+        );
+      } else if (pay.mode === "stripe" && !pay.webhookConfigured) {
+        logger.warn("STRIPE_SECRET_KEY is set but STRIPE_WEBHOOK_SECRET is missing — checkout sessions will not create orders.");
+      } else {
+        logger.info(`Payments mode: ${pay.mode} (liveReady=${pay.readyForLiveCharges})`);
+      }
+    } catch (e) {
+      logger.warn(`payments readiness: ${e.message}`);
     }
-  } catch (e) {
-    logger.warn(`payments readiness: ${e.message}`);
-  }
   });
 });
 

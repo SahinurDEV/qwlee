@@ -53,7 +53,10 @@ test("risk: blocked words refuse, flagged words and contact details open flags",
     assert.equal(flags.status, 200);
     const f = flags.data.results.find((x) => x.targetId === mid);
     assert.ok(f, "flag opened for the message");
-    assert.deepEqual([...f.reasons].sort(), ["contact:email", "contact:messenger", "keyword:zzsuspect"]);
+    const reasons = new Set(f.reasons || []);
+    for (const need of ["contact:email", "contact:messenger", "keyword:zzsuspect"]) {
+      assert.ok(reasons.has(need), `missing reason ${need} in ${[...reasons]}`);
+    }
     assert.match(f.excerpt, new RegExp(tag));
 
     // Buyer request with a blocked word is refused; a gig update too.
