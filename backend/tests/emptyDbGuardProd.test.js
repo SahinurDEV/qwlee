@@ -1,15 +1,13 @@
-const { describe, it, after } = require("node:test");
+// Must set before emptyDbGuard → logger → config loads.
+process.env.NODE_ENV = process.env.NODE_ENV || "test";
+process.env.JWT_SECRET = process.env.JWT_SECRET || "test-jwt-secret-16chars";
+process.env.MONGODB_URL = process.env.MONGODB_URL || "mongodb://127.0.0.1:27017/qwlee_test";
+
+const { describe, it } = require("node:test");
 const assert = require("node:assert/strict");
 
 describe("emptyDbGuard production refuse", () => {
-  const saved = { ...process.env };
-  after(() => {
-    for (const k of Object.keys(process.env)) if (!(k in saved)) delete process.env[k];
-    Object.assign(process.env, saved);
-    delete require.cache[require.resolve("../src/services/emptyDbGuard")];
-  });
-
-  it("enabled() still reads the flag", () => {
+  it("enabled() reads SEED_DEMO_IF_EMPTY", () => {
     process.env.SEED_DEMO_IF_EMPTY = "true";
     delete require.cache[require.resolve("../src/services/emptyDbGuard")];
     assert.equal(require("../src/services/emptyDbGuard").enabled(), true);
