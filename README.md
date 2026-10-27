@@ -1,6 +1,10 @@
 # Qwlee
 
-An open-source, Fiverr-style freelance services marketplace: sellers publish gigs, buyers order them, both sides chat in real time, and admins manage everything from a dashboard.
+[![License: MIT](https://img.shields.io/badge/License-MIT-emerald.svg)](LICENSE)
+[![Docker build](https://github.com/SahinurDEV/qwlee/actions/workflows/docker.yml/badge.svg)](https://github.com/SahinurDEV/qwlee/actions/workflows/docker.yml)
+[![GitHub stars](https://img.shields.io/github/stars/SahinurDEV/qwlee?style=social)](https://github.com/SahinurDEV/qwlee/stargazers)
+
+**Open-source freelance marketplace** — sellers publish gigs, buyers order them with escrow, both sides chat in real time, and admins run the platform from a dedicated dashboard.
 
 | App | Stack | Port |
 |---|---|---|
@@ -8,40 +12,35 @@ An open-source, Fiverr-style freelance services marketplace: sellers publish gig
 | `frontend/` | Next.js 16, React 19, Redux Toolkit, Tailwind | 8000 |
 | `admin/` | Vite 5, React 18 | 4000 |
 | database | MongoDB 7 | internal |
+| `services/ai-dispute/` | FastAPI sidecar (optional) | internal |
 
-Full feature list: [docs/FEATURES.md](docs/FEATURES.md). Architecture and developer guides: [docs/](docs/).
+Full feature list: [docs/FEATURES.md](docs/FEATURES.md). Architecture and guides: [docs/](docs/).
 
-## Case study: AI Dispute Assistant
+## Screenshots
 
-**Problem.** Admins resolving marketplace disputes had to dig through order chat, delivery events, and policy pages by hand. That was slow, easy to miss evidence, and hard to keep consistent with published refund rules.
+Captured from a running Docker stack (desktop 1440×900, mobile 390×844).
 
-**How it works.** On **Admin → Disputes**, an admin opens a case and clicks **Suggest resolution**. Express assembles a redacted context pack (dispute thread, order events, last ~80 order messages, gig package, top policy chunks) with PII masked. A small FastAPI sidecar (`services/ai-dispute`) calls OpenRouter, validates the JSON against a strict schema, and drops any citation that was not in the prompt. The admin sees outcome, confidence, evidence quotes, and an optional partial-refund amount — then must Accept, edit, copy an ask-more draft, or Dismiss. The model never refunds or releases escrow on its own.
+| Home | Marketplace |
+|---|---|
+| ![Home — desktop](docs/screenshots/home-desktop.png) | ![Gigs — desktop](docs/screenshots/gigs-desktop.png) |
+| ![Home — mobile](docs/screenshots/home-mobile.png) | ![Gig detail](docs/screenshots/gig-detail-desktop.png) |
 
-```mermaid
-flowchart LR
-  Admin[Admin Disputes UI] -->|suggest| API[Express API]
-  API -->|read case| Mongo[(MongoDB)]
-  API -->|redacted context| Py[ai-dispute FastAPI]
-  Policies[Policy corpus] --> Py
-  Py -->|prompt| LLM[OpenRouter]
-  LLM -->|JSON suggestion| Py
-  Py --> API
-  API -->|suggestion card| Admin
-```
+## Highlights
 
-**Eval.** Offline mock harness: **100%** exact outcome match on 20 seeded cases. Live OpenRouter (`openai/gpt-4o-mini`): **90%** (18/20). Misses E11 and E20 returned the safer `ask_for_more_info` instead of `release_to_seller`.
+Documented in the repo — not marketing claims:
 
-**Human approval.** Every suggestion is logged on `DisputeAiSuggestion` (model, latency, source). Accept runs the existing resolve endpoint only after the admin confirms. Ask-for-more is draft-only (copy/paste). Partial refunds carry a real amount field.
+- **Buyer & seller marketplace** with packages, extras, FAQ, requirements, and optional gig video (YouTube / Vimeo / MP4)
+- **Escrow checkout** (Stripe or demo mode), revisions, custom offers, milestones, and auto-complete
+- **Real-time messaging** (Socket.IO) for DMs and order threads
+- **Admin dashboard** for users, gigs, orders, payouts, content, and site settings
+- **Optional AI Dispute Assistant** (`services/ai-dispute`) with human approval before any refund or release
 
-**Screenshots** (desktop suggestion card, evidence close-up, 375px):
 
-![AI suggestion — desktop](docs/ai-dispute/example-suggest-desktop.png)
-
-![AI suggestion — evidence](docs/ai-dispute/example-evidence-desktop.png)
-
-![AI suggestion — 375px](docs/ai-dispute/example-suggest-375.png)
-
-Operational env vars and eval commands: [Admin Dispute AI assistant](#admin-dispute-ai-assistant) below.
+<!--
+  SHOW_DEMO_VIDEO: false
+  The walkthrough below is outdated and is intentionally hidden from the
+  README. To re-enable, delete this HTML comment wrapper (keep the markdown
+  inside) or set SHOW_DEMO_VIDEO to true in your docs publishing pipeline.
 
 ## Demo video
 
@@ -78,6 +77,7 @@ Operational env vars and eval commands: [Admin Dispute AI assistant](#admin-disp
 - 12:45 Wrap-up
 
 </details>
+-->
 
 ## Quick start (Docker)
 
@@ -110,6 +110,38 @@ Demo logins after seeding: `admin@example.com / Admin123!`, `seller@example.com 
 Seed images are committed under `backend/public/seed/` and served by the API at `/seed/...`, so demo data never depends on an external image host. Seeded image URLs use `PUBLIC_API_URL`; re-run the seed if you change it.
 
 MongoDB data persists in the `mongo-data` volume. `docker compose down -v` wipes it.
+
+## Case study: AI Dispute Assistant
+
+**Problem.** Admins resolving marketplace disputes had to dig through order chat, delivery events, and policy pages by hand. That was slow, easy to miss evidence, and hard to keep consistent with published refund rules.
+
+**How it works.** On **Admin → Disputes**, an admin opens a case and clicks **Suggest resolution**. Express assembles a redacted context pack (dispute thread, order events, last ~80 order messages, gig package, top policy chunks) with PII masked. A small FastAPI sidecar (`services/ai-dispute`) calls OpenRouter, validates the JSON against a strict schema, and drops any citation that was not in the prompt. The admin sees outcome, confidence, evidence quotes, and an optional partial-refund amount — then must Accept, edit, copy an ask-more draft, or Dismiss. The model never refunds or releases escrow on its own.
+
+```mermaid
+flowchart LR
+  Admin[Admin Disputes UI] -->|suggest| API[Express API]
+  API -->|read case| Mongo[(MongoDB)]
+  API -->|redacted context| Py[ai-dispute FastAPI]
+  Policies[Policy corpus] --> Py
+  Py -->|prompt| LLM[OpenRouter]
+  LLM -->|JSON suggestion| Py
+  Py --> API
+  API -->|suggestion card| Admin
+```
+
+**Eval.** Offline mock harness: **100%** exact outcome match on 20 seeded cases. Live OpenRouter (`openai/gpt-4o-mini`): **90%** (18/20). Misses E11 and E20 returned the safer `ask_for_more_info` instead of `release_to_seller`.
+
+**Human approval.** Every suggestion is logged on `DisputeAiSuggestion` (model, latency, source). Accept runs the existing resolve endpoint only after the admin confirms. Ask-for-more is draft-only (copy/paste). Partial refunds carry a real amount field.
+
+**Screenshots** (desktop suggestion card, evidence close-up, 375px):
+
+![AI suggestion — desktop](docs/ai-dispute/example-suggest-desktop.png)
+
+![AI suggestion — evidence](docs/ai-dispute/example-evidence-desktop.png)
+
+![AI suggestion — 375px](docs/ai-dispute/example-suggest-375.png)
+
+Operational env vars and eval commands: [Admin Dispute AI assistant](#admin-dispute-ai-assistant) below.
 
 ## Configuration
 
@@ -316,14 +348,6 @@ scripts/test-isolated.sh
 This starts a separate, throw-away stack (`docker-compose.test.yml`, project `qwlee-test`) with its own in-memory database, mail catcher and ports (API on 17171), seeds it, runs the API tests and removes it. Your live or demo database is never touched. `KEEP=1` leaves the test stack running.
 
 The tests refuse to run unless the API's `/health` reports `testMode: true` (set `TEST_MODE=true` on the backend, as the test stack and CI do), so `npm test` cannot write into a real database by accident. Set `ALLOW_NON_TEST_API=true` only if you really mean to.
-
-## Contributing
-
-Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) and our [Code of Conduct](CODE_OF_CONDUCT.md). Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md).
-
-## License
-
-[MIT](LICENSE)
 
 ### Support canned replies
 
@@ -580,3 +604,23 @@ text. Optional emails (orders, reviews, messages, announcements) can be
 turned off entirely; sign-in, password, payout and moderation emails can't.
 Everything you type is HTML-escaped; the layout, order summary tables and
 links stay built-in. Overrides are cached for 30 s (cleared on save).
+
+## Tech stack
+
+| Layer | Libraries |
+|---|---|
+| API | Node.js, Express 4, Mongoose 8, Socket.IO, JWT |
+| Marketplace UI | Next.js 16 (App Router), React 19, Redux Toolkit, Tailwind CSS, Ant Design |
+| Admin UI | Vite 5, React 18, Tailwind CSS |
+| Data | MongoDB 7 |
+| Optional AI | FastAPI + OpenRouter (`services/ai-dispute`) |
+| Ops | Docker Compose, Mailpit (dev email), GitHub Actions (`docker.yml`) |
+
+## Contributing
+
+Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) and our [Code of Conduct](CODE_OF_CONDUCT.md). Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md).
+
+## License
+
+[MIT](LICENSE) — Copyright (c) 2026 Sahinur Islam
+
