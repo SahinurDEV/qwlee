@@ -50,6 +50,7 @@ test("milestones: offers are validated, released one by one, last one completes 
   const before = await balanceOf(seller);
   assert.equal((await call("POST", `/orders/${id}/milestones/0/release`, { token: seller.token })).status, 403, "seller can't release");
   assert.equal((await call("POST", `/orders/${id}/milestones/5/release`, { token: buyer.token })).status, 404);
+  assert.equal((await call("POST", `/orders/${id}/milestones/1/release`, { token: buyer.token })).status, 409, "must release earlier milestones first");
   const one = await call("POST", `/orders/${id}/milestones/0/release`, { token: buyer.token });
   assert.equal(one.status, 200, JSON.stringify(one.json));
   assert.equal(one.data.status, "active", "order stays open");

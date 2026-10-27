@@ -48,6 +48,9 @@ async function release(orderId, userId, index) {
   if (!Number.isInteger(n) || !list[n]) throw new ApiError(httpStatus.NOT_FOUND, "Milestone not found");
   if (list[n].status !== "pending") throw new ApiError(httpStatus.CONFLICT, "Milestone already released");
   if (!OPEN.includes(order.status)) throw new ApiError(httpStatus.CONFLICT, `Order is ${order.status}`);
+  // Release in order: earlier milestones must already be released.
+  const earlierOpen = list.findIndex((m, i) => i < n && m.status === "pending");
+  if (earlierOpen !== -1) throw new ApiError(httpStatus.CONFLICT, "Release earlier milestones first");
   // The last open milestone completes the order (releasing the remainder).
   if (list.filter((m) => m.status === "pending").length === 1) {
     return require("./orderLifecycle.service").completeOrder(order, { reason: "milestones" });
