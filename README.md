@@ -409,7 +409,7 @@ Admins can open **Disputes** and click **Suggest resolution**. A small Python Fa
 | --- | --- |
 | `AI_API_URL` | `https://openrouter.ai/api/v1/chat/completions` |
 | `AI_API_KEY` | your OpenRouter key (required for live suggestions) |
-| `AI_MODEL` | free default `meta-llama/llama-3.3-70b-instruct:free`; for better quality use paid `openai/gpt-4o-mini` |
+| `AI_MODEL` | default `openai/gpt-4o-mini` (reliable on OpenRouter). Free `:free` slugs rotate and may 404 — pick another free model from the OpenRouter catalogue if you want zero cost |
 | `OPENROUTER_HTTP_REFERER` / `OPENROUTER_X_TITLE` | sent as OpenRouter attribution headers |
 | `AI_DISPUTE_ASSISTANT` | `on` / `off` |
 | `AI_DISPUTE_URL` | `http://ai-dispute:7190` in compose, or `http://127.0.0.1:7190` in hostnet |

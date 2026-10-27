@@ -52,7 +52,7 @@ services:
       AI_HELPERS: ${AI_HELPERS:-on}
       AI_API_URL: ${AI_API_URL:-https://openrouter.ai/api/v1/chat/completions}
       AI_API_KEY: ${AI_API_KEY:-}
-      AI_MODEL: ${AI_MODEL:-meta-llama/llama-3.3-70b-instruct:free}
+      AI_MODEL: ${AI_MODEL:-openai/gpt-4o-mini}
       AI_DISPUTE_ASSISTANT: ${AI_DISPUTE_ASSISTANT:-on}
       AI_DISPUTE_URL: ${AI_DISPUTE_URL:-http://ai-dispute:7190}
       AI_DISPUTE_TOKEN: ${AI_DISPUTE_TOKEN:-local-ai-dispute-token-change-me}
@@ -140,7 +140,7 @@ services:
       PORT: 7190
       AI_API_URL: ${AI_API_URL:-https://openrouter.ai/api/v1/chat/completions}
       AI_API_KEY: ${AI_API_KEY:-}
-      AI_MODEL: ${AI_MODEL:-meta-llama/llama-3.3-70b-instruct:free}
+      AI_MODEL: ${AI_MODEL:-openai/gpt-4o-mini}
       AI_DISPUTE_TOKEN: ${AI_DISPUTE_TOKEN:-local-ai-dispute-token-change-me}
       OPENROUTER_HTTP_REFERER: ${OPENROUTER_HTTP_REFERER:-https://qwlee.local}
       OPENROUTER_X_TITLE: ${OPENROUTER_X_TITLE:-Qwlee Dispute Assistant}
