@@ -30,3 +30,4 @@
 **/.env.*
 !**/.env.example
 offsite-backups/
+__pycache__/
