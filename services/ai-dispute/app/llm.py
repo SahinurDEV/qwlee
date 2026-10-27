@@ -317,3 +317,54 @@ async def complete_fraud_review(excerpt: str, reasons: list, kind: str = "messag
         return s, "remote", model, int((time.time() - t0) * 1000)
     except Exception:
         return review_fraud(excerpt, reasons, kind), "mock", "mock-fallback", int((time.time() - t0) * 1000)
+
+
+INSIGHTS_SYSTEM = """You are a marketplace ops assistant. Given aggregate counts only (no PII), return JSON:
+{"summary":"...","bullets":[{"title":"...","detail":"...","tone":"ok|warn|info"}],"confidence":0-1}
+Max 6 bullets. Never recommend auto-bans or automatic refunds. Prioritize human review queues.
+"""
+
+
+async def complete_insights(stats: dict, *, force_mock: bool = False):
+    from .schemas import InsightsResult
+    from .insights_mock import build_insights
+    t0 = time.time()
+    if force_mock or not configured():
+        return build_insights(stats), "mock", "mock", int((time.time() - t0) * 1000)
+    url = os.environ["AI_API_URL"]
+    key = os.environ["AI_API_KEY"]
+    model = os.environ.get("AI_MODEL") or "openai/gpt-4o-mini"
+    headers = {
+        "Authorization": f"Bearer {key}",
+        "Content-Type": "application/json",
+        "HTTP-Referer": os.environ.get("OPENROUTER_HTTP_REFERER", "https://qwlee.local"),
+        "X-Title": os.environ.get("OPENROUTER_X_TITLE", "Qwlee Admin Insights"),
+    }
+    body = {
+        "model": model,
+        "temperature": 0.2,
+        "max_tokens": 500,
+        "messages": [
+            {"role": "system", "content": INSIGHTS_SYSTEM},
+            {"role": "user", "content": json.dumps({"stats": stats}, ensure_ascii=False)[:8000]},
+        ],
+    }
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            r = await client.post(url, headers=headers, json=body)
+            r.raise_for_status()
+            data = r.json()
+        content = (((data.get("choices") or [{}])[0].get("message") or {}).get("content")) or ""
+        content = content.strip()
+        if content.startswith("```"):
+            content = content.strip("`")
+            if content.startswith("json"):
+                content = content[4:]
+            content = content.strip()
+        parsed = coerce_llm_payload(json.loads(content))
+        s = InsightsResult.model_validate(parsed)
+        if not s.bullets:
+            s = build_insights(stats)
+        return s, "remote", model, int((time.time() - t0) * 1000)
+    except Exception:
+        return build_insights(stats), "mock", "mock-fallback", int((time.time() - t0) * 1000)

@@ -1,6 +1,6 @@
 import os
 from fastapi import FastAPI, Header, HTTPException
-from .llm import complete, complete_support, complete_search_parse, complete_fraud_review, configured
+from .llm import complete, complete_support, complete_search_parse, complete_fraud_review, complete_insights, configured
 from .schemas import (
     SuggestRequest,
     SuggestResponse,
@@ -10,6 +10,8 @@ from .schemas import (
     SearchParseResponse,
     FraudReviewRequest,
     FraudReviewResponse,
+    InsightsRequest,
+    InsightsResponse,
 )
 
 app = FastAPI(title="qwlee ai-dispute", version="1.1.0")
@@ -91,3 +93,12 @@ async def fraud_review(req: FraudReviewRequest, x_internal_token: str | None = H
         req.excerpt, req.reasons, req.kind, force_mock=req.mock
     )
     return FraudReviewResponse(review=review, source=source, model=model, latencyMs=latency, configured=configured())
+
+
+@app.post("/v1/insights", response_model=InsightsResponse)
+async def insights(req: InsightsRequest, x_internal_token: str | None = Header(default=None)):
+    _check_token(x_internal_token)
+    if not configured() and not req.mock:
+        raise HTTPException(status_code=503, detail="AI not configured")
+    result, source, model, latency = await complete_insights(req.stats or {}, force_mock=req.mock)
+    return InsightsResponse(insights=result, source=source, model=model, latencyMs=latency, configured=configured())

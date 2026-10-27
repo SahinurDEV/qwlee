@@ -137,6 +137,14 @@ flowchart LR
 
 **Eval.** Mock fixtures cover off-platform contact, pay-outside, impersonation, and unclear cases (see `backend/scripts/eval-fraud-ai.js`).
 
+
+
+## Case study: Admin AI insights
+
+**Problem.** Admins see many queues (disputes, risk flags, AI support escalations) without a short “what should I look at first?” brief.
+
+**How it works.** `POST /admin/ai-insights` gathers aggregate counts only (no PII), then the AI dispute sidecar returns a summary and prioritized bullets. The Analytics page shows a Generate button. AI never refunds, bans, or messages users.
+
 ## Case study: AI Dispute Assistant
 
 **Problem.** Admins resolving marketplace disputes had to dig through order chat, delivery events, and policy pages by hand. That was slow, easy to miss evidence, and hard to keep consistent with published refund rules.

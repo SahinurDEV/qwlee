@@ -128,3 +128,11 @@ def test_fraud_mock_unclear():
     r = review_fraud("Thanks for the delivery!", [], "message")
     assert r.label == "unclear"
     assert r.recommendAction == "review"
+
+
+def test_insights_mock_warns_on_open_queues():
+    from app.insights_mock import build_insights
+    r = build_insights({"openDisputes": 2, "openRiskFlags": 3, "aiEscalatedTickets": 1, "ordersLast7d": 10})
+    assert r.bullets
+    assert r.confidence >= 0.5
+    assert "dispute" in r.summary.lower() or "Trust" in r.summary
