@@ -19,6 +19,7 @@ const STATUS_KEYS = ["active", "late", "delivered", "cancelled", "disputed"];
 // Count orders per status for the manage-orders tab badges. `role` is
 // either "buyer" or "seller" (matches the user's view mode), so a single
 // account can pull either side's counts.
+// Active orders past delivery (not yet delivered) count as late for tab badges.
 const getOrderCounts = async (userId, role = "buyer") => {
   const matchKey = role === "seller" ? "freelancerId" : "clientId";
   const match = {
@@ -34,6 +35,17 @@ const getOrderCounts = async (userId, role = "buyer") => {
   for (const row of grouped) {
     if (counts.hasOwnProperty(row._id)) counts[row._id] = row.count;
     total += row.count;
+  }
+  // Move overdue actives into the late bucket so Late (n) matches Due In.
+  const overdue = await Payment.countDocuments({
+    ...match,
+    status: "active",
+    deliveryDate: { $lt: new Date() },
+    "delivery.state": { $ne: "submitted" },
+  });
+  if (overdue > 0) {
+    counts.active = Math.max(0, (counts.active || 0) - overdue);
+    counts.late = (counts.late || 0) + overdue;
   }
   return { ...counts, all: total };
 };
