@@ -167,6 +167,7 @@ const ordersSchema = mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    demoSeed: { type: Boolean, default: false, index: true },
   },
   {
     timestamps: true,
