@@ -132,6 +132,9 @@ async function run() {
 
   for (const [name, fn] of PIPELINE) {
     if (args.only && !args.only.includes(name)) continue;
+    // Dispute AI eval cases (20 "Eval E0N" disputed orders on the demo
+    // buyer/seller) are test fixtures, not demo content: opt in explicitly.
+    if (name === "disputeAiEval" && !args.only && process.env.SEED_DISPUTE_EVAL !== "true") continue;
     process.stdout.write(`→ seeding ${name.padEnd(14)} `);
     try {
       const result = await fn(ctx);
