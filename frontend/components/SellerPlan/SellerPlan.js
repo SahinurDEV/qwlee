@@ -29,6 +29,7 @@ export default function SellerPlan() {
       <h1 className="text-3xl font-semibold text-gray-900">Seller plans</h1>
       <p className="mt-2 text-gray-600">
         Paid monthly from your Qwlee balance{data.balance != null ? ` (you have $${Number(data.balance).toFixed(2)})` : ""}. Cancel any time; the plan runs to the end of the period.
+        Plus and Premium members get a badge on their gig cards and faster payout clearance.
       </p>
       {cur.id !== "free" && (
         <div className="mt-6 p-4 rounded-xl border border-emerald-200 bg-emerald-50 text-sm text-emerald-900" data-testid="current-plan">

@@ -122,6 +122,18 @@ export default function GigCard({ item, sponsored = false }) {
                     Pro
                   </span>
                 ) : null}
+                {seller.planBadge === "premium" || seller.planBadge === "plus" ? (
+                  <span
+                    className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                      seller.planBadge === "premium"
+                        ? "bg-amber-400 text-gray-900"
+                        : "bg-emerald-100 text-emerald-800"
+                    }`}
+                    title={seller.planBadge === "premium" ? "Seller Plus Premium" : "Seller Plus"}
+                  >
+                    {seller.planBadge === "premium" ? "Premium" : "Plus"}
+                  </span>
+                ) : null}
               </div>
               <div className="flex items-center gap-1.5 min-w-0">
                 <LevelBadge seller={seller} />
