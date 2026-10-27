@@ -305,12 +305,25 @@ const editMessage = async (messageId, userId, text) => {
   if (!clean) throw new ApiError(httpStatus.BAD_REQUEST, "Message can't be empty.");
   if (clean.length > 5000) throw new ApiError(httpStatus.BAD_REQUEST, "Message is too long.");
   const risk = require("./risk.service");
-  const screened = await risk.screen(clean, { contact: true });
-  message.content.message = clean;
+  let screened = await risk.screen(clean, { contact: true });
+  if (screened.reasons.length) screened = await risk.enrichWithAi(clean, screened);
+  const mod = (await require("./siteSettings.service").get()).moderation;
+  if (mod.blockContactMessages && screened.reasons.some((r) => String(r).startsWith("contact:"))) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Sharing contact details isn't allowed on this site.");
+  }
+  let out = clean;
+  if (mod.maskContactBeforeOrder && screened.reasons.some((r) => String(r).startsWith("contact:"))) {
+    out = risk.maskContact(clean);
+  }
+  message.content.message = out;
   message.editedAt = new Date();
   message.markModified("content");
   await message.save();
-  if (screened.reasons.length) risk.record("message", message._id, userId, screened.reasons, clean);
+  if (screened.reasons.length) {
+    risk.record("message", message._id, userId, screened.reasons, clean, {
+      spans: screened.spans, score: screened.score, chatId: message.chat, aiSource: screened.aiSource,
+    });
+  }
   notifyUpdate(message);
   return loadForClient(message._id);
 };

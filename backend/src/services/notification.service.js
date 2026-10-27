@@ -218,22 +218,38 @@ const getALLAdminNotification = async (filter, options) => {
 };
 
 const addCustomNotification = async (eventName, userId, notifications) => {
-  console.log(eventName, userId, notifications);
   const messageEvent = `${eventName}::${userId}`;
   const result = await addNotification(notifications);
 
-  if (eventName !== "admin-notification") {
-    const filter = {};
-    const options = { limit: 10, sortBy: "createdAt:desc" };
-    const notificationsAll = await getALLNotification(filter, options, userId);
-
-    io.emit(messageEvent, {
-      message: "Notifications",
-      status: "OK",
-      statusCode: httpStatus.OK,
-      data: notificationsAll,
-    });
+  if (eventName === "admin-notification") {
+    // Push to every connected admin so the bell updates live.
+    try {
+      io.to("admins").emit("admin-notification", {
+        message: "Notifications",
+        status: "OK",
+        statusCode: httpStatus.OK,
+        data: result,
+      });
+      io.emit(messageEvent, {
+        message: "Notifications",
+        status: "OK",
+        statusCode: httpStatus.OK,
+        data: result,
+      });
+    } catch (_) {}
+    return result;
   }
+
+  const filter = {};
+  const options = { limit: 10, sortBy: "createdAt:desc" };
+  const notificationsAll = await getALLNotification(filter, options, userId);
+
+  io.emit(messageEvent, {
+    message: "Notifications",
+    status: "OK",
+    statusCode: httpStatus.OK,
+    data: notificationsAll,
+  });
   return result;
 };
 

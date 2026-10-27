@@ -340,7 +340,15 @@ getUserActivity: builder.query({
 
 // Admin conversation moderation — read-only access to direct messages
 // and order chats across the platform.
-getDirectChats: builder.query({
+getFlaggedChats: builder.query({
+      query: ({ status = "open" } = {}) => ({
+        url: `/admin/chats/flagged?status=${encodeURIComponent(status)}&limit=100`,
+        headers: { authorization: `Bearer ${localStorage.getItem("token")}` },
+      }),
+      transformResponse: (r) => r?.data?.attributes || r?.data || r,
+      providesTags: ["riskFlags"],
+    }),
+    getDirectChats: builder.query({
   query: ({ search = "" } = {}) => ({
     url: `/admin/chats?search=${encodeURIComponent(search)}&limit=200`,
     headers: { authorization: `Bearer ${localStorage.getItem("token")}` },
@@ -911,6 +919,7 @@ updateProfielPicture: builder.mutation({
       useUpdateSupportStatusMutation,
       useGetVerificationsQuery,
       useReviewVerificationMutation,
+      useGetFlaggedChatsQuery,
       useGetDirectChatsQuery,
       useGetDirectChatMessagesQuery,
       useGetOrderChatsQuery,

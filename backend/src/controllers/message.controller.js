@@ -52,9 +52,14 @@ const addMessage = catchAsync(async (req, res) => {
     parsedGigReference = null;
   }
 
-  // Keyword filter: blocked words refuse the message, others flag it.
+  // Keyword + contact filter (obfuscated forms included). Blocked words
+  // refuse the message; contact/payment sharing flags it and notifies
+  // admins live. Mask/block are admin settings (default off).
   const risk = require("../services/risk.service");
-  const screened = await risk.screenAll([message, parsedOfferDetails?.description, parsedOfferDetails?.title], { contact: true });
+  let screened = await risk.screenAll([message, parsedOfferDetails?.description, parsedOfferDetails?.title], { contact: true });
+  if (screened.reasons.length) {
+    screened = await risk.enrichWithAi(message || parsedOfferDetails?.description || "", screened);
+  }
 
   // Check for existing chat or create a new one
   let chatInfo = await chatService.getChatByParticipants([sender, receiver]);
@@ -98,11 +103,18 @@ const addMessage = catchAsync(async (req, res) => {
     replyToId = parent._id;
   }
 
-  // Off-platform guard: before the two users have an order together,
-  // contact details are hidden from the message (and still flagged).
+  // Off-platform guard: optional block or mask (both default OFF).
+  // Flags + admin notify always happen when reasons are present.
   let notice = "";
-  if (message && screened.reasons.some((r) => r.startsWith("contact:"))) {
+  const contactHit = screened.reasons.some((r) => String(r).startsWith("contact:"));
+  if (message && contactHit) {
     const mod = (await require("../services/siteSettings.service").get()).moderation;
+    if (mod.blockContactMessages) {
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        "Sharing contact details, payment info or off-platform links isn't allowed. Please keep the conversation on Qwlee."
+      );
+    }
     if (mod.maskContactBeforeOrder && !(await risk.haveOrder(sender, receiver))) {
       message = risk.maskContact(message);
       notice = "Contact details were hidden. Please keep communication and payments on Qwlee until an order is placed.";
@@ -139,7 +151,14 @@ const addMessage = catchAsync(async (req, res) => {
   const messageSent = created ? await messageService.loadForClient(created._id) : null;
 
   if (messageSent) {
-    risk.record("message", messageSent._id || messageSent.id, sender, screened.reasons, req.body.message || parsedOfferDetails?.description);
+    risk.record(
+      "message",
+      messageSent._id || messageSent.id,
+      sender,
+      screened.reasons,
+      req.body.message || parsedOfferDetails?.description,
+      { spans: screened.spans, score: screened.score, chatId: chatInfo.id || chatInfo._id, aiSource: screened.aiSource, aiSummary: screened.aiSummary }
+    );
     // Build a chat snapshot from each side's perspective. `getChat(viewer, chatId)`
     // returns the participant list as { the OTHER party, you } — so the
     // sender and receiver need different copies for their sidebars.

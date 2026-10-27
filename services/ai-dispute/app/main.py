@@ -1,6 +1,7 @@
 import os
 from fastapi import FastAPI, Header, HTTPException
 from .llm import complete, complete_support, complete_search_parse, complete_fraud_review, complete_insights, configured
+from .moderation_mock import moderate as moderate_mock
 from .schemas import (
     SuggestRequest,
     SuggestResponse,
@@ -8,6 +9,8 @@ from .schemas import (
     SupportAskResponse,
     SearchParseRequest,
     SearchParseResponse,
+    ModerateMessageRequest,
+    ModerateMessageResponse,
     FraudReviewRequest,
     FraudReviewResponse,
     InsightsRequest,
@@ -84,6 +87,26 @@ async def search_parse(req: SearchParseRequest, x_internal_token: str | None = H
     return SearchParseResponse(parse=parse, source=source, model=model, latencyMs=latency, configured=configured())
 
 
+@app.post("/v1/moderate-message", response_model=ModerateMessageResponse)
+async def moderate_message(req: ModerateMessageRequest, x_internal_token: str | None = Header(default=None)):
+    """Scan a chat message for off-platform contact / payment sharing.
+    Always safe to call with mock=true; used by Express on every DM send.
+    """
+    _check_token(x_internal_token)
+    text = (req.text or "").strip()
+    result = moderate_mock(text, req.heuristic or {})
+    source = "mock" if (req.mock or not configured()) else "remote"
+    return ModerateMessageResponse(
+        reasons=result["reasons"],
+        score=result["score"],
+        summary=result["summary"],
+        source=source,
+        model=os.environ.get("AI_MODEL") or "",
+        latencyMs=0,
+        configured=configured(),
+    )
+
+
 @app.post("/v1/fraud-review", response_model=FraudReviewResponse)
 async def fraud_review(req: FraudReviewRequest, x_internal_token: str | None = Header(default=None)):
     _check_token(x_internal_token)
@@ -102,3 +125,4 @@ async def insights(req: InsightsRequest, x_internal_token: str | None = Header(d
         raise HTTPException(status_code=503, detail="AI not configured")
     result, source, model, latency = await complete_insights(req.stats or {}, force_mock=req.mock)
     return InsightsResponse(insights=result, source=source, model=model, latencyMs=latency, configured=configured())
+

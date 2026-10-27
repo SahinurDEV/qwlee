@@ -13,6 +13,8 @@ import { MdMenu } from "react-icons/md";
 import { IoSearch } from "react-icons/io5";
 
 import { useGetNotificationQuery } from "../../redux/api/apiSlice";
+import useAdminSocket from "../../hooks/useAdminSocket";
+import toast from "react-hot-toast";
 import cls from "../../utils/cls";
 import { timeAgo } from "../../utils/format";
 
@@ -53,9 +55,34 @@ const QUICK_LINKS = [
 export default function Header({ onOpenMobileSidebar }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { data: notifications } = useGetNotificationQuery();
-  const items = notifications?.data?.attributes?.results || [];
+  const { data: notifications, refetch: refetchNotifs } = useGetNotificationQuery(undefined, { pollingInterval: 30000 });
+  const [liveNotifs, setLiveNotifs] = useState([]);
+  const items = [...liveNotifs, ...(notifications?.data?.attributes?.results || [])]
+    .filter((n, i, arr) => arr.findIndex((x) => String(x.id || x._id) === String(n.id || n._id)) === i);
   const unread = items.filter((n) => !n.viewStatus).length;
+
+  useAdminSocket({
+    onRiskFlag: (payload) => {
+      const flag = payload?.data?.flag;
+      const n = payload?.data?.notification;
+      if (n) setLiveNotifs((prev) => [{ ...n, id: n.id || `live-${Date.now()}`, viewStatus: false }, ...prev].slice(0, 30));
+      toast((tt) => (
+        <div className="text-sm">
+          <div className="font-semibold text-ink-900">Message flagged</div>
+          <div className="text-ink-600">{n?.message || flag?.excerpt || "Contact sharing detected"}</div>
+          <button type="button" className="mt-1 text-primary-700 underline" onClick={() => { toast.dismiss(tt.id); navigate(`/dashboard/conversations?tab=flagged${flag?.chatId ? `&chat=${flag.chatId}` : ""}`); }}>
+            Open Flagged queue
+          </button>
+        </div>
+      ), { duration: 8000 });
+      refetchNotifs?.();
+    },
+    onNotification: (payload) => {
+      const n = payload?.data?.notification || payload?.data;
+      if (n?.message) setLiveNotifs((prev) => [{ ...n, id: n.id || `live-${Date.now()}`, viewStatus: false }, ...prev].slice(0, 30));
+      refetchNotifs?.();
+    },
+  });
 
   const [notifOpen, setNotifOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);

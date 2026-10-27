@@ -1,175 +1,223 @@
-  
-import { Select, Button, Form, Input, notification } from "antd";
+import { Button, Form, Input, Select, Switch, notification } from "antd";
 import JoditEditor from "jodit-react";
-import React, { useEffect, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { IoIosArrowBack } from "react-icons/io";
 import { Link, useLoaderData, useNavigate } from "react-router-dom";
 import { useUpdateBlogMutation } from "../../../redux/api/apiSlice";
 import baseUrl from "../../../baseUrl";
+import { adminFetch } from "../../../utils/adminApi";
+import { PropagateLoader } from "react-spinners";
 
-const EditBlog = () => {
-  const [updateBlog, { isLoading, error }] = useUpdateBlogMutation();
+const slugify = (s) =>
+  String(s || "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+
+export default function EditBlog() {
+  const [updateBlog, { isLoading }] = useUpdateBlogMutation();
   const data = useLoaderData();
-  const singleData = data.data.attributes;
-  const { title, image, content, author, description, _id, kind } = singleData;
+  const blog = data?.data?.attributes || {};
+  const {
+    title, image, content: initialContent, author, description, _id, kind,
+    status, featured, slug, tags, categories, seo, scheduledAt,
+  } = blog;
 
-  const [descriptionEdit, setDescriptionEdit] = useState(description);
+  const [body, setBody] = useState(initialContent || description || "");
   const [updateImage, setUpdateImage] = useState(null);
-  const navigate = useNavigate();
- 
+  const [previewUrl, setPreviewUrl] = useState(image ? `${baseUrl}${image}` : "");
   const [form] = Form.useForm();
+  const navigate = useNavigate();
+  const editor = useRef(null);
+  const config = useMemo(
+    () => ({
+      readonly: false,
+      height: 420,
+      toolbarAdaptive: false,
+      buttons:
+        "bold,italic,underline,strikethrough,|,ul,ol,|,outdent,indent,|,font,fontsize,brush,paragraph,|,image,table,link,|,align,undo,redo,|,hr,copyformat,fullsize,preview,source",
+      uploader: { insertImageAsBase64URI: true },
+      askBeforePasteHTML: false,
+    }),
+    []
+  );
 
-  const handleUpdateImageChange = (e) => {
-    const file = e.target.files[0];
-    setUpdateImage(file);
+  const onImage = (e) => {
+    const file = e.target.files?.[0];
+    setUpdateImage(file || null);
+    setPreviewUrl(file ? URL.createObjectURL(file) : image ? `${baseUrl}${image}` : "");
   };
 
-  const handleUpdateBlog = async (values) => {
+  const suggestAi = async () => {
+    try {
+      const r = await adminFetch("/blog/suggest", {
+        method: "POST",
+        body: {
+          title: form.getFieldValue("title"),
+          content: body,
+          description: form.getFieldValue("description"),
+        },
+      });
+      const s = r?.suggestions || r?.data?.suggestions || r;
+      form.setFieldsValue({
+        title: s.title || form.getFieldValue("title"),
+        description: s.excerpt || form.getFieldValue("description"),
+        metaTitle: s.metaTitle,
+        metaDescription: s.metaDescription,
+        tags: (s.tags || []).join(", "),
+        slug: slugify(s.title || form.getFieldValue("title")),
+      });
+      notification.success({ message: "AI suggestions applied", description: `Source: ${r?.source || r?.data?.source || "mock"}` });
+    } catch (e) {
+      notification.error({ message: "AI suggest failed", description: e.message });
+    }
+  };
+
+  const onFinish = async (values) => {
     const formData = new FormData();
     formData.append("title", values.title);
     formData.append("author", values.author);
-      formData.append("kind", values?.kind || "article");
-    formData.append("description", descriptionEdit);
-    formData.append("content", values.content);
-    if (updateImage) {
-      formData.append("image", updateImage);
-    }
-
+    formData.append("kind", values.kind || "article");
+    formData.append("status", values.status || "published");
+    formData.append("featured", values.featured ? "true" : "false");
+    formData.append("slug", values.slug || slugify(values.title));
+    formData.append("description", values.description || "");
+    formData.append("content", body);
+    formData.append("tags", values.tags || "");
+    formData.append("categories", values.categories || "");
+    formData.append("metaTitle", values.metaTitle || "");
+    formData.append("metaDescription", values.metaDescription || "");
+    formData.append("ogImage", values.ogImage || "");
+    if (values.scheduledAt) formData.append("scheduledAt", values.scheduledAt);
+    if (updateImage) formData.append("image", updateImage);
     try {
       await updateBlog({ _id, formData }).unwrap();
-      notification.success({
-        message: "Success",
-        description: "Blog Updated Successfully",
-      });
+      notification.success({ message: "Saved", description: "Blog post updated." });
       navigate("/dashboard/blog");
-     
     } catch (error) {
-      notification.error({
-        message: "Error",
-        description: "Failed to update blog", error,
-      });
-      console.error("Failed to update blog:", error);
+      notification.error({ message: "Error", description: error?.data?.message || "Could not update" });
     }
   };
 
-  if (isLoading) return <div><h1>Loading...</h1></div>;
- 
+  if (isLoading) {
+    return (
+      <div className="w-4/12 mx-auto mt-40">
+        <PropagateLoader color="#00BF63" size={30} />
+      </div>
+    );
+  }
+
+  const toLocal = (d) => {
+    if (!d) return "";
+    const x = new Date(d);
+    if (Number.isNaN(x.getTime())) return "";
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${x.getFullYear()}-${pad(x.getMonth() + 1)}-${pad(x.getDate())}T${pad(x.getHours())}:${pad(x.getMinutes())}`;
+  };
 
   return (
-    <div className="mt-9 mx-6">
-      <p className="font-normal text-[24px] flex items-center gap-2">
-        <Link to="/dashboard/blog">
-          <IoIosArrowBack className="bg-[#00BF63] text-[24px] rounded-md text-white" />
-        </Link>
-        Edit Blog
-      </p>
+    <div className="mt-6 mx-4 md:mx-6 pb-16" data-testid="blog-cms-editor-edit">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <p className="font-semibold text-2xl flex items-center gap-2">
+          <Link to="/dashboard/blog">
+            <IoIosArrowBack className="bg-emerald-600 text-[24px] rounded-md text-white" />
+          </Link>
+          Edit blog post
+        </p>
+        <div className="flex gap-2">
+          <Button onClick={suggestAi}>AI suggest</Button>
+          <Button type="primary" className="!bg-emerald-600" onClick={() => form.submit()}>
+            Save
+          </Button>
+        </div>
+      </div>
+
       <Form
         form={form}
-        labelCol={{ span: 22 }}
-        wrapperCol={{ span: 40 }}
         layout="vertical"
         initialValues={{
-          title: title,
-          author: author,
+          title,
+          author,
           kind: kind || "article",
-          content: content,
+          status: status || "published",
+          featured: !!featured,
+          slug: slug || slugify(title),
+          description: typeof description === "string" ? description.replace(/<[^>]+>/g, "").slice(0, 300) : "",
+          tags: Array.isArray(tags) ? tags.join(", ") : tags || "",
+          categories: Array.isArray(categories) ? categories.join(", ") : categories || "",
+          metaTitle: seo?.metaTitle || "",
+          metaDescription: seo?.metaDescription || "",
+          ogImage: seo?.ogImage || "",
+          scheduledAt: toLocal(scheduledAt),
         }}
-        onFinish={handleUpdateBlog}
+        onFinish={onFinish}
+        className="grid lg:grid-cols-[1fr_320px] gap-6"
       >
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 mt-8">
-          <div className="w-full">
-            <Form.Item
-              name="title"
-              label={<span className="font-normal text-[18px] text-[#494949]">Blog title</span>}
-              rules={[{ required: true, message: "Please input the blog title!" }]}
-            >
-              <Input
-                size="large"
-                placeholder="Blog title"
-                type="text"
-                className="w-full pl-4 h-14 borde mt-4 border-[#00BF63] rounded-md bg-[#E6F9EF]"
-              />
-            </Form.Item>
-          </div>
-          <div className="w-full">
-            <Form.Item name="kind" label={<span className="font-normal text-[18px] text-[#494949]">Type</span>}>
-              <Select
-                size="large"
-                options={[{ value: "article", label: "Article (blog)" }, { value: "guide", label: "Guide (how-to, shown in Help)" }]}
-              />
-            </Form.Item>
-          </div>
-          <div className="w-full">
-            <Form.Item
-              name="author"
-              label={<span className="font-normal text-[18px] text-[#494949]">Author</span>}
-              rules={[{ required: true, message: "Please input the author name!" }]}
-            >
-              <Input
-                size="large"
-                placeholder="Author name"
-                type="text"
-                className="w-full pl-4 h-14 borde mt-4 border-[#00BF63] rounded-md bg-[#E6F9EF]"
-              />
-            </Form.Item>
-          </div>
-        </div>
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 mt-8">
-          <div className="w-full">
-            <Form.Item
-              name="content"
-              label={<span className="font-normal text-[18px] text-[#494949]">Content</span>}
-              rules={[{ required: true, message: "Please input your content!" }]}
-            >
-              <Input
-                size="large"
-                placeholder="Content"
-                type="text"
-                className="w-full pl-4 h-14 border mt-4 border-[#00BF63] rounded-md bg-[#E6F9EF]"
-              />
-            </Form.Item>
-          </div>
-          <div className="w-full">
-            <Form.Item
-              name="image"
-              label={<span className="text-[16px] font-medium">Upload Image</span>}
-            >
-              <input
-                onChange={handleUpdateImageChange}
-                placeholder="Upload Image"
-                type="file"
-                className="w-full pl-4 h-14 border pt-3 mt-4 border-[#00BF63] rounded-md bg-[#E6F9EF]"
-              />
-            </Form.Item>
-          </div>
-        </div>
-        <div className="w-full mt-8">
-          <div className="flex-1 mt-[16px]">
-            <label htmlFor="description" className="text-[#494949] text-[18px] font-medium">
-              Description
-            </label>
-            <div className="mt-[16px]">
-              <JoditEditor
-                value={descriptionEdit}
-                onChange={(newContent) => setDescriptionEdit(newContent)}
-                style={{ backgroundColor: "#FFE7EA4F" }}
-              />
-            </div>
-          </div>
-        </div>
-        <div className="text-right mt-6">
-          <Form.Item>
-            <Button
-              htmlType="submit"
-              className="h-[55px] w-full sm:w-[380px] bg-[#00BF63] rounded-[8px] text-white"
-            >
-              Update Blog
-            </Button>
+        <div className="space-y-4 bg-white rounded-2xl border border-ink-100 p-5">
+          <Form.Item name="title" label="Title" rules={[{ required: true }]}>
+            <Input size="large" placeholder="Post title" />
           </Form.Item>
+          <Form.Item name="slug" label="Slug" rules={[{ required: true }]}>
+            <Input addonBefore="/" placeholder="url-slug" />
+          </Form.Item>
+          <Form.Item name="description" label="Excerpt" rules={[{ required: true }]}>
+            <Input.TextArea rows={3} maxLength={300} showCount placeholder="Short summary for cards and SEO" />
+          </Form.Item>
+          <div>
+            <div className="text-sm font-medium mb-2">Body</div>
+            <JoditEditor ref={editor} value={body} config={config} onBlur={(v) => setBody(v)} />
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div className="bg-white rounded-2xl border border-ink-100 p-4 space-y-3">
+            <Form.Item name="status" label="Status">
+              <Select
+                options={[
+                  { value: "draft", label: "Draft" },
+                  { value: "scheduled", label: "Scheduled" },
+                  { value: "published", label: "Published" },
+                ]}
+              />
+            </Form.Item>
+            <Form.Item name="scheduledAt" label="Schedule for">
+              <Input type="datetime-local" />
+            </Form.Item>
+            <Form.Item name="kind" label="Type">
+              <Select options={[{ value: "article", label: "Article" }, { value: "guide", label: "Guide" }]} />
+            </Form.Item>
+            <Form.Item name="featured" label="Featured" valuePropName="checked">
+              <Switch />
+            </Form.Item>
+            <Form.Item name="author" label="Author" rules={[{ required: true }]}>
+              <Input />
+            </Form.Item>
+            <Form.Item name="categories" label="Categories">
+              <Input placeholder="freelance, tips" />
+            </Form.Item>
+            <Form.Item name="tags" label="Tags">
+              <Input placeholder="pricing, ai, seo" />
+            </Form.Item>
+            <Form.Item label="Cover image">
+              <input type="file" accept="image/*" onChange={onImage} />
+              {previewUrl ? <img src={previewUrl} alt="" className="mt-2 rounded-lg max-h-40 object-cover w-full" /> : null}
+            </Form.Item>
+          </div>
+          <div className="bg-white rounded-2xl border border-ink-100 p-4 space-y-3">
+            <div className="font-semibold text-ink-900">SEO</div>
+            <Form.Item name="metaTitle" label="Meta title">
+              <Input maxLength={70} showCount />
+            </Form.Item>
+            <Form.Item name="metaDescription" label="Meta description">
+              <Input.TextArea rows={3} maxLength={170} showCount />
+            </Form.Item>
+            <Form.Item name="ogImage" label="OG image URL">
+              <Input placeholder="https://…" />
+            </Form.Item>
+          </div>
         </div>
       </Form>
     </div>
   );
-};
-
-export default EditBlog;
+}

@@ -70,6 +70,12 @@ async function sendEmail(to, subject, html) {
   try {
     const ctx = templateCtx.getStore();
     if (ctx?.override?.subject) subject = fill(ctx.override.subject, { ...ctx.vars, subject }, false);
+    // Visual block builder: when an admin saved blocks, they replace the
+    // built-in shell HTML for both real sends and admin preview/test.
+    if (ctx?.override?.blocks?.length) {
+      const { renderBlocksHtml } = require("./emailTemplates.service");
+      html = renderBlocksHtml(ctx.override.blocks, { ...(ctx.vars || {}), subject });
+    }
     if (ctx?.capture) {
       ({ subject, html } = await applyBranding(subject, html));
       ctx.captured = { to, subject, html };

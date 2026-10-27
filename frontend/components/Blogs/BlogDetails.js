@@ -83,6 +83,13 @@ function BlogDetails({ slug }) {
             </div>
 
             {/* Blog Description */}
+            {(blog?.tags || []).length ? (
+              <div className="flex flex-wrap gap-2 mb-4">
+                {blog.tags.map((tag) => (
+                  <span key={tag} className="text-xs px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-100">#{tag}</span>
+                ))}
+              </div>
+            ) : null}
             <BlogDescription content={data?.content || data?.description} />
           </div>
         </div>

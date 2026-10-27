@@ -1,72 +1,96 @@
-import { Select, Button, Descriptions, Form, Input, notification } from "antd";
+import { Button, Form, Input, Select, Switch, notification } from "antd";
 import JoditEditor from "jodit-react";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { IoIosArrowBack } from "react-icons/io";
 import { Link, useNavigate } from "react-router-dom";
-import baseUrl from '../../../baseUrl'
 import { useAddBlogsMutation } from "../../../redux/api/apiSlice";
+import { adminFetch } from "../../../utils/adminApi";
 import { PropagateLoader } from "react-spinners";
- 
 
-const Addblog = () => {
-  
-  const [addBlogs,  {isLoading, error}] = useAddBlogsMutation()
- 
-  
-  const [description,setDescription] = useState('')
-  // console.log(description);
+const slugify = (s) =>
+  String(s || "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+
+export default function Addblog() {
+  const [addBlogs, { isLoading }] = useAddBlogsMutation();
+  const [content, setContent] = useState("");
   const [image, setImage] = useState(null);
- 
-  const navigate = useNavigate()
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [form] = Form.useForm();
+  const navigate = useNavigate();
+  const editor = useRef(null);
+  const config = useMemo(
+    () => ({
+      readonly: false,
+      height: 420,
+      toolbarAdaptive: false,
+      buttons:
+        "bold,italic,underline,strikethrough,|,ul,ol,|,outdent,indent,|,font,fontsize,brush,paragraph,|,image,table,link,|,align,undo,redo,|,hr,copyformat,fullsize,preview,source",
+      uploader: { insertImageAsBase64URI: true },
+      askBeforePasteHTML: false,
+    }),
+    []
+  );
 
-  
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    setImage(file);
-  };
- 
-  
-  
-  const handleCreateBlog = async (values) => {
- 
-      // const strippedDescription = description.replace(/\/?/, '');
-      
-  console.log(values);
-      const formData = new FormData();
-
-      formData.append("title", values?.title);
-      formData.append("author", values?.author);
-      formData.append("kind", values?.kind || "article");
-      formData.append("image", image);
-      formData.append('description',description);
-      formData.append('content', values?.content)
-      // formData.append('description', values.description)
-      console.log(formData)
-      try {
-        await addBlogs(formData).unwrap();
-       
-        notification.success({
-          message: 'Success',
-          description:  `Blog Created Successfully`,
-          
-        });
-        
-        navigate("/dashboard/blog");
-      
-      } catch (error) {
-        notification.error({
-          message: 'Error',
-          description:  `${error?.data?.message}`,
-        });
-        setTimeout(() => {
-          // window.location.reload();
-          navigate("/dashboard/blog");
-        }, 1600); 
-        console.error('Failed to create category:', error);
-      }
-     
+  const onImage = (e) => {
+    const file = e.target.files?.[0];
+    setImage(file || null);
+    setPreviewUrl(file ? URL.createObjectURL(file) : "");
   };
 
+  const suggestAi = async () => {
+    try {
+      const r = await adminFetch("/blog/suggest", {
+        method: "POST",
+        body: {
+          title: form.getFieldValue("title"),
+          content,
+          description: form.getFieldValue("description"),
+        },
+      });
+      const s = r?.suggestions || r?.data?.suggestions || r;
+      form.setFieldsValue({
+        title: s.title || form.getFieldValue("title"),
+        description: s.excerpt || form.getFieldValue("description"),
+        metaTitle: s.metaTitle,
+        metaDescription: s.metaDescription,
+        tags: (s.tags || []).join(", "),
+        slug: slugify(s.title || form.getFieldValue("title")),
+      });
+      notification.success({ message: "AI suggestions applied", description: `Source: ${r?.source || r?.data?.source || "mock"}` });
+    } catch (e) {
+      notification.error({ message: "AI suggest failed", description: e.message });
+    }
+  };
+
+  const onFinish = async (values) => {
+    const formData = new FormData();
+    formData.append("title", values.title);
+    formData.append("author", values.author);
+    formData.append("kind", values.kind || "article");
+    formData.append("status", values.status || "published");
+    formData.append("featured", values.featured ? "true" : "false");
+    formData.append("slug", values.slug || slugify(values.title));
+    formData.append("description", values.description || "");
+    formData.append("content", content);
+    formData.append("tags", values.tags || "");
+    formData.append("categories", values.categories || "");
+    formData.append("metaTitle", values.metaTitle || "");
+    formData.append("metaDescription", values.metaDescription || "");
+    formData.append("ogImage", values.ogImage || "");
+    if (values.scheduledAt) formData.append("scheduledAt", values.scheduledAt);
+    if (image) formData.append("image", image);
+    try {
+      await addBlogs(formData).unwrap();
+      notification.success({ message: "Published", description: "Blog post saved." });
+      navigate("/dashboard/blog");
+    } catch (error) {
+      notification.error({ message: "Error", description: error?.data?.message || "Could not save" });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -74,167 +98,105 @@ const Addblog = () => {
         <PropagateLoader color="#00BF63" size={30} />
       </div>
     );
-  } 
- 
+  }
+
   return (
-    <div className="mt-9 mx-6">
-      <p className=" font-normal text-[24px] flex items-center gap-2">
-        {" "}
-        <Link to="/dashboard/blog">
-          <IoIosArrowBack className=" bg-[#00BF63] text-[24px] rounded-md text-white" />
-        </Link>
-        Add Blog
-      </p>
-      <Form
-        labelCol={{ span: 22 }}
-        wrapperCol={{ span: 40 }}
-        layout="vertical"
-        initialValues={{
-          remember: true,
-          kind: "article",
-          
-        }}
-        onFinish = {handleCreateBlog}
-      >
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 mt-8">
-          <div className=" w-full">
-            <Form.Item
-              name="title"
-              label={
-                <span className="font-normal text-[18px] text-[#494949]">
-                  Blog Title
-                </span>
-              }
-              rules={[
-                {
-                  required: true,
-                  message: "Please Input Category name!",
-                },
-              ]}
-            >
-              <Input
-                size="large"
-                placeholder="blog name"
-                type="text"
-                className="w-full pl-4 h-14 borde mt-4 border-[#00BF63] rounded-md bg-[#E6F9EF]"
-                required
-              />
-            </Form.Item>
-          </div>
-          <div className="w-full">
-            <Form.Item name="kind" label={<span className="font-normal text-[18px] text-[#494949]">Type</span>}>
-              <Select
-                size="large"
-                options={[{ value: "article", label: "Article (blog)" }, { value: "guide", label: "Guide (how-to, shown in Help)" }]}
-              />
-            </Form.Item>
-          </div>
-          <div className=" w-full">
-            <Form.Item
-              name="author"
-              label={
-                <span className="font-normal text-[18px] text-[#494949]">
-                  Author
-                </span>
-              }
-              rules={[
-                {
-                  required: true,
-                  message: "Please Input Category name!",
-                },
-              ]}
-            >
-              <Input
-                size="large"
-                placeholder="author name"
-                type="text"
-                className="w-full pl-4 h-14 borde mt-4 border-[#00BF63] rounded-md bg-[#E6F9EF]"
-                required
-              />
-            </Form.Item>
-          </div>
+    <div className="mt-6 mx-4 md:mx-6 pb-16" data-testid="blog-cms-editor">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <p className="font-semibold text-2xl flex items-center gap-2">
+          <Link to="/dashboard/blog">
+            <IoIosArrowBack className="bg-emerald-600 text-[24px] rounded-md text-white" />
+          </Link>
+          New blog post
+        </p>
+        <div className="flex gap-2">
+          <Button onClick={suggestAi}>AI suggest</Button>
+          <Button type="primary" className="!bg-emerald-600" onClick={() => form.submit()}>
+            Save
+          </Button>
         </div>
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 mt-8">
-          <div className=" w-full">
-            <Form.Item
-              name="content"
-              label={
-                <span className="font-normal text-[18px] text-[#494949]">
-                  Content
-                </span>
-              }
-              rules={[
-                {
-                  required: true,
-                  message: "Please Input your content!",
-                },
-              ]}
-            >
-              <Input
-                size="large"
-                placeholder="content"
-                type="text"
-                className="w-full pl-4 h-14 border mt-4 border-[#00BF63] rounded-md bg-[#E6F9EF]"
-                required
-              />
-            </Form.Item>
-          </div>
-          <div className=" w-full">
-            <Form.Item
-              name="image"
-              label={
-                <span className=" text-[16px] font-medium">Uploard Image</span>
-              }
-              rules={[
-                {
-                  required: true,
-                  message: "Please input your Uploard Image!",
-                },
-              ]}
-            >
-              <input
-                // size="large"
-                onChange={handleImageChange}
-                placeholder="Uploard Image"
-                name="image"
-                type="file"
-                className="w-full pl-4 h-14 border pt-3 mt-4 border-[#00BF63] rounded-md bg-[#E6F9EF]"
-              />
-            </Form.Item>
+      </div>
+
+      <Form
+        form={form}
+        layout="vertical"
+        initialValues={{ kind: "article", status: "published", featured: false, author: "Qwlee Team" }}
+        onFinish={onFinish}
+        onValuesChange={(chg, all) => {
+          if (chg.title && !all.slugManual) form.setFieldValue("slug", slugify(chg.title));
+        }}
+        className="grid lg:grid-cols-[1fr_320px] gap-6"
+      >
+        <div className="space-y-4 bg-white rounded-2xl border border-ink-100 p-5">
+          <Form.Item name="title" label="Title" rules={[{ required: true }]}>
+            <Input size="large" placeholder="Post title" onChange={(e) => form.setFieldValue("slug", slugify(e.target.value))} />
+          </Form.Item>
+          <Form.Item name="slug" label="Slug" rules={[{ required: true }]}>
+            <Input addonBefore="/" placeholder="url-slug" />
+          </Form.Item>
+          <Form.Item name="description" label="Excerpt" rules={[{ required: true }]}>
+            <Input.TextArea rows={3} maxLength={300} showCount placeholder="Short summary for cards and SEO" />
+          </Form.Item>
+          <div>
+            <div className="text-sm font-medium mb-2">Body</div>
+            <JoditEditor ref={editor} value={content} config={config} onBlur={(v) => setContent(v)} />
           </div>
         </div>
 
-        <div className=" w-full mt-8">
-        
-          <div className="flex-1 mt-[16px]">
-            <label htmlFor="" className="text-white text-[18px] font-medium">
-              Description
-            </label>
-            <div className="mt-[16px]">
-              <JoditEditor  
-                value={description}
-                onChange={(newContent) => {
-                  setDescription(newContent);
-                }}
-                style={{ backgroundColor: "#FFE7EA4F" }} 
+        <div className="space-y-4">
+          <div className="bg-white rounded-2xl border border-ink-100 p-4 space-y-3">
+            <Form.Item name="status" label="Status">
+              <Select
+                options={[
+                  { value: "draft", label: "Draft" },
+                  { value: "scheduled", label: "Scheduled" },
+                  { value: "published", label: "Published" },
+                ]}
               />
+            </Form.Item>
+            <Form.Item name="scheduledAt" label="Schedule for">
+              <Input type="datetime-local" />
+            </Form.Item>
+            <Form.Item name="kind" label="Type">
+              <Select options={[{ value: "article", label: "Article" }, { value: "guide", label: "Guide" }]} />
+            </Form.Item>
+            <Form.Item name="featured" label="Featured" valuePropName="checked">
+              <Switch />
+            </Form.Item>
+            <Form.Item name="author" label="Author" rules={[{ required: true }]}>
+              <Input />
+            </Form.Item>
+            <Form.Item name="categories" label="Categories">
+              <Input placeholder="freelance, tips" />
+            </Form.Item>
+            <Form.Item name="tags" label="Tags">
+              <Input placeholder="pricing, ai, seo" />
+            </Form.Item>
+            <Form.Item label="Cover image" required>
+              <input type="file" accept="image/*" onChange={onImage} />
+              {previewUrl ? <img src={previewUrl} alt="" className="mt-2 rounded-lg max-h-40 object-cover w-full" /> : null}
+            </Form.Item>
+          </div>
+          <div className="bg-white rounded-2xl border border-ink-100 p-4 space-y-3">
+            <div className="font-semibold text-ink-900">SEO</div>
+            <Form.Item name="metaTitle" label="Meta title">
+              <Input maxLength={70} showCount />
+            </Form.Item>
+            <Form.Item name="metaDescription" label="Meta description">
+              <Input.TextArea rows={3} maxLength={170} showCount />
+            </Form.Item>
+            <Form.Item name="ogImage" label="OG image URL">
+              <Input placeholder="https://…" />
+            </Form.Item>
+            <div className="rounded-lg border border-ink-100 p-3 bg-ink-50">
+              <div className="text-xs text-ink-500 mb-1">Search preview</div>
+              <div className="text-primary-700 text-base leading-snug">{form.getFieldValue("metaTitle") || form.getFieldValue("title") || "Title"}</div>
+              <div className="text-emerald-700 text-xs truncate">qwlee.dev/blogs/{form.getFieldValue("slug") || "slug"}</div>
+              <div className="text-sm text-ink-600 mt-1">{form.getFieldValue("metaDescription") || form.getFieldValue("description") || "Description"}</div>
             </div>
-          </div> 
-             
-        </div>
-        <div className="text-right mt-6">
-          <Form.Item>
-            <Button
-              htmlType="submit"
-              className=" h-[55px] w-full sm:w-[380px] bg-[#00BF63] rounded-[8px] text-white"
-            >
-              Add Blog
-            </Button>
-          </Form.Item>
+          </div>
         </div>
       </Form>
     </div>
   );
-};
-
-export default Addblog;
+}
