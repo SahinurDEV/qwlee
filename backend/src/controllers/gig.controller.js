@@ -228,6 +228,26 @@ const publicGigs = catchAsync(async (req, res) => {
   );
 });
 
+const gigVideoUpload = catchAsync(async (req, res) => {
+  if (!req.file?.buffer?.length) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Choose an MP4 or WebM video");
+  }
+  const stored = await require("../services/imageUpload.service").storeVideo(req.file);
+  const gigId = req.query.gigId || req.body?.gigId;
+  if (gigId) {
+    // Persist on the gig when editing an existing one.
+    await gigService.updateGigById(gigId, { video: stored.url }, [], req.user);
+  }
+  res.status(httpStatus.OK).json(
+    response({
+      message: "Gig video uploaded",
+      status: "OK",
+      statusCode: httpStatus.OK,
+      data: { url: stored.url },
+    })
+  );
+});
+
 module.exports = {
   createGig,
   getGigs,
@@ -235,6 +255,7 @@ module.exports = {
   updateGig,
   deleteGig,
   gigImageUpload,
+  gigVideoUpload,
   getGigBySlug,
   gigSingleImageDelete,
   publicGigs,

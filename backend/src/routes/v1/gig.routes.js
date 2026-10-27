@@ -79,6 +79,14 @@ router.get("/:gigId/related", async (req, res, next) => {
 });
 router.post("/:gigId/impression", impressionController.bumpImpression);
 router.post("/:gigId/click", impressionController.bumpClick);
+const videoUpload = require("../../middlewares/gigVideoUpload")();
+router
+  .route("/video")
+  .post(
+    auth("freelancer"),
+    videoUpload.single("video"),
+    gigController.gigVideoUpload
+  );
 router
   .route("/image")
   .post(
