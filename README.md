@@ -165,14 +165,6 @@ flowchart LR
 
 **Human approval.** Every suggestion is logged on `DisputeAiSuggestion` (model, latency, source). Accept runs the existing resolve endpoint only after the admin confirms. Ask-for-more is draft-only (copy/paste). Partial refunds carry a real amount field.
 
-**Screenshots** (desktop suggestion card, evidence close-up, 375px):
-
-![AI suggestion — desktop](docs/ai-dispute/example-suggest-desktop.png)
-
-![AI suggestion — evidence](docs/ai-dispute/example-evidence-desktop.png)
-
-![AI suggestion — 375px](docs/ai-dispute/example-suggest-375.png)
-
 Operational env vars and eval commands: [Admin Dispute AI assistant](#admin-dispute-ai-assistant) below.
 
 ## Configuration
