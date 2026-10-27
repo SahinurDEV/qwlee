@@ -80,3 +80,20 @@ def test_sanitize_keeps_valid_citations_after_null_coerce():
     )
     s = _sanitize(Suggestion.model_validate(payload), ctx)
     assert [e.source for e in s.evidence] == ["dispute.response[0]"]
+
+
+def test_support_mock_refund_keywords():
+    from app.support_mock import answer_support
+    chunks = [{"id": "policy:refund§5", "doc": "refund", "heading": "Disputes", "text": "Our team reviews refund requests within a few days."}]
+    s = answer_support("How do I get a refund for a late delivery?", chunks)
+    assert s.confidence >= 0.7
+    assert s.citations
+    assert s.citations[0].source.startswith("policy:refund")
+    assert s.escalate is False
+
+
+def test_support_mock_escalates_when_thin():
+    from app.support_mock import answer_support
+    s = answer_support("xyzzy unexplained purple widgets?", [])
+    assert s.escalate is True
+    assert s.confidence < 0.55

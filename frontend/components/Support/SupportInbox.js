@@ -15,6 +15,7 @@ import {
   useCreateTicketMutation,
 } from "@/app/redux/features/supportApi";
 import useUser from "@/hooks/useUser";
+import AskSupportAi from "@/components/Support/AskSupportAi";
 
 const STATUS_TONE = {
   open: "bg-emerald-50 text-emerald-700 border-emerald-100",
@@ -85,6 +86,10 @@ export default function SupportInbox() {
           Reach our team for anything billing, account, orders, or trust & safety related.
         </p>
       </header>
+
+      <div className="mb-6">
+        <AskSupportAi />
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <section className="lg:col-span-7">

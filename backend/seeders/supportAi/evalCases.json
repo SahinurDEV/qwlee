@@ -1,0 +1,12 @@
+[
+  {"id":"S01","question":"How do refunds work if the seller is late?","expectEscalate":false,"expectDoc":"refund"},
+  {"id":"S02","question":"When do payouts clear to my bank?","expectEscalate":false,"expectDoc":"payment"},
+  {"id":"S03","question":"Someone asked me to pay on WhatsApp instead","expectEscalate":false,"expectDoc":"community"},
+  {"id":"S04","question":"How do I report a copyright infringement?","expectEscalate":false,"expectDoc":"intellectual"},
+  {"id":"S05","question":"What are the site terms for banned accounts?","expectEscalate":false,"expectDoc":"terms"},
+  {"id":"S06","question":"xyzzy purple widget teleportation clause?","expectEscalate":true,"expectDoc":null},
+  {"id":"S07","question":"Can I cancel an order before delivery?","expectEscalate":false,"expectDoc":"refund"},
+  {"id":"S08","question":"Is off-platform contact allowed?","expectEscalate":false,"expectDoc":"community"},
+  {"id":"S09","question":"How do milestone payments work?","expectEscalate":false,"expectDoc":"payment"},
+  {"id":"S10","question":"asdfghjkl nonsense query without policy match","expectEscalate":true,"expectDoc":null}
+]

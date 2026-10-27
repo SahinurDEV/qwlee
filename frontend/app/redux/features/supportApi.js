@@ -39,6 +39,15 @@ const supportApi = baseApi.injectEndpoints({
         "SupportTickets",
       ],
     }),
+    askSupportAi: builder.mutation({
+      query: (body) => ({ url: "/support/ai/ask", method: "POST", body }),
+      transformResponse: (res) => res?.data?.attributes,
+      invalidatesTags: ["SupportTickets"],
+    }),
+    getSupportAiStatus: builder.query({
+      query: () => "/support/ai/status",
+      transformResponse: (res) => res?.data?.attributes,
+    }),
   }),
 });
 
@@ -46,5 +55,7 @@ export const {
   useGetMyTicketsQuery,
   useGetTicketQuery,
   useCreateTicketMutation,
+  useAskSupportAiMutation,
+  useGetSupportAiStatusQuery,
   usePostTicketMessageMutation,
 } = supportApi;

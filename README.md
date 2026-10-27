@@ -43,6 +43,10 @@ flowchart LR
 
 Operational env vars and eval commands: [Admin Dispute AI assistant](#admin-dispute-ai-assistant) below.
 
+## Case study: AI support inbox
+
+Buyers and sellers can ask policy questions on **Help & support**. Express retrieves policy chunks, the FastAPI sidecar answers with citations, and anything under 55% confidence (or an explicit “talk to a human”) opens a `SupportTicket` tagged `aiEscalated` for the admin queue. Rate-limited (20/hour), PII-masked, mock mode when `AI_API_KEY` is unset.
+
 ## Demo video
 
 **qwlee – Full User Manual: Open-Source Freelance Marketplace (Buyer, Seller & Admin Walkthrough)**
