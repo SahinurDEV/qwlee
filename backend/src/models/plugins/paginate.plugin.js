@@ -1,19 +1,15 @@
-
-
-const mongoose = require('mongoose');
-
 const paginate = (schema) => {
   schema.statics.paginate = async function (filter, options) {
-    let sort = '';
+    let sort = "";
     if (options.sortBy) {
       const sortingCriteria = [];
-      options.sortBy.split(',').forEach((sortOption) => {
-        const [key, order] = sortOption.split(':');
-        sortingCriteria.push((order === 'desc' ? '-' : '') + key);
+      options.sortBy.split(",").forEach((sortOption) => {
+        const [key, order] = sortOption.split(":");
+        sortingCriteria.push((order === "desc" ? "-" : "") + key);
       });
-      sort = sortingCriteria.join(' ');
+      sort = sortingCriteria.join(" ");
     } else {
-      sort = 'createdAt';
+      sort = "createdAt";
     }
 
     const limit = options.limit && parseInt(options.limit, 10) > 0 ? parseInt(options.limit, 10) : 10;
@@ -28,25 +24,26 @@ const paginate = (schema) => {
         options.populate.forEach((popOption) => {
           query = query.populate(popOption);
         });
-      } else if (typeof options.populate === 'string') {
-        query = query.populate(options.populate);
-      } else if (typeof options.populate === 'object') {
+      } else if (typeof options.populate === "string") {
+        // Comma-separated paths (e.g. "orderId,initiatorId") — same
+        // convention as the nestjs-paginate style used across services.
+        options.populate.split(",").forEach((populateOption) => {
+          const path = populateOption.trim();
+          if (path) query = query.populate(path);
+        });
+      } else if (typeof options.populate === "object") {
         query = query.populate(options.populate);
       }
     }
 
     const [totalResults, results] = await Promise.all([countPromise, query.exec()]);
-
-    const totalPages = Math.ceil(totalResults / limit);
-    const result = {
+    return {
       results,
       page,
       limit,
-      totalPages,
+      totalPages: Math.ceil(totalResults / limit),
       totalResults,
     };
-
-    return result;
   };
 };
 
