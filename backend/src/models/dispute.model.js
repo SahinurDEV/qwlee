@@ -77,6 +77,9 @@ const disputeSchema = new mongoose.Schema(
     },
     resolutionNote: { type: String, default: "" },
     partialAmount: { type: Number, default: null },
+    demoSeed: { type: Boolean, default: false, index: true },
+    evalCase: { type: String, default: null, index: true },
+    expectedOutcome: { type: String, default: null },
     resolvedByAdminId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
