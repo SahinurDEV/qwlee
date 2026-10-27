@@ -1,11 +1,13 @@
 import os
 from fastapi import FastAPI, Header, HTTPException
-from .llm import complete, complete_support, configured
+from .llm import complete, complete_support, complete_search_parse, configured
 from .schemas import (
     SuggestRequest,
     SuggestResponse,
     SupportAskRequest,
     SupportAskResponse,
+    SearchParseRequest,
+    SearchParseResponse,
 )
 
 app = FastAPI(title="qwlee ai-dispute", version="1.1.0")
@@ -64,3 +66,15 @@ async def support_answer(req: SupportAskRequest, x_internal_token: str | None = 
         latencyMs=latency,
         configured=configured(),
     )
+
+
+@app.post("/v1/search-parse", response_model=SearchParseResponse)
+async def search_parse(req: SearchParseRequest, x_internal_token: str | None = Header(default=None)):
+    _check_token(x_internal_token)
+    q = (req.query or "").strip()
+    if len(q) < 2:
+        raise HTTPException(status_code=400, detail="Query is too short")
+    if not configured() and not req.mock:
+        raise HTTPException(status_code=503, detail="AI not configured")
+    parse, source, model, latency = await complete_search_parse(q, req.categories, force_mock=req.mock)
+    return SearchParseResponse(parse=parse, source=source, model=model, latencyMs=latency, configured=configured())
