@@ -24,8 +24,12 @@ export const useSocket = () => useContext(SocketContext);
 function getAccessToken() {
   if (typeof window === "undefined") return "";
   const raw = Cookies.get("accessToken");
-  if (!raw) return "";
-  return raw.replace(/^"(.*)"$/, "$1");
+  if (raw) return raw.replace(/^"(.*)"$/, "$1");
+  try {
+    const ls = window.localStorage.getItem("accessToken");
+    if (ls) return String(ls).replace(/^"(.*)"$/, "$1");
+  } catch {}
+  return "";
 }
 
 export const SocketProvider = ({ children }) => {
@@ -50,6 +54,9 @@ export const SocketProvider = ({ children }) => {
       reconnectionDelayMax: 5000,
       timeout: 20000,
       transports: ["websocket", "polling"],
+      // HttpOnly accessToken cookie is read server-side from the handshake
+      // Cookie header; auth.token remains for legacy JS cookies / localStorage.
+      withCredentials: true,
       auth: token ? { token } : {},
     });
     next.on("connect", () => {
@@ -70,6 +77,7 @@ export const SocketProvider = ({ children }) => {
       try {
         Cookies.remove("user");
         Cookies.remove("accessToken");
+      fetch("/api/auth/clear-session", { method: "POST" }).catch(() => {});
         Cookies.remove("refreshToken");
         if (typeof window !== "undefined") {
           window.localStorage.removeItem("accessToken");

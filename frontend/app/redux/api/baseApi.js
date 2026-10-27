@@ -7,10 +7,17 @@ export const baseApi = createApi({
   reducerPath: "api",
   baseQuery: fetchBaseQuery({
     baseUrl: `${baseUrl}`,
+    credentials: "include",
     prepareHeaders: (headers) => {
+      // Prefer Authorization when a legacy/non-HttpOnly cookie still exists
+      // (local scripts). HttpOnly tokens ride as cookies via credentials.
       const token = Cookies.get("accessToken");
       if (token) {
-        headers.set("Authorization", `Bearer ${JSON.parse(token)}`);
+        try {
+          headers.set("Authorization", `Bearer ${JSON.parse(token)}`);
+        } catch {
+          headers.set("Authorization", `Bearer ${token}`);
+        }
       }
       headers.set("X-Custom-Header", "foobar");
       return headers;

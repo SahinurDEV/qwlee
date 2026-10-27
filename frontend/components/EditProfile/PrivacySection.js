@@ -49,6 +49,7 @@ export default function PrivacySection() {
       const j = await r.json().catch(() => null);
       if (!r.ok) throw new Error(j?.message || "Could not delete the account");
       ["user", "accessToken", "refreshToken"].forEach((c) => Cookies.remove(c));
+      fetch("/api/auth/clear-session", { method: "POST" }).catch(() => {});
       toast.success("Your account was deleted");
       setTimeout(() => window.location.assign("/"), 800);
     } catch (e) {

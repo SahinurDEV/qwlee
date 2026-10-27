@@ -108,24 +108,28 @@ const SignIn = () => {
         // that's fine because we clear it on logout anyway.
         const remember = !!values.remember;
         const cookieOpts = remember ? { expires: 30 } : {};
+        const tokens = res?.data?.attributes?.tokens;
         storeUserInfo({
-          accessToken: res?.data?.attributes?.tokens?.access?.token,
+          accessToken: tokens?.access?.token,
         });
+        // Profile cookie stays readable for the UI chrome; tokens are HttpOnly.
         Cookies.set(
           "user",
           JSON.stringify(res?.data?.attributes?.user),
           cookieOpts
         );
-        Cookies.set(
-          "accessToken",
-          JSON.stringify(res?.data?.attributes?.tokens?.access?.token),
-          cookieOpts
-        );
-        Cookies.set(
-          "refreshToken",
-          JSON.stringify(res?.data?.attributes?.tokens?.refresh?.token),
-          cookieOpts
-        );
+        await fetch("/api/auth/set-session", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            accessToken: tokens?.access?.token,
+            refreshToken: tokens?.refresh?.token,
+            remember,
+          }),
+        });
+        // Drop any legacy JS-readable token cookies.
+        Cookies.remove("accessToken");
+        Cookies.remove("refreshToken");
         dispatch(setUser(res?.data?.attributes?.user));
         // Honour `?from=<path>` set by the middleware when it bounced an
         // unauthenticated request — so the user lands back on the page

@@ -117,6 +117,7 @@ export default function TopNav() {
       localStorage.removeItem("accessToken");
       Cookies.remove("user");
       Cookies.remove("accessToken");
+      fetch("/api/auth/clear-session", { method: "POST" }).catch(() => {});
       Cookies.remove("refreshToken");
       clearViewMode();
       dispatch(setUser(null));
