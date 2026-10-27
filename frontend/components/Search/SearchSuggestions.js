@@ -179,9 +179,11 @@ export default function SearchSuggestions({
           icon: "w-4 h-4",
         };
 
+  // Keep placeholders short so mobile inputs do not clip mid-word
+  // (e.g. "Logo designe…"). Ellipsis via placeholder:truncate below.
   const dynPlaceholder =
     rotatingPlaceholders?.[phIdx]
-      ? `Try "${rotatingPlaceholders[phIdx]}"`
+      ? `Try ${rotatingPlaceholders[phIdx]}`
       : placeholder;
 
   return (
@@ -209,7 +211,7 @@ export default function SearchSuggestions({
           onFocus={() => setOpen(true)}
           placeholder={dynPlaceholder}
           aria-label="Search Qwlee"
-          className={`flex-1 w-full min-w-0 bg-transparent outline-none placeholder:text-gray-400 ${sizeClasses.input}`}
+          className={`flex-1 w-full min-w-0 bg-transparent outline-none placeholder:text-gray-400 placeholder:truncate ${sizeClasses.input}`}
         />
         {query && (
           <button

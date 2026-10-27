@@ -29,9 +29,9 @@ const ROTATING_SUGGESTIONS = [
   "Logo designer",
   "Video editor",
   "SEO audit",
-  "Claude API integration",
+  "Claude API",
   "React Native app",
-  "Landing page copywriter",
+  "Landing page copy",
   "Brand identity",
 ];
 
