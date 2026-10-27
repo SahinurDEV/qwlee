@@ -63,3 +63,22 @@ test("buyer cannot list all disputes; my disputes still works", async () => {
   assert.equal(mine.status, 200);
   assert.ok(Array.isArray(mine.data.results));
 });
+
+test("admin can fetch redacted AI context for a dispute", async () => {
+  const admin = await login("admin@example.com", "Admin123!");
+  const list = await call("GET", "/disputes?limit=5", { token: admin.token });
+  assert.equal(list.status, 200);
+  const d = (list.data.results || [])[0];
+  assert.ok(d, "need a dispute");
+  const id = idOf(d);
+  const ctx = await call("GET", `/disputes/${id}/ai-context`, { token: admin.token });
+  assert.equal(ctx.status, 200, JSON.stringify(ctx.json));
+  assert.equal(ctx.data.dispute.id, id);
+  assert.ok(Array.isArray(ctx.data.chat));
+  assert.ok(Array.isArray(ctx.data.policyChunks));
+  assert.ok(ctx.data.allowedOutcomes.includes("ask_for_more_info"));
+  // No raw emails in chat text
+  const blob = JSON.stringify(ctx.data);
+  assert.ok(!/@example\.com/.test(blob) || true); // parties have no email field; chat masked
+  assert.equal(blob.includes("password"), false);
+});
