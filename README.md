@@ -36,15 +36,15 @@ Documented in the repo — not marketing claims:
 - **Optional AI Dispute Assistant** (`services/ai-dispute`) with human approval before any refund or release
 
 
+## Case study: AI support inbox
+
+Buyers and sellers can ask policy questions on **Help & support**. Express retrieves policy chunks, the FastAPI sidecar answers with citations, and anything under 55% confidence (or an explicit “talk to a human”) opens a `SupportTicket` tagged `aiEscalated` for the admin queue. Rate-limited (20/hour), PII-masked, mock mode when `AI_API_KEY` is unset.
+
 <!--
   SHOW_DEMO_VIDEO: false
   The walkthrough below is outdated and is intentionally hidden from the
   README. To re-enable, delete this HTML comment wrapper (keep the markdown
   inside) or set SHOW_DEMO_VIDEO to true in your docs publishing pipeline.
-
-## Case study: AI support inbox
-
-Buyers and sellers can ask policy questions on **Help & support**. Express retrieves policy chunks, the FastAPI sidecar answers with citations, and anything under 55% confidence (or an explicit “talk to a human”) opens a `SupportTicket` tagged `aiEscalated` for the admin queue. Rate-limited (20/hour), PII-masked, mock mode when `AI_API_KEY` is unset.
 
 ## Demo video
 
