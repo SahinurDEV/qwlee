@@ -51,6 +51,7 @@ export default function Activity({ order, orderId }) {
   const [newMessage, setNewMessage] = useState("");
   const [attachments, setAttachments] = useState([]);
   const bottomRef = useRef(null);
+  const listRef = useRef(null);
 
   const myId = String(user?.id || user?._id || "");
   const isSeller = !!user && String(order?.freelancerId?.id || order?.freelancerId?._id) === myId;
@@ -74,7 +75,10 @@ export default function Activity({ order, orderId }) {
   }, [socket, orderId]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ block: "end", behavior: "smooth" });
+    // Scroll only the message list, never the page, so the order header
+    // stays in view when the page opens.
+    const list = listRef.current;
+    if (list) list.scrollTop = list.scrollHeight;
   }, [messages.length]);
 
   const orderStarted = useMemo(() => {
@@ -150,7 +154,7 @@ export default function Activity({ order, orderId }) {
         <span className="font-semibold">Order started.</span> {orderStarted}
       </div>
 
-      <div className="px-5 py-5 space-y-4 max-h-[520px] overflow-y-auto">
+      <div ref={listRef} className="px-5 py-5 space-y-4 max-h-[520px] overflow-y-auto">
         {messages.length === 0 && (
           <div className="text-sm text-gray-500 text-center py-6">
             No activity yet — say hi to get started.
