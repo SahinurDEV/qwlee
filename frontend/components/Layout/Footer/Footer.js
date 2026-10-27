@@ -50,6 +50,7 @@ const LEGAL = [
   { label: "Refunds", key: "refundPolicy", href: "/refund-policy" },
   { label: "Payment terms", key: "paymentTerms", href: "/payment-terms" },
   { label: "Intellectual property", key: "ipPolicy", href: "/intellectual-property" },
+  { label: "Cookie policy", key: "cookiePolicy", href: "/cookie-policy" },
 ];
 
 // Social handles intentionally point to placeholder URLs. Replace with
