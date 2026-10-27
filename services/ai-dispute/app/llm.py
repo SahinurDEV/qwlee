@@ -58,7 +58,7 @@ async def complete(context: dict, *, force_mock: bool = False) -> tuple[Suggesti
 
     url = os.environ["AI_API_URL"]
     key = os.environ["AI_API_KEY"]
-    model = os.environ.get("AI_MODEL") or "meta-llama/llama-3.3-70b-instruct:free"
+    model = os.environ.get("AI_MODEL") or "openai/gpt-4o-mini"
     headers = {
         "Authorization": f"Bearer {key}",
         "Content-Type": "application/json",
