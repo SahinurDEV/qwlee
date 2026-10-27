@@ -105,3 +105,11 @@ def test_search_mock_logo_under_50():
     assert p.categoryHint == "Graphic Design"
     assert p.maxPrice == 50
     assert "logo" in p.keywords
+
+
+def test_parse_search_maps_logo_to_graphic():
+    from app.search_mock import parse_search
+    p = parse_search("logo design under $40", ["Graphic Design", "Web Development", "UI/UX Design"])
+    assert p.categoryHint == "Graphic Design"
+    assert p.maxPrice == 40
+    assert "AI understood" in p.explanation
