@@ -75,6 +75,7 @@ export default function MobileDrawer({ open, onClose }) {
       localStorage.removeItem("accessToken");
       Cookies.remove("user");
       Cookies.remove("accessToken");
+      fetch("/api/auth/clear-session", { method: "POST" }).catch(() => {});
       Cookies.remove("refreshToken");
       clearViewMode();
       dispatch(setUser(null));

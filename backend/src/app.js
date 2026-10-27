@@ -3,6 +3,7 @@ const helmet = require("helmet");
 const mongoSanitize = require("express-mongo-sanitize");
 const compression = require("compression");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 const passport = require("passport");
 const httpStatus = require("http-status");
 const config = require("./config/config");
@@ -87,6 +88,7 @@ app.use(
 );
 
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 app.use((err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400 && "body" in err) {

@@ -187,6 +187,7 @@ export const Navbar = () => {
         localStorage.removeItem("accessToken");
         Cookies.remove("user");
         Cookies.remove("accessToken");
+      fetch("/api/auth/clear-session", { method: "POST" }).catch(() => {});
         Cookies.remove("refreshToken");
         dispatch(setUser(null));
         router.push("/sign-in");

@@ -3,9 +3,13 @@ const config = require("./config");
 const { tokenTypes } = require("./tokens");
 const { User } = require("../models");
 
+const authCookies = require("../utils/authCookies");
 const jwtOptions = {
   secretOrKey: config.jwt.secret,
-  jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+  jwtFromRequest: ExtractJwt.fromExtractors([
+    ExtractJwt.fromAuthHeaderAsBearerToken(),
+    (req) => authCookies.readAccessToken(req),
+  ]),
 };
 
 const jwtVerify = async (payload, done) => {

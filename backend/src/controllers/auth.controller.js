@@ -19,6 +19,7 @@ const { isReserved } = require("../utils/reservedUsernames");
 const { deriveUniqueUsername } = require("../utils/deriveUsername");
 
 const siteSettings = require("../services/siteSettings.service");
+const authCookies = require("../utils/authCookies");
 // Bump when the Terms change materially; stored with each consent.
 const TERMS_VERSION = "2026-10";
 
@@ -112,6 +113,7 @@ async function sendLoginSuccess(req, res, user) {
   } catch (err) {
     console.error("activity.recordLogin failed:", err?.message);
   }
+  authCookies.setAuthCookies(req, res, tokens);
   res.status(httpStatus.OK).json(
     response({
       status: "OK",
@@ -222,7 +224,9 @@ const twoFactorVerify = catchAsync(async (req, res) => {
 });
 
 const logout = catchAsync(async (req, res) => {
-  const user = await authService.logout(req.body.refreshToken);
+  const refresh = req.body?.refreshToken || authCookies.readRefreshToken(req);
+  const user = await authService.logout(refresh);
+  authCookies.clearAuthCookies(req, res);
   res.status(httpStatus.OK).json(
     response({
       message: "Login Out Successful",
@@ -234,7 +238,10 @@ const logout = catchAsync(async (req, res) => {
 });
 
 const refreshTokens = catchAsync(async (req, res) => {
-  const tokens = await authService.refreshAuth(req.body.refreshToken);
+  const bodyToken = req.body?.refreshToken;
+  const cookieToken = authCookies.readRefreshToken(req);
+  const tokens = await authService.refreshAuth(bodyToken || cookieToken);
+  authCookies.setAuthCookies(req, res, tokens);
   res.send({ ...tokens });
 });
 

@@ -26,12 +26,21 @@ export default function GoogleCallback() {
   const [busy, setBusy] = useState(false);
   const ran = useRef(false);
 
-  const finish = (a) => {
+  const finish = async (a) => {
     const opts = { expires: 30 };
     storeUserInfo({ accessToken: a.tokens.access.token });
     Cookies.set("user", JSON.stringify(a.user), opts);
-    Cookies.set("accessToken", JSON.stringify(a.tokens.access.token), opts);
-    Cookies.set("refreshToken", JSON.stringify(a.tokens.refresh.token), opts);
+    await fetch("/api/auth/set-session", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        accessToken: a.tokens.access.token,
+        refreshToken: a.tokens.refresh.token,
+        remember: true,
+      }),
+    });
+    Cookies.remove("accessToken");
+    Cookies.remove("refreshToken");
     dispatch(setUser(a.user));
     const from = params.get("from") || "/";
     router.replace(from.startsWith("/") && !from.startsWith("//") ? from : "/");

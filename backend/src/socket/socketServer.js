@@ -14,6 +14,7 @@ const express = require("express");
 const config = require("../config/config");
 const userEvents = require("./events/user");
 const presence = require("./presence");
+const authCookies = require("../utils/authCookies");
 
 const app = express();
 const server = http.createServer(app);
@@ -31,7 +32,8 @@ io.use((socket, next) => {
   // Best-effort JWT verification. We don't fail unauthenticated sockets —
   // public features (e.g. live presence read) work without auth — but
   // authenticated sockets get a verified userId.
-  const token = socket.handshake.auth?.token || socket.handshake.query?.token;
+  const fromCookie = authCookies.parseCookieHeader(socket.handshake.headers?.cookie, authCookies.ACCESS);
+  const token = socket.handshake.auth?.token || socket.handshake.query?.token || fromCookie;
   if (!token) return next();
   try {
     const cleaned = String(token).replace(/^"(.*)"$/, "$1");

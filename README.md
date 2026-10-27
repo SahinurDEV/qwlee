@@ -178,6 +178,9 @@ cd backend && npm run legal:upsert
 Admin → Privacy / Terms editors can still override the text afterward.
 
 ## Configuration
+
+> **Auth cookies.** Access and refresh tokens are stored as **HttpOnly** `SameSite` cookies (set by the API and mirrored on the site origin via `/api/auth/set-session`). Do not put JWTs in `document.cookie`. Optional: `COOKIE_SECURE`, `COOKIE_SAMESITE`, `COOKIE_DOMAIN`.
+
 > **Launch email.** Set `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME` (or `SMTP_USER`), `SMTP_PASSWORD` (or `SMTP_PASS`), and `EMAIL_FROM` (or `SMTP_FROM`). `GET /health` exposes a non-secret `smtp` readiness object. Mailpit (`127.0.0.1:1025`) is fine for demos only.
 
 > **Launch payments.** Checkout uses Stripe when `STRIPE_SECRET_KEY` is set (webhook needs `STRIPE_WEBHOOK_SECRET`; frontend needs `STRIPE_PUBLISHABLE_KEY` / `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`). Keep `DEMO_PAYMENTS=true` until those keys exist — setting `DEMO_PAYMENTS=false` with no Stripe key makes checkout return 503. `GET /health` includes a non-secret `payments` readiness object.
