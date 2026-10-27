@@ -44,7 +44,7 @@ const errorHandler = (err, req, res, next) => {
 
   if (config.env === 'development') {
     logger.error(err);
-  errorReporting.captureException(err, { path: req.originalUrl, method: req.method }).catch(() => {});;
+  errorReporting.captureException(err, { path: req.originalUrl, method: req.method }).catch(() => {});
   }
 
   res.status(statusCode).send(response);
