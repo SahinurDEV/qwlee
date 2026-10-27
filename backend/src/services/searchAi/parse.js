@@ -35,6 +35,7 @@ async function parseQuery(rawQuery) {
     });
     const j = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(j.detail || `AI ${r.status}`);
+    try { require("../aiObservability/log").logAiCall({ feature: "search", source: j.source, model: j.model, latencyMs: j.latencyMs, ok: true }); } catch (_) {}
     return {
       parse: j.parse,
       source: j.source,
@@ -45,6 +46,7 @@ async function parseQuery(rawQuery) {
     };
   } catch (e) {
     // Fall back: treat whole query as title keywords
+    try { require("../aiObservability/log").logAiCall({ feature: "search", source: "fallback", model: "", latencyMs: 0, ok: false, error: e.message }); } catch (_) {}
     return {
       parse: {
         keywords: query,

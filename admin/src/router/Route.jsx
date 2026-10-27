@@ -58,6 +58,7 @@ import Team from "../dashboard/control/Team";
 import Security from "../dashboard/control/Security";
 import Approvals from "../dashboard/control/Approvals";
 import RiskFlags from "../dashboard/control/RiskFlags";
+import AiObservability from "../dashboard/control/AiObservability";
 import Jobs from "../dashboard/control/Jobs";
 import Backups from "../dashboard/control/Backups";
 import ProApplications from "../dashboard/control/ProApplications";
@@ -158,6 +159,7 @@ export const router = createBrowserRouter([
       { path: "security", element: <Security /> },
       { path: "approvals", element: <Approvals /> },
       { path: "risk-flags", element: <RiskFlags /> },
+      { path: "ai-observability", element: <AiObservability /> },
       { path: "jobs", element: <Jobs /> },
       { path: "backups", element: <Backups /> },
       { path: "pro", element: <ProApplications /> },

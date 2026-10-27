@@ -49,6 +49,7 @@ async function summarize({ mock = false } = {}) {
     err.statusCode = r.status === 503 ? 503 : 502;
     throw err;
   }
+  try { require("../aiObservability/log").logAiCall({ feature: "insights", source: j.source, model: j.model, latencyMs: j.latencyMs, ok: true }); } catch (_) {}
   return {
     stats,
     insights: j.insights,

@@ -37,6 +37,7 @@ async function reviewFlag(flag, { forceMock = false } = {}) {
     const j = await r.json().catch(() => ({}));
     if (!r.ok) return null;
     const review = j.review || {};
+    try { require("../aiObservability/log").logAiCall({ feature: "fraud", source: j.source, model: j.model, latencyMs: j.latencyMs, ok: true }); } catch (_) {}
     return {
       aiLabel: String(review.label || "").slice(0, 64),
       aiConfidence: typeof review.confidence === "number" ? review.confidence : null,

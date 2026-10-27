@@ -72,6 +72,7 @@ async function suggest(adminId, disputeId, { mock = false } = {}) {
     throw new ApiError(httpStatus.BAD_GATEWAY, `AI dispute service unreachable: ${e.message}`);
   }
 
+  try { require("../aiObservability/log").logAiCall({ feature: "dispute", source: remote.source, model: remote.model, latencyMs: remote.latencyMs || Date.now() - t0, ok: true }); } catch (_) {}
   const row = await DisputeAiSuggestion.create({
     disputeId,
     adminId,
