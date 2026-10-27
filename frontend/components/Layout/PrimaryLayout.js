@@ -22,7 +22,8 @@ function Chrome({ children, isFooterAdd }) {
       <AnnouncementBar />
       <TopNav />
       <CategoryBar />
-      {children}
+      {/* Keep the footer below the fold on short pages (empty states). */}
+      <div className="min-h-[calc(100vh-8rem)]">{children}</div>
       {!isFooterAdd && <Footer />}
       <CookieBanner />
     </>
