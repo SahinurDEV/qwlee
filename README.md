@@ -395,7 +395,31 @@ On the order page the buyer or seller can propose 1-5 future time slots for a ca
 
 ### AI assistant (opt-in)
 
-`/ai-assistant` offers a gig description writer (`POST /v1/ai/gig-description`), a request brief writer (`POST /v1/ai/brief`), reply ideas (`POST /v1/ai/replies`) and seller matches for your own open requests (`GET /v1/ai/match/:requestId`, keyword overlap with seller profiles, Pro/online boost). `GET /v1/ai/status` reports `{enabled, provider}`. Settings: `AI_HELPERS=off` turns everything off; `AI_API_URL` + `AI_API_KEY` (+ `AI_MODEL`) point text generation at an OpenAI-compatible chat endpoint. Without them, or if the provider fails, a deterministic template mock (`utils/aiMock.js`) answers. Only the mock has been tested; no real provider has been verified. Covered by `backend/tests/ai.test.js`.
+`/ai-assistant` offers a gig description writer (`POST /v1/ai/gig-description`), a request brief writer (`POST /v1/ai/brief`), reply ideas (`POST /v1/ai/replies`) and seller matches for your own open requests (`GET /v1/ai/match/:requestId`, keyword overlap with seller profiles, Pro/online boost). `GET /v1/ai/status` reports `{enabled, provider}`. Settings: `AI_HELPERS=off` turns everything off; `AI_API_URL` + `AI_API_KEY` (+ `AI_MODEL`) point text generation at an OpenAI-compatible chat endpoint. Without them, or if the provider fails, a deterministic template mock (`utils/aiMock.js`) answers. Covered by `backend/tests/ai.test.js`.
+
+### Admin Dispute AI assistant
+
+Admins can open **Disputes** and click **Suggest resolution**. A small Python FastAPI service (`services/ai-dispute`, compose service `ai-dispute`) reads a redacted case pack (dispute thread, order events, order chat, gig package, policy chunks) and returns a recommended outcome with cited evidence. The AI never refunds or releases escrow on its own — the admin must Accept, edit, copy an ask-more draft, or Dismiss.
+
+**Outcomes:** `full_refund`, `partial_refund` (with a real `partialAmount` field), `release_to_seller`, `mutual_cancellation`, or `ask_for_more_info` (draft only — the admin copies the message; nothing is posted automatically).
+
+**Provider (OpenRouter by default):** set these in `.env`:
+
+| Variable | Default / notes |
+| --- | --- |
+| `AI_API_URL` | `https://openrouter.ai/api/v1/chat/completions` |
+| `AI_API_KEY` | your OpenRouter key (required for live suggestions) |
+| `AI_MODEL` | free default `meta-llama/llama-3.3-70b-instruct:free`; for better quality use paid `openai/gpt-4o-mini` |
+| `OPENROUTER_HTTP_REFERER` / `OPENROUTER_X_TITLE` | sent as OpenRouter attribution headers |
+| `AI_DISPUTE_ASSISTANT` | `on` / `off` |
+| `AI_DISPUTE_URL` | `http://ai-dispute:7190` in compose, or `http://127.0.0.1:7190` in hostnet |
+| `AI_DISPUTE_TOKEN` | shared secret between Node and the Python service |
+
+Without `AI_API_KEY` the admin UI shows **AI not configured**; API tests can still call suggest with `{ mock: true }`. Policy text used for citations lives in `backend/data/policies/` (`policy:doc§n` chunk IDs).
+
+**Eval:** `cd backend && npm run eval:dispute-ai` (mock) or `npm run eval:dispute-ai:live` (needs the sidecar + key). Seeded cases: `npm run seed` includes `disputeAiEval` (tagged `demoSeed` / `evalCase`, for local docker only).
+
+**Case study (FDE):** grounded citations, human-in-the-loop approval, suggestion audit log (`DisputeAiSuggestion`), PII masking via `maskContact`, and a measurable 20-case eval set.
 
 ### Talent search and invite-to-request
 
