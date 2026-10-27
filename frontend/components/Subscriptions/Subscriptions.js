@@ -1,10 +1,11 @@
 "use client";
 // /subscriptions: a buyer's monthly gig subscriptions, and for sellers the
 // subscriptions to their gigs plus the per-gig opt-in.
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import useUser from "@/hooks/useUser";
+import { base } from "@/lib/constant";
 import { useGetMyGigsStatsQuery } from "@/app/redux/features/sellerLevelApi";
 import { useGetSubscriptionsQuery, useUpdateSubscriptionMutation, useSetGigSubscriptionMutation } from "@/app/redux/features/subscriptionsApi";
 
@@ -21,7 +22,16 @@ function SubList({ role }) {
     else toast.success(`Subscription ${r.data?.data?.attributes?.status}`);
   }
   if (isLoading) return <p className="text-sm text-gray-500">Loading…</p>;
-  if (!data.length) return <p className="text-sm text-gray-500">{role === "seller" ? "No one subscribes to your gigs yet." : "You have no subscriptions. Look for “Subscribe monthly” on a gig."}</p>;
+  if (!data.length) {
+    return role === "seller" ? (
+      <p className="text-sm text-gray-500">No one subscribes to your gigs yet. Enable Monthly on a gig below.</p>
+    ) : (
+      <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-6 text-sm text-gray-600" data-testid="subs-empty">
+        <p>You have no subscriptions yet. Look for <strong>Subscribe monthly</strong> on a gig package.</p>
+        <Link href="/gig" className="inline-block mt-3 text-emerald-700 font-medium hover:underline">Browse gigs →</Link>
+      </div>
+    );
+  }
   return (
     <ul className="space-y-3">
       {data.map((s) => {
@@ -103,11 +113,32 @@ export default function Subscriptions() {
   const isSeller = user?.role === "freelancer";
   // The user loads after the first render, so the default tab is derived.
   const [picked, setTab] = useState(null);
+  const [payMode, setPayMode] = useState(null);
   const tab = picked || (isSeller ? "seller" : "buyer");
+  useEffect(() => {
+    fetch(`${base}/health`, { credentials: "include" })
+      .then((r) => r.json())
+      .then((j) => setPayMode(j?.payments?.mode || null))
+      .catch(() => {});
+  }, []);
   return (
     <main className="container mx-auto max-w-4xl px-4 py-8">
       <h1 className="text-2xl font-bold text-gray-900">Subscriptions</h1>
       <p className="mt-1 text-sm text-gray-600">A subscription places the same order every month. Each month is a normal order with escrow, delivery and payout.</p>
+      {payMode === "demo" ? (
+        <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" data-testid="subs-demo-banner">
+          Live payments are in <strong>demo mode</strong>. Monthly renewals will use the demo charge path until Stripe keys are configured.
+        </div>
+      ) : payMode === "unconfigured" ? (
+        <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
+          Card payments are not configured yet. New subscriptions cannot charge until Stripe is set up (or demo mode is enabled).
+        </div>
+      ) : null}
+      <ol className="mt-4 grid sm:grid-cols-3 gap-3 text-sm text-gray-700" data-testid="subs-how">
+        <li className="rounded-xl border border-gray-200 bg-white p-3"><span className="font-semibold text-gray-900">1. Opt in</span><p className="mt-1 text-xs text-gray-500">Seller enables Monthly on a gig; buyer picks Subscribe monthly.</p></li>
+        <li className="rounded-xl border border-gray-200 bg-white p-3"><span className="font-semibold text-gray-900">2. Renew</span><p className="mt-1 text-xs text-gray-500">Each billing date places a normal escrow order for the same package.</p></li>
+        <li className="rounded-xl border border-gray-200 bg-white p-3"><span className="font-semibold text-gray-900">3. Control</span><p className="mt-1 text-xs text-gray-500">Pause, resume or cancel any time. Open orders keep running.</p></li>
+      </ol>
       {isSeller && (
         <div className="mt-5 flex gap-2" role="tablist">
           {[["seller", "Subscribers to my gigs"], ["buyer", "My subscriptions"]].map(([k, label]) => (
