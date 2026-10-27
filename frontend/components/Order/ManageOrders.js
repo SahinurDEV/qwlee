@@ -41,6 +41,7 @@ const STATUS_STYLE = {
   delivered: { label: "Delivered", chip: "bg-sky-50 text-sky-700 border-sky-100", dot: "bg-sky-500" },
   completed: { label: "Completed", chip: "bg-emerald-50 text-emerald-800 border-emerald-200", dot: "bg-emerald-600" },
   cancelled: { label: "Cancelled", chip: "bg-gray-100 text-gray-700 border-gray-200", dot: "bg-gray-400" },
+  disputed: { label: "Disputed", chip: "bg-amber-50 text-amber-800 border-amber-100", dot: "bg-amber-500" },
 };
 
 export default function ManageOrders() {
@@ -291,7 +292,7 @@ function Row({ order, isSelling }) {
   const total = Number(order.items?.[0]?.price || order.price || 0);
   const dueLabel = (() => {
     if (!order.deliveryDate) return "—";
-    if (order.status === "delivered" || order.status === "cancelled") {
+    if (order.status === "delivered" || order.status === "cancelled" || order.status === "disputed") {
       return moment(order.updatedAt || order.deliveryDate).format("D MMM YYYY");
     }
     const diff = moment(order.deliveryDate).diff(moment(), "days");
@@ -301,7 +302,7 @@ function Row({ order, isSelling }) {
   })();
   const dueTone = (() => {
     if (order.status === "late" || (order.status === "active" && moment(order.deliveryDate).isBefore(moment()) && (order.delivery?.state || "none") !== "submitted")) return "text-rose-600 font-medium";
-    if (order.status === "delivered" || order.status === "cancelled") return "text-gray-500";
+    if (order.status === "delivered" || order.status === "cancelled" || order.status === "disputed") return "text-gray-500";
     const d = moment(order.deliveryDate).diff(moment(), "days");
     if (d <= 1) return "text-amber-600 font-medium";
     return "text-gray-700";
