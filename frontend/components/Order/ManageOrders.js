@@ -255,7 +255,7 @@ function MobileRow({ order, isSelling }) {
         </div>
         <div className="min-w-0 flex-1">
           <div className="text-sm font-medium text-gray-900 line-clamp-2">
-            {gig?.title || order?.data?.title || "Gig"}
+            {gig?.title || order?.items?.[0]?.name || order?.data?.title || order?.data?.scenario || "Gig"}
           </div>
           <div className="mt-0.5 text-xs text-gray-500 truncate">
             {counterparty?.fullName || "—"} · #{String(order._id).slice(-8).toUpperCase()}
@@ -328,7 +328,7 @@ function Row({ order, isSelling }) {
           </div>
           <div className="min-w-0">
             <div className="text-sm text-gray-900 truncate group-hover:text-emerald-700">
-              {gig?.title || order?.data?.title || "Gig"}
+              {gig?.title || order?.items?.[0]?.name || order?.data?.title || order?.data?.scenario || "Gig"}
             </div>
             <div className="text-xs text-gray-400">
               #{String(order._id).slice(-8).toUpperCase()}
