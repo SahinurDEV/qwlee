@@ -48,6 +48,15 @@ export default function ManageOrders() {
   const { isSelling, ready } = useViewMode(user);
   const mode = isSelling ? "seller" : "buyer";
 
+
+function isLateTabOrder(o) {
+  if (o.status === "late") return true;
+  if (o.status !== "active") return false;
+  if (!o.deliveryDate) return false;
+  if ((o.delivery?.state || "none") === "submitted") return false;
+  return new Date(o.deliveryDate) < new Date();
+}
+
   const [activeTab, setActiveTab] = useState("all");
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("newest");
@@ -67,7 +76,9 @@ export default function ManageOrders() {
   // keystroke.
   const visible = useMemo(() => {
     let list = rows;
-    if (activeTab !== "all") list = list.filter((o) => o.status === activeTab);
+    if (activeTab === "late") list = list.filter(isLateTabOrder);
+    else if (activeTab === "active") list = list.filter((o) => o.status === "active" && !isLateTabOrder(o));
+    else if (activeTab !== "all") list = list.filter((o) => o.status === activeTab);
     if (search.trim()) {
       const q = search.trim().toLowerCase();
       list = list.filter((o) => {
@@ -289,7 +300,7 @@ function Row({ order, isSelling }) {
     return `${diff} day${diff === 1 ? "" : "s"}`;
   })();
   const dueTone = (() => {
-    if (order.status === "late") return "text-rose-600 font-medium";
+    if (order.status === "late" || (order.status === "active" && moment(order.deliveryDate).isBefore(moment()) && (order.delivery?.state || "none") !== "submitted")) return "text-rose-600 font-medium";
     if (order.status === "delivered" || order.status === "cancelled") return "text-gray-500";
     const d = moment(order.deliveryDate).diff(moment(), "days");
     if (d <= 1) return "text-amber-600 font-medium";
