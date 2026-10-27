@@ -68,6 +68,11 @@ const nextConfig = {
     // at build time to serve remote images as-is (useful behind broken
     // split-DNS / SSRF-sensitive proxies).
     unoptimized: process.env.NEXT_IMAGE_OPTIMIZE === "false",
+    // Next 16 refuses to optimize images whose host resolves to a private
+    // IP. Tunnels/split-DNS setups (ngrok, Cloudflare) resolve our own host
+    // that way, which breaks every /api/seed and upload image. Hosts are
+    // still limited to remotePatterns below.
+    dangerouslyAllowLocalIP: process.env.NEXT_IMAGE_ALLOW_LOCAL_IP === "true",
     remotePatterns: [...hosts].map((hostname) => ({ hostname })),
   },
 };
