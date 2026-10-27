@@ -1,6 +1,7 @@
 const express = require("express");
 const auth = require("../../middlewares/auth");
 const disputeController = require("../../controllers/dispute.controller");
+const disputeAiController = require("../../controllers/disputeAi.controller");
 
 const router = express.Router();
 
@@ -14,6 +15,7 @@ router.post("/:disputeId/cancel", auth("common"), disputeController.cancelDisput
 
 // Admin
 router.get("/", auth("admin"), disputeController.getDisputesAdmin);
+router.get("/:disputeId/ai-context", auth("admin"), disputeAiController.getContext);
 router.post("/:disputeId/resolve", auth("admin"), disputeController.resolveDispute);
 
 module.exports = router;
